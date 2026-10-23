@@ -51,6 +51,7 @@ Use **Relatórios → Backup** para salvar ou transferir os dados.
 
 > ⚠️ Sem servidor, a escolha de perfil e o PIN **organizam** o acesso, mas não são uma proteção de segurança real
 > (quem tiver acesso ao navegador consegue ver os dados). Login seguro depende do backend (próxima etapa).
+
 A camada `js/storage.js` isola o acesso aos dados para facilitar a troca por uma API no futuro.
 
 ## Estrutura
@@ -99,5 +100,5 @@ python3 -m http.server 8000
 - [x] Professores, grade curricular e grade semanal
 - [x] Faturas e recibos
 - [ ] Backend + banco de dados (dados compartilhados entre computadores)
-- [ ] Login de usuários e permissões (secretaria, comercial, financeiro)
+- [ ] Login seguro com senha (no servidor)
 - [ ] Frequência/notas, emissão de boletos/PIX, envio de WhatsApp/e-mail
