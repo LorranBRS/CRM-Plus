@@ -13,7 +13,11 @@ const TelaTurmas = {
       if (!btn) return;
       const turma = Turmas.buscarPorId(btn.dataset.id);
       if (btn.dataset.acao === 'editar') this.abrir(turma);
-      if (btn.dataset.acao === 'excluir' && confirm(`Excluir a turma "${turma.codigo}"?`)) {
+      if (btn.dataset.acao === 'excluir') {
+        if (Matriculas.listar().some((m) => m.turmaId === turma.id)) {
+          return Utils.toast('A turma possui matrículas. Altere o status para Cancelada ou Concluída.', 'erro');
+        }
+        if (!confirm(`Excluir a turma "${turma.codigo}"?`)) return;
         Turmas.excluir(turma.id);
         this.renderizar();
         Utils.toast('Turma excluída.');
@@ -74,6 +78,12 @@ const TelaTurmas = {
     if (sel.selectedIndex < 0) sel.value = ''; // curso do filtro foi excluído
   },
 
+  ocupacao(t) {
+    const ocup = Matriculas.ocupadas(t.id);
+    const pct = Math.min(100, Math.round((ocup / t.vagas) * 100));
+    return `${ocup}/${t.vagas}<span class="mini-barra ${pct >= 100 ? 'cheia' : ''}"><span style="width:${pct}%"></span></span>`;
+  },
+
   horario(t) {
     const dias = (t.dias || []).join(', ') || '-';
     const horas = t.horaInicio && t.horaFim ? `${t.horaInicio} às ${t.horaFim}` : '';
@@ -92,7 +102,7 @@ const TelaTurmas = {
         <td>${Utils.escapar(t.professor) || '-'}<small>${Utils.escapar(t.sala)}</small></td>
         <td>${this.horario(t)}</td>
         <td>${Utils.formatarData(t.dataInicio)}<small>até ${Utils.formatarData(t.dataFim)}</small></td>
-        <td>${t.vagas}</td>
+        <td>${this.ocupacao(t)}</td>
         <td>${Utils.badge(t.status)}</td>
         <td class="acoes">
           <button class="btn-icon" data-acao="editar" data-id="${t.id}" title="Editar">✏️</button>

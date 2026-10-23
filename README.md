@@ -1,63 +1,74 @@
 # CRM Plus – Gestão Educacional
 
-Sistema web de CRM voltado para instituições de ensino (cursos livres, escolas técnicas, etc.).
-Desenvolvido em **HTML, CSS e JavaScript puro**, sem dependências.
+Sistema web de CRM para instituições de ensino (cursos livres, escolas de idiomas, escolas técnicas).
+Feito em **HTML, CSS e JavaScript puro**, sem dependências nem etapa de build.
 
 🔗 **Demonstração:** https://lorranbrs.github.io/CRM-Plus/
 
-## Funcionalidades
+> Clique em **"Carregar dados de exemplo"** no menu lateral para ver o sistema preenchido.
 
-> Use o botão **"Carregar dados de exemplo"** no menu lateral para ver o sistema preenchido.
+## Módulos
 
-### Etapa 1 – Alunos
-- Cadastro, edição e exclusão de alunos
-- Validação de CPF (dígitos verificadores), e-mail e telefone; bloqueio de CPF duplicado
-- Máscaras de CPF, telefone e CEP; endereço automático pelo CEP (API ViaCEP)
-- Busca, filtro por status, indicadores e exportação para CSV
-- Curso de interesse sugerido a partir dos cursos cadastrados
+| Módulo | O que faz |
+|---|---|
+| 🏠 **Painel** | Indicadores, receita prevista × recebida (6 meses), funil de leads, ocupação das turmas, próximos contatos e mensalidades em atraso |
+| 🎯 **Leads / Funil** | Kanban com 6 etapas (arrastar e soltar), origem, responsável, próximo contato, histórico de interações e **conversão em aluno → matrícula** |
+| 👩‍🎓 **Alunos** | Cadastro completo, validação de CPF, máscaras, endereço automático pelo CEP (ViaCEP), busca, filtros e CSV |
+| 📚 **Cursos** | Catálogo com modalidade, carga horária, duração, mensalidade e taxa de matrícula |
+| 🏫 **Turmas** | Professor, sala, dias, turno, horário, período, vagas e barra de ocupação |
+| 📝 **Matrículas** | Aluno × turma, controle de vagas, desconto, parcelas, dia de vencimento; gera o financeiro automaticamente |
+| 💰 **Financeiro** | Contas a receber, situação automática (pendente/atrasado/pago/cancelado), registro e estorno de pagamentos, totais e CSV |
+| 📊 **Relatórios** | Exportação CSV de todos os módulos, inadimplência, resumo por turma, backup/restauração em JSON |
 
-### Etapa 2 – Cursos e Turmas
-- **Cursos:** nome, código, área, modalidade (Presencial/Online/Híbrido), carga horária,
-  duração, mensalidade, taxa de matrícula, descrição e status
-- **Turmas:** curso, código, professor(a), sala, dias da semana, turno, horário,
-  período (início/término), vagas e status (Planejada, Em andamento, Concluída, Cancelada)
-- Regras: código de curso/turma único, datas e horários coerentes, curso com turmas não pode ser excluído
-- Atalho "ver turmas" a partir do curso; filtros por curso e status
-- Indicadores: cursos ativos, mensalidade média, turmas em andamento e vagas ofertadas
+### Regras de negócio
+- CPF válido e único; códigos de curso e turma únicos
+- Turma lotada não aceita novas matrículas; só turmas *Planejada* ou *Em andamento* recebem matrícula
+- Matrícula nova torna o aluno **Ativo** e gera taxa + mensalidades (com desconto aplicado)
+- Cancelar/trancar matrícula oferece cancelar as parcelas pendentes
+- Não é possível excluir curso com turmas, turma com matrículas ou aluno com histórico (use o status)
 
-> Os dados ficam salvos no **localStorage** do navegador (cada navegador tem seus próprios dados).
+## Armazenamento
+
+Os dados ficam no **localStorage** do navegador: cada navegador/computador tem seus próprios dados.
+Use **Relatórios → Backup** para salvar ou transferir os dados.
+A camada `js/storage.js` isola o acesso aos dados para facilitar a troca por uma API no futuro.
 
 ## Estrutura
 
 ```
 CRM-Plus/
-├── index.html            # Layout, telas e formulários
-├── css/style.css         # Estilos globais
+├── index.html              # Layout, telas e formulários (modais)
+├── css/style.css           # Estilos e responsividade
 └── js/
-    ├── utils.js          # Máscaras, validações, formulários, modais
-    ├── storage.js        # Camada de dados + CRUD genérico (criarRepositorio)
-    ├── modelos/          # Regras de negócio
-    │   ├── alunos.js
-    │   ├── cursos.js
-    │   └── turmas.js
-    ├── telas/            # Eventos e renderização de cada tela
-    │   ├── alunos.js
-    │   ├── cursos.js
-    │   └── turmas.js
-    ├── exemplos.js       # Dados de demonstração
-    └── app.js            # Navegação entre telas (#alunos, #cursos, #turmas)
+    ├── utils.js            # Máscaras, validações, datas, CSV, formulários, modais
+    ├── storage.js          # localStorage + CRUD genérico + backup
+    ├── graficos.js         # Gráficos de barras em HTML/CSS
+    ├── modelos/            # Regras de negócio
+    │   ├── alunos.js  cursos.js  turmas.js
+    │   └── matriculas.js  financeiro.js  leads.js
+    ├── telas/              # Eventos e renderização de cada tela
+    │   ├── painel.js  leads.js  alunos.js  cursos.js
+    │   └── turmas.js  matriculas.js  financeiro.js  relatorios.js
+    ├── exemplos.js         # Dados de demonstração
+    └── app.js              # Navegação (#painel, #leads, #alunos, ...)
 ```
 
 ## Como rodar localmente
 
-Basta abrir o `index.html` no navegador.
+Abra o `index.html` no navegador, ou sirva a pasta:
+
+```bash
+python3 -m http.server 8000
+```
 
 ## Roadmap
 
-- [x] Cadastro de alunos
+- [x] Alunos
 - [x] Cursos e turmas
-- [ ] Matrículas
-- [ ] Leads e funil de vendas (captação)
-- [ ] Financeiro (mensalidades, boletos)
-- [ ] Relatórios e dashboard
-- [ ] Backend + banco de dados e login de usuários
+- [x] Matrículas
+- [x] Leads e funil de captação
+- [x] Financeiro
+- [x] Painel e relatórios
+- [ ] Backend + banco de dados (dados compartilhados entre computadores)
+- [ ] Login de usuários e permissões (secretaria, comercial, financeiro)
+- [ ] Frequência/notas, emissão de boletos/PIX, envio de WhatsApp/e-mail

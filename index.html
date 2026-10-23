@@ -18,19 +18,93 @@
         </div>
       </div>
       <nav class="menu">
+        <a href="#painel" class="menu-item" data-tela="painel">🏠 Painel</a>
+        <a href="#leads" class="menu-item" data-tela="leads">🎯 Leads / Funil</a>
         <a href="#alunos" class="menu-item" data-tela="alunos">👩‍🎓 Alunos</a>
         <a href="#cursos" class="menu-item" data-tela="cursos">📚 Cursos</a>
         <a href="#turmas" class="menu-item" data-tela="turmas">🏫 Turmas</a>
-        <a class="menu-item disabled" title="Em breve">📝 Matrículas <span class="tag">em breve</span></a>
-        <a class="menu-item disabled" title="Em breve">🎯 Leads / Funil <span class="tag">em breve</span></a>
-        <a class="menu-item disabled" title="Em breve">💰 Financeiro <span class="tag">em breve</span></a>
-        <a class="menu-item disabled" title="Em breve">📊 Relatórios <span class="tag">em breve</span></a>
+        <a href="#matriculas" class="menu-item" data-tela="matriculas">📝 Matrículas</a>
+        <a href="#financeiro" class="menu-item" data-tela="financeiro">💰 Financeiro</a>
+        <a href="#relatorios" class="menu-item" data-tela="relatorios">📊 Relatórios</a>
       </nav>
       <button class="btn-exemplos" id="btnExemplos">Carregar dados de exemplo</button>
-      <footer class="sidebar-footer">v0.2 · Etapa 2</footer>
+      <footer class="sidebar-footer">v1.0</footer>
     </aside>
 
     <main class="content">
+
+      <!-- ===================== TELA: PAINEL ===================== -->
+      <section class="tela" data-tela="painel" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Painel</h1>
+            <p class="subtitle" id="painelData">Visão geral da instituição</p>
+          </div>
+        </header>
+
+        <section class="cards cards-5">
+          <div class="card"><span>Alunos ativos</span><strong id="kpiAlunos">0</strong></div>
+          <div class="card"><span>Matrículas ativas</span><strong id="kpiMatriculas">0</strong></div>
+          <div class="card"><span>Leads em aberto</span><strong id="kpiLeads">0</strong></div>
+          <div class="card"><span>Recebido no mês</span><strong id="kpiRecebido">R$ 0,00</strong></div>
+          <div class="card card-alerta"><span>Em atraso</span><strong id="kpiAtraso">R$ 0,00</strong></div>
+        </section>
+
+        <section class="paineis">
+          <article class="painel painel-largo">
+            <h3>Receita – últimos 6 meses</h3>
+            <div id="grafReceita"></div>
+          </article>
+          <article class="painel">
+            <h3>Funil de leads</h3>
+            <div id="grafFunil"></div>
+          </article>
+          <article class="painel">
+            <h3>Ocupação das turmas abertas</h3>
+            <div id="grafOcupacao"></div>
+          </article>
+          <article class="painel">
+            <h3>Leads por origem</h3>
+            <div id="grafOrigem"></div>
+          </article>
+          <article class="painel">
+            <h3>Próximos contatos (7 dias)</h3>
+            <ul class="lista-simples" id="listaContatos"></ul>
+          </article>
+          <article class="painel painel-largo">
+            <h3>Mensalidades em atraso</h3>
+            <ul class="lista-simples" id="listaAtrasos"></ul>
+          </article>
+        </section>
+      </section>
+
+      <!-- ===================== TELA: LEADS ===================== -->
+      <section class="tela" data-tela="leads" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Leads / Funil</h1>
+            <p class="subtitle">Captação de novos alunos – arraste os cards entre as etapas</p>
+          </div>
+          <button class="btn btn-primary" id="btnNovoLead">+ Novo lead</button>
+        </header>
+
+        <section class="cards">
+          <div class="card"><span>Total de leads</span><strong id="statLeadsTotal">0</strong></div>
+          <div class="card"><span>Em aberto</span><strong id="statLeadsAbertos">0</strong></div>
+          <div class="card"><span>Matriculados</span><strong id="statLeadsConvertidos">0</strong></div>
+          <div class="card"><span>Taxa de conversão</span><strong id="statLeadsTaxa">0%</strong></div>
+        </section>
+
+        <section class="toolbar">
+          <input type="search" id="buscaLeads" placeholder="Buscar por nome, telefone, e-mail ou responsável...">
+          <select id="filtroOrigemLeads"></select>
+          <select id="filtroCursoLeads"></select>
+        </section>
+
+        <section class="kanban" id="kanban"></section>
+      </section>
 
       <!-- ===================== TELA: ALUNOS ===================== -->
       <section class="tela" data-tela="alunos" hidden>
@@ -137,7 +211,7 @@
           <div class="card"><span>Total de turmas</span><strong id="statTurmasTotal">0</strong></div>
           <div class="card"><span>Em andamento</span><strong id="statTurmasAndamento">0</strong></div>
           <div class="card"><span>Planejadas</span><strong id="statTurmasPlanejadas">0</strong></div>
-          <div class="card"><span>Vagas ofertadas</span><strong id="statTurmasVagas">0</strong></div>
+          <div class="card"><span>Vagas disponíveis</span><strong id="statTurmasVagas">0</strong></div>
         </section>
 
         <section class="toolbar">
@@ -157,7 +231,7 @@
             <thead>
               <tr>
                 <th>Turma</th><th>Professor</th><th>Horário</th><th>Período</th>
-                <th>Vagas</th><th>Status</th><th class="acoes">Ações</th>
+                <th>Ocupação</th><th>Status</th><th class="acoes">Ações</th>
               </tr>
             </thead>
             <tbody id="listaTurmas"></tbody>
@@ -165,7 +239,213 @@
           <div class="vazio" id="vazioTurmas"><p></p></div>
         </section>
       </section>
+
+      <!-- ===================== TELA: MATRÍCULAS ===================== -->
+      <section class="tela" data-tela="matriculas" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Matrículas</h1>
+            <p class="subtitle">Vínculo dos alunos com as turmas</p>
+          </div>
+          <button class="btn btn-primary" id="btnNovaMatricula">+ Nova matrícula</button>
+        </header>
+
+        <section class="cards">
+          <div class="card"><span>Total de matrículas</span><strong id="statMatTotal">0</strong></div>
+          <div class="card"><span>Ativas</span><strong id="statMatAtivas">0</strong></div>
+          <div class="card"><span>Novas no mês</span><strong id="statMatMes">0</strong></div>
+          <div class="card"><span>Mensalidade média</span><strong id="statMatTicket">R$ 0,00</strong></div>
+        </section>
+
+        <section class="toolbar">
+          <input type="search" id="buscaMatriculas" placeholder="Buscar por aluno, CPF, turma ou curso...">
+          <select id="filtroTurmaMatriculas"></select>
+          <select id="filtroStatusMatriculas">
+            <option value="">Todos os status</option>
+            <option>Ativa</option>
+            <option>Trancada</option>
+            <option>Concluída</option>
+            <option>Cancelada</option>
+          </select>
+        </section>
+
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Aluno</th><th>Turma</th><th>Data</th><th>Mensalidade</th>
+                <th>Parcelas pagas</th><th>Status</th><th class="acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="listaMatriculas"></tbody>
+          </table>
+          <div class="vazio" id="vazioMatriculas"><p></p></div>
+        </section>
+      </section>
+
+      <!-- ===================== TELA: FINANCEIRO ===================== -->
+      <section class="tela" data-tela="financeiro" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Financeiro</h1>
+            <p class="subtitle">Mensalidades, taxas e recebimentos</p>
+          </div>
+          <button class="btn btn-primary" id="btnNovoLancamento">+ Novo lançamento</button>
+        </header>
+
+        <section class="cards">
+          <div class="card"><span>Previsto no mês</span><strong id="statFinPrevisto">R$ 0,00</strong></div>
+          <div class="card"><span>Recebido no mês</span><strong id="statFinRecebido">R$ 0,00</strong></div>
+          <div class="card card-alerta"><span>Total em atraso</span><strong id="statFinAtraso">R$ 0,00</strong></div>
+          <div class="card"><span>Alunos inadimplentes</span><strong id="statFinInadimplentes">0</strong></div>
+        </section>
+
+        <section class="toolbar">
+          <input type="search" id="buscaFinanceiro" placeholder="Buscar por aluno ou descrição...">
+          <input type="month" id="filtroMesFinanceiro" title="Mês de vencimento">
+          <select id="filtroSituacaoFinanceiro">
+            <option value="">Todas as situações</option>
+            <option>Pendente</option>
+            <option>Atrasado</option>
+            <option>Pago</option>
+            <option>Cancelado</option>
+          </select>
+          <button class="btn btn-light" id="btnExportarFinanceiro">⬇ Exportar CSV</button>
+        </section>
+
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Aluno</th><th>Descrição</th><th>Vencimento</th><th>Valor</th>
+                <th>Pagamento</th><th>Situação</th><th class="acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="listaFinanceiro"></tbody>
+            <tfoot id="totalFinanceiro"></tfoot>
+          </table>
+          <div class="vazio" id="vazioFinanceiro"><p></p></div>
+        </section>
+      </section>
+
+      <!-- ===================== TELA: RELATÓRIOS ===================== -->
+      <section class="tela" data-tela="relatorios" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Relatórios</h1>
+            <p class="subtitle">Exportações, backup e manutenção dos dados</p>
+          </div>
+        </header>
+
+        <section class="paineis">
+          <article class="painel">
+            <h3>Exportar planilhas (CSV)</h3>
+            <p class="ajuda">Arquivos que abrem direto no Excel ou Google Planilhas.</p>
+            <div class="botoes-relatorio" id="botoesExportar"></div>
+          </article>
+
+          <article class="painel">
+            <h3>Resumo por turma</h3>
+            <p class="ajuda">Alunos matriculados, ocupação e receita prevista de cada turma.</p>
+            <div class="table-wrap table-mini">
+              <table>
+                <thead><tr><th>Turma</th><th>Ocupação</th><th>Receita mensal</th></tr></thead>
+                <tbody id="resumoTurmas"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="painel">
+            <h3>Backup</h3>
+            <p class="ajuda">Os dados ficam salvos neste navegador. Faça backup para não perder nada
+              ou para levar os dados para outro computador.</p>
+            <div class="botoes-relatorio">
+              <button class="btn btn-primary" id="btnBackup">⬇ Baixar backup (JSON)</button>
+              <label class="btn btn-light">⬆ Restaurar backup
+                <input type="file" id="inputRestaurar" accept=".json,application/json" hidden>
+              </label>
+            </div>
+          </article>
+
+          <article class="painel">
+            <h3>Zona de perigo</h3>
+            <p class="ajuda">Apaga todos os cadastros deste navegador. Faça um backup antes.</p>
+            <button class="btn btn-perigo" id="btnLimparTudo">Apagar todos os dados</button>
+          </article>
+        </section>
+      </section>
     </main>
+  </div>
+
+  <!-- ===================== MODAL: LEAD ===================== -->
+  <div class="modal" id="modalLead" aria-hidden="true">
+    <div class="modal-box" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Novo lead</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+
+      <form id="formLead" novalidate>
+        <input type="hidden" name="id">
+        <fieldset>
+          <legend>Contato</legend>
+          <div class="grid">
+            <label class="col-2">Nome *
+              <input type="text" name="nome" maxlength="120">
+            </label>
+            <label>Telefone / WhatsApp *
+              <input type="tel" name="telefone" placeholder="(00) 00000-0000">
+            </label>
+            <label class="col-2">E-mail
+              <input type="email" name="email">
+            </label>
+            <label>Origem
+              <select name="origem"></select>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Negociação</legend>
+          <div class="grid">
+            <label class="col-2">Curso de interesse
+              <select name="cursoId"></select>
+            </label>
+            <label>Etapa
+              <select name="etapa"></select>
+            </label>
+            <label>Responsável
+              <input type="text" name="responsavel" placeholder="Quem atende este lead">
+            </label>
+            <label>Próximo contato
+              <input type="date" name="proximoContato">
+            </label>
+            <label class="col-full">Observações
+              <textarea name="observacoes" rows="2"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Histórico de interações</legend>
+          <ul class="historico" id="historicoLead"></ul>
+          <div class="grid">
+            <label class="col-full">Nova anotação
+              <textarea id="novaNotaLead" rows="2" placeholder="Ex.: Liguei, pediu proposta por WhatsApp"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light btn-esquerda" id="btnConverterLead">🎓 Converter em aluno</button>
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
   </div>
 
   <!-- ===================== MODAL: ALUNO ===================== -->
@@ -435,16 +715,173 @@
     </div>
   </div>
 
+  <!-- ===================== MODAL: MATRÍCULA ===================== -->
+  <div class="modal" id="modalMatricula" aria-hidden="true">
+    <div class="modal-box" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Nova matrícula</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+
+      <form id="formMatricula" novalidate>
+        <input type="hidden" name="id">
+
+        <fieldset>
+          <legend>Aluno e turma</legend>
+          <div class="grid">
+            <label class="col-2">Aluno *
+              <select name="alunoId"></select>
+            </label>
+            <label>Data da matrícula *
+              <input type="date" name="dataMatricula">
+            </label>
+            <label class="col-2">Turma *
+              <select name="turmaId"></select>
+            </label>
+            <label>Status
+              <select name="status">
+                <option>Ativa</option>
+                <option>Trancada</option>
+                <option>Concluída</option>
+                <option>Cancelada</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Condições financeiras</legend>
+          <div class="grid">
+            <label>Mensalidade (R$) *
+              <input type="number" name="valorMensalidade" min="0" step="0.01">
+            </label>
+            <label>Desconto (%)
+              <input type="number" name="desconto" min="0" max="100" step="0.5">
+            </label>
+            <div class="campo">
+              <span>Valor final</span>
+              <strong class="valor-final" id="valorFinalMatricula">R$ 0,00</strong>
+            </div>
+            <label>Taxa de matrícula (R$)
+              <input type="number" name="taxaMatricula" min="0" step="0.01">
+            </label>
+            <label>Nº de parcelas *
+              <input type="number" name="parcelas" min="1" max="60" step="1">
+            </label>
+            <label>Dia de vencimento *
+              <input type="number" name="diaVencimento" min="1" max="28" step="1">
+            </label>
+            <label class="col-full checkbox-linha" id="linhaGerarFinanceiro">
+              <input type="checkbox" id="gerarFinanceiro" checked>
+              Gerar taxa e mensalidades automaticamente no Financeiro
+            </label>
+            <label class="col-full">Observações
+              <textarea name="observacoes" rows="2"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: LANÇAMENTO ===================== -->
+  <div class="modal" id="modalLancamento" aria-hidden="true">
+    <div class="modal-box modal-pequeno" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Novo lançamento</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+
+      <form id="formLancamento" novalidate>
+        <input type="hidden" name="id">
+        <fieldset>
+          <div class="grid grid-2">
+            <label class="col-full">Aluno *
+              <select name="alunoId"></select>
+            </label>
+            <label class="col-full">Descrição *
+              <input type="text" name="descricao" placeholder="Ex.: Material didático">
+            </label>
+            <label>Valor (R$) *
+              <input type="number" name="valor" min="0.01" step="0.01">
+            </label>
+            <label>Vencimento *
+              <input type="date" name="vencimento">
+            </label>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: PAGAMENTO ===================== -->
+  <div class="modal" id="modalPagamento" aria-hidden="true">
+    <div class="modal-box modal-pequeno" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Registrar pagamento</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+
+      <form id="formPagamento" novalidate>
+        <input type="hidden" name="id">
+        <p class="resumo-pagamento" id="resumoPagamento"></p>
+        <fieldset>
+          <div class="grid grid-2">
+            <label>Data do pagamento *
+              <input type="date" name="dataPagamento">
+            </label>
+            <label>Valor pago (R$) *
+              <input type="number" name="valorPago" min="0.01" step="0.01">
+            </label>
+            <label class="col-full">Forma de pagamento
+              <select name="formaPagamento">
+                <option>PIX</option>
+                <option>Boleto</option>
+                <option>Cartão de crédito</option>
+                <option>Cartão de débito</option>
+                <option>Dinheiro</option>
+                <option>Transferência</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Confirmar pagamento</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
+  <div class="dica" id="dica" role="tooltip"></div>
 
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/graficos.js"></script>
   <script src="js/modelos/alunos.js"></script>
   <script src="js/modelos/cursos.js"></script>
   <script src="js/modelos/turmas.js"></script>
+  <script src="js/modelos/matriculas.js"></script>
+  <script src="js/modelos/financeiro.js"></script>
+  <script src="js/modelos/leads.js"></script>
+  <script src="js/telas/painel.js"></script>
+  <script src="js/telas/leads.js"></script>
   <script src="js/telas/alunos.js"></script>
   <script src="js/telas/cursos.js"></script>
   <script src="js/telas/turmas.js"></script>
+  <script src="js/telas/matriculas.js"></script>
+  <script src="js/telas/financeiro.js"></script>
+  <script src="js/telas/relatorios.js"></script>
   <script src="js/exemplos.js"></script>
   <script src="js/app.js"></script>
 </body>

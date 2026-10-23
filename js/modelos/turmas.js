@@ -32,6 +32,15 @@ const Turmas = {
     return erros;
   },
 
+  estaAberta(turma) {
+    return turma.status === 'Planejada' || turma.status === 'Em andamento';
+  },
+
+  // Texto usado nos selects: "ING-2026-1A – Inglês (12/20)"
+  rotulo(turma) {
+    return `${turma.codigo} – ${this.nomeCurso(turma)} (${Matriculas.ocupadas(turma.id)}/${turma.vagas})`;
+  },
+
   nomeCurso(turma) {
     return Cursos.buscarPorId(turma.cursoId)?.nome || '(curso removido)';
   },
@@ -48,12 +57,12 @@ const Turmas = {
 
   estatisticas() {
     const lista = this.listar();
-    const abertas = lista.filter((t) => t.status === 'Planejada' || t.status === 'Em andamento');
+    const abertas = lista.filter((t) => this.estaAberta(t));
     return {
       total: lista.length,
       andamento: lista.filter((t) => t.status === 'Em andamento').length,
       planejadas: lista.filter((t) => t.status === 'Planejada').length,
-      vagas: abertas.reduce((s, t) => s + Number(t.vagas || 0), 0),
+      vagas: abertas.reduce((s, t) => s + Math.max(0, Number(t.vagas || 0) - Matriculas.ocupadas(t.id)), 0),
     };
   },
 };

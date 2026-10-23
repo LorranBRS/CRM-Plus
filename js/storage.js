@@ -13,6 +13,30 @@ const Storage = {
   salvar(colecao, dados) {
     localStorage.setItem(`crmplus_${colecao}`, JSON.stringify(dados));
   },
+
+  COLECOES: ['alunos', 'cursos', 'turmas', 'matriculas', 'financeiro', 'leads'],
+
+  // Backup completo em um único objeto
+  exportarTudo() {
+    const dados = {};
+    this.COLECOES.forEach((c) => { dados[c] = this.ler(c); });
+    return { sistema: 'CRM Plus', versao: 1, geradoEm: new Date().toISOString(), dados };
+  },
+
+  importarTudo(backup) {
+    if (!backup || backup.sistema !== 'CRM Plus' || typeof backup.dados !== 'object') {
+      throw new Error('Arquivo de backup inválido.');
+    }
+    this.COLECOES.forEach((c) => this.salvar(c, Array.isArray(backup.dados[c]) ? backup.dados[c] : []));
+  },
+
+  limparTudo() {
+    this.COLECOES.forEach((c) => localStorage.removeItem(`crmplus_${c}`));
+  },
+
+  estaVazio() {
+    return this.COLECOES.every((c) => !this.ler(c).length);
+  },
 };
 
 // CRUD genérico reaproveitado por todos os módulos (alunos, cursos, turmas...)

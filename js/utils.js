@@ -52,6 +52,39 @@ const Utils = {
     return new Date(valor).toLocaleDateString('pt-BR');
   },
 
+  // ---------- Datas (sempre no formato "AAAA-MM-DD", horário local) ----------
+  paraISO(data) {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${data.getFullYear()}-${p(data.getMonth() + 1)}-${p(data.getDate())}`;
+  },
+
+  hoje() {
+    return Utils.paraISO(new Date());
+  },
+
+  mesAtual() {
+    return Utils.hoje().slice(0, 7);
+  },
+
+  // Soma "n" meses a uma data; "dia" fixa o dia do mês (limitado ao último dia)
+  somarMeses(dataISO, n, dia) {
+    const [a, m, d] = dataISO.split('-').map(Number);
+    const ultimoDia = new Date(a, m - 1 + n + 1, 0).getDate();
+    return Utils.paraISO(new Date(a, m - 1 + n, Math.min(dia ?? d, ultimoDia)));
+  },
+
+  somarDias(dataISO, n) {
+    const [a, m, d] = dataISO.split('-').map(Number);
+    return Utils.paraISO(new Date(a, m - 1, d + n));
+  },
+
+  // "2026-10" -> "out/26"
+  nomeMes(anoMes) {
+    const [a, m] = anoMes.split('-').map(Number);
+    return new Date(a, m - 1, 1).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+      .replace('. de ', '/').replace(' de ', '/').replace('.', '');
+  },
+
   formatarMoeda(valor) {
     if (valor === '' || valor === null || valor === undefined) return '-';
     return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -132,6 +165,26 @@ const Utils = {
 
   fecharModal(id) {
     $(id).classList.remove('aberto');
+  },
+
+  // Monta as <option> de um <select> a partir de uma lista
+  opcoes(lista, { valor = (x) => x, texto = (x) => x, vazio } = {}) {
+    const inicio = vazio !== undefined ? `<option value="">${Utils.escapar(vazio)}</option>` : '';
+    return inicio + lista.map((x) =>
+      `<option value="${Utils.escapar(valor(x))}">${Utils.escapar(texto(x))}</option>`).join('');
+  },
+
+  // CSV separado por ";" (padrão do Excel em português). colunas: [[titulo, funcao], ...]
+  gerarCSV(lista, colunas) {
+    const celula = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const linhas = lista.map((item) => colunas.map(([, fn]) => celula(fn(item))).join(';'));
+    // BOM para o Excel reconhecer acentuação
+    return '﻿' + [colunas.map(([t]) => celula(t)).join(';'), ...linhas].join('\n');
+  },
+
+  baixarCSV(lista, colunas, nome) {
+    Utils.baixarArquivo(Utils.gerarCSV(lista, colunas),
+      `${nome}_${Utils.hoje()}.csv`, 'text/csv;charset=utf-8');
   },
 
   baixarArquivo(conteudo, nome, tipo) {

@@ -18,7 +18,11 @@ const TelaAlunos = {
       if (!btn) return;
       const aluno = Alunos.buscarPorId(btn.dataset.id);
       if (btn.dataset.acao === 'editar') this.abrir(aluno);
-      if (btn.dataset.acao === 'excluir' && confirm(`Excluir o aluno "${aluno.nome}"?`)) {
+      if (btn.dataset.acao === 'excluir') {
+        const vinculos = Matriculas.listar().some((m) => m.alunoId === aluno.id) ||
+          Financeiro.listar().some((l) => l.alunoId === aluno.id);
+        if (vinculos) return Utils.toast('Aluno possui matrículas ou lançamentos. Altere o status para Inativo.', 'erro');
+        if (!confirm(`Excluir o aluno "${aluno.nome}"?`)) return;
         Alunos.excluir(aluno.id);
         this.renderizar();
         Utils.toast('Aluno excluído.');
@@ -41,18 +45,24 @@ const TelaAlunos = {
       if (erros.length) return Utils.mostrarErros(form, erros);
 
       const editando = Boolean(aluno.id);
-      Alunos.salvar(aluno);
+      const salvo = Alunos.salvar(aluno);
       Utils.fecharModal('modalAluno');
       this.renderizar();
       Utils.toast(editando ? 'Aluno atualizado!' : 'Aluno cadastrado!');
+
+      const callback = this.aposSalvar;
+      this.aposSalvar = null;
+      if (callback) callback(salvo);
     });
   },
 
-  abrir(aluno = null) {
+  // extras.dados: pré-preenchimento (ex.: lead); extras.aposSalvar: função chamada após salvar
+  abrir(aluno = null, extras = {}) {
+    this.aposSalvar = extras.aposSalvar || null;
     // Sugestões de curso vêm do cadastro de cursos ativos
     $('listaNomesCursos').innerHTML = Cursos.ativos()
       .map((c) => `<option value="${Utils.escapar(c.nome)}">`).join('');
-    Utils.preencherForm($('formAluno'), aluno || {});
+    Utils.preencherForm($('formAluno'), aluno || extras.dados || {});
     Utils.abrirModal('modalAluno', aluno ? 'Editar aluno' : 'Novo aluno');
   },
 
