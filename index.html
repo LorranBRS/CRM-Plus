@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM Plus – Gestão Educacional</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Menu lateral -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="brand-logo">C+</span>
+        <div>
+          <strong>CRM Plus</strong>
+          <small>Gestão Educacional</small>
+        </div>
+      </div>
+      <nav class="menu">
+        <a href="#" class="menu-item active" data-modulo="alunos">👩‍🎓 Alunos</a>
+        <a href="#" class="menu-item disabled" title="Em breve">📚 Cursos <span class="tag">em breve</span></a>
+        <a href="#" class="menu-item disabled" title="Em breve">📝 Matrículas <span class="tag">em breve</span></a>
+        <a href="#" class="menu-item disabled" title="Em breve">🎯 Leads / Funil <span class="tag">em breve</span></a>
+        <a href="#" class="menu-item disabled" title="Em breve">💰 Financeiro <span class="tag">em breve</span></a>
+        <a href="#" class="menu-item disabled" title="Em breve">📊 Relatórios <span class="tag">em breve</span></a>
+      </nav>
+      <footer class="sidebar-footer">v0.1 · Etapa 1</footer>
+    </aside>
+
+    <!-- Conteúdo -->
+    <main class="content">
+      <header class="topbar">
+        <button class="btn-icon" id="btnMenu" aria-label="Abrir menu">☰</button>
+        <div>
+          <h1>Alunos</h1>
+          <p class="subtitle">Cadastro e gerenciamento de alunos</p>
+        </div>
+        <button class="btn btn-primary" id="btnNovo">+ Novo aluno</button>
+      </header>
+
+      <!-- Indicadores -->
+      <section class="cards">
+        <div class="card"><span>Total de alunos</span><strong id="statTotal">0</strong></div>
+        <div class="card"><span>Ativos</span><strong id="statAtivos">0</strong></div>
+        <div class="card"><span>Interessados</span><strong id="statInteressados">0</strong></div>
+        <div class="card"><span>Novos no mês</span><strong id="statMes">0</strong></div>
+      </section>
+
+      <!-- Filtros -->
+      <section class="toolbar">
+        <input type="search" id="busca" placeholder="Buscar por nome, CPF, e-mail ou telefone...">
+        <select id="filtroStatus">
+          <option value="">Todos os status</option>
+          <option value="Ativo">Ativo</option>
+          <option value="Interessado">Interessado</option>
+          <option value="Inativo">Inativo</option>
+        </select>
+        <button class="btn btn-light" id="btnExportar">⬇ Exportar CSV</button>
+      </section>
+
+      <!-- Tabela -->
+      <section class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>Contato</th>
+              <th>Curso de interesse</th>
+              <th>Status</th>
+              <th>Cadastro</th>
+              <th class="acoes">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaAlunos"></tbody>
+        </table>
+        <div class="vazio" id="vazio">
+          <p>Nenhum aluno cadastrado ainda.</p>
+          <button class="btn btn-primary" id="btnNovoVazio">Cadastrar primeiro aluno</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal de cadastro / edição -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-labelledby="modalTitulo">
+      <header class="modal-header">
+        <h2 id="modalTitulo">Novo aluno</h2>
+        <button class="btn-icon" id="btnFechar" aria-label="Fechar">✕</button>
+      </header>
+
+      <form id="formAluno" novalidate>
+        <input type="hidden" id="alunoId">
+
+        <fieldset>
+          <legend>Dados pessoais</legend>
+          <div class="grid">
+            <label class="col-2">Nome completo *
+              <input type="text" id="nome" required maxlength="120">
+            </label>
+            <label>CPF *
+              <input type="text" id="cpf" required inputmode="numeric" placeholder="000.000.000-00">
+            </label>
+            <label>Data de nascimento
+              <input type="date" id="nascimento">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Contato</legend>
+          <div class="grid">
+            <label>E-mail *
+              <input type="email" id="email" required>
+            </label>
+            <label>Telefone / WhatsApp *
+              <input type="tel" id="telefone" required placeholder="(00) 00000-0000">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Endereço</legend>
+          <div class="grid">
+            <label>CEP
+              <input type="text" id="cep" inputmode="numeric" placeholder="00000-000">
+            </label>
+            <label class="col-2">Logradouro
+              <input type="text" id="endereco">
+            </label>
+            <label>Número
+              <input type="text" id="numero">
+            </label>
+            <label>Bairro
+              <input type="text" id="bairro">
+            </label>
+            <label>Cidade
+              <input type="text" id="cidade">
+            </label>
+            <label>UF
+              <input type="text" id="uf" maxlength="2">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Acadêmico</legend>
+          <div class="grid">
+            <label class="col-2">Curso de interesse
+              <input type="text" id="curso" list="cursosSugeridos" placeholder="Ex.: Informática Básica">
+              <datalist id="cursosSugeridos">
+                <option value="Informática Básica">
+                <option value="Inglês">
+                <option value="Administração">
+                <option value="Design Gráfico">
+                <option value="Programação Web">
+              </datalist>
+            </label>
+            <label>Status
+              <select id="status">
+                <option value="Interessado">Interessado</option>
+                <option value="Ativo">Ativo</option>
+                <option value="Inativo">Inativo</option>
+              </select>
+            </label>
+            <label class="col-full">Observações
+              <textarea id="observacoes" rows="3"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/alunos.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
