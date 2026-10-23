@@ -1,19 +1,11 @@
-// ===== Módulo de Alunos (regras de negócio) =====
+// ===== Modelo: Alunos (regras de negócio) =====
 const Alunos = {
-  COLECAO: 'alunos',
-
-  listar() {
-    return Storage.ler(this.COLECAO);
-  },
-
-  buscarPorId(id) {
-    return this.listar().find((a) => a.id === id);
-  },
+  ...criarRepositorio('alunos'),
 
   // Retorna lista de erros; vazia = dados válidos
   validar(aluno) {
     const erros = [];
-    if (!aluno.nome || aluno.nome.trim().length < 3) erros.push({ campo: 'nome', msg: 'Informe o nome completo.' });
+    if (!aluno.nome || aluno.nome.length < 3) erros.push({ campo: 'nome', msg: 'Informe o nome completo.' });
     if (!Utils.cpfValido(aluno.cpf)) erros.push({ campo: 'cpf', msg: 'CPF inválido.' });
     if (!Utils.emailValido(aluno.email)) erros.push({ campo: 'email', msg: 'E-mail inválido.' });
     if (Utils.somenteDigitos(aluno.telefone).length < 10) erros.push({ campo: 'telefone', msg: 'Telefone inválido.' });
@@ -24,24 +16,6 @@ const Alunos = {
     if (cpfDuplicado) erros.push({ campo: 'cpf', msg: 'Já existe um aluno com este CPF.' });
 
     return erros;
-  },
-
-  salvar(aluno) {
-    const lista = this.listar();
-    if (aluno.id) {
-      const i = lista.findIndex((a) => a.id === aluno.id);
-      lista[i] = { ...lista[i], ...aluno, atualizadoEm: new Date().toISOString() };
-    } else {
-      aluno.id = Utils.gerarId();
-      aluno.criadoEm = new Date().toISOString();
-      lista.push(aluno);
-    }
-    Storage.salvar(this.COLECAO, lista);
-    return aluno;
-  },
-
-  excluir(id) {
-    Storage.salvar(this.COLECAO, this.listar().filter((a) => a.id !== id));
   },
 
   filtrar(termo, status) {

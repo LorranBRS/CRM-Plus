@@ -18,93 +18,178 @@
         </div>
       </div>
       <nav class="menu">
-        <a href="#" class="menu-item active" data-modulo="alunos">👩‍🎓 Alunos</a>
-        <a href="#" class="menu-item disabled" title="Em breve">📚 Cursos <span class="tag">em breve</span></a>
-        <a href="#" class="menu-item disabled" title="Em breve">📝 Matrículas <span class="tag">em breve</span></a>
-        <a href="#" class="menu-item disabled" title="Em breve">🎯 Leads / Funil <span class="tag">em breve</span></a>
-        <a href="#" class="menu-item disabled" title="Em breve">💰 Financeiro <span class="tag">em breve</span></a>
-        <a href="#" class="menu-item disabled" title="Em breve">📊 Relatórios <span class="tag">em breve</span></a>
+        <a href="#alunos" class="menu-item" data-tela="alunos">👩‍🎓 Alunos</a>
+        <a href="#cursos" class="menu-item" data-tela="cursos">📚 Cursos</a>
+        <a href="#turmas" class="menu-item" data-tela="turmas">🏫 Turmas</a>
+        <a class="menu-item disabled" title="Em breve">📝 Matrículas <span class="tag">em breve</span></a>
+        <a class="menu-item disabled" title="Em breve">🎯 Leads / Funil <span class="tag">em breve</span></a>
+        <a class="menu-item disabled" title="Em breve">💰 Financeiro <span class="tag">em breve</span></a>
+        <a class="menu-item disabled" title="Em breve">📊 Relatórios <span class="tag">em breve</span></a>
       </nav>
-      <footer class="sidebar-footer">v0.1 · Etapa 1</footer>
+      <button class="btn-exemplos" id="btnExemplos">Carregar dados de exemplo</button>
+      <footer class="sidebar-footer">v0.2 · Etapa 2</footer>
     </aside>
 
-    <!-- Conteúdo -->
     <main class="content">
-      <header class="topbar">
-        <button class="btn-icon" id="btnMenu" aria-label="Abrir menu">☰</button>
-        <div>
-          <h1>Alunos</h1>
-          <p class="subtitle">Cadastro e gerenciamento de alunos</p>
-        </div>
-        <button class="btn btn-primary" id="btnNovo">+ Novo aluno</button>
-      </header>
 
-      <!-- Indicadores -->
-      <section class="cards">
-        <div class="card"><span>Total de alunos</span><strong id="statTotal">0</strong></div>
-        <div class="card"><span>Ativos</span><strong id="statAtivos">0</strong></div>
-        <div class="card"><span>Interessados</span><strong id="statInteressados">0</strong></div>
-        <div class="card"><span>Novos no mês</span><strong id="statMes">0</strong></div>
+      <!-- ===================== TELA: ALUNOS ===================== -->
+      <section class="tela" data-tela="alunos" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Alunos</h1>
+            <p class="subtitle">Cadastro e gerenciamento de alunos</p>
+          </div>
+          <button class="btn btn-primary" id="btnNovoAluno">+ Novo aluno</button>
+        </header>
+
+        <section class="cards">
+          <div class="card"><span>Total de alunos</span><strong id="statAlunosTotal">0</strong></div>
+          <div class="card"><span>Ativos</span><strong id="statAlunosAtivos">0</strong></div>
+          <div class="card"><span>Interessados</span><strong id="statAlunosInteressados">0</strong></div>
+          <div class="card"><span>Novos no mês</span><strong id="statAlunosMes">0</strong></div>
+        </section>
+
+        <section class="toolbar">
+          <input type="search" id="buscaAlunos" placeholder="Buscar por nome, CPF, e-mail ou telefone...">
+          <select id="filtroStatusAlunos">
+            <option value="">Todos os status</option>
+            <option>Ativo</option>
+            <option>Interessado</option>
+            <option>Inativo</option>
+          </select>
+          <button class="btn btn-light" id="btnExportarAlunos">⬇ Exportar CSV</button>
+        </section>
+
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th><th>CPF</th><th>Contato</th><th>Curso de interesse</th>
+                <th>Status</th><th>Cadastro</th><th class="acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="listaAlunos"></tbody>
+          </table>
+          <div class="vazio" id="vazioAlunos"><p></p></div>
+        </section>
       </section>
 
-      <!-- Filtros -->
-      <section class="toolbar">
-        <input type="search" id="busca" placeholder="Buscar por nome, CPF, e-mail ou telefone...">
-        <select id="filtroStatus">
-          <option value="">Todos os status</option>
-          <option value="Ativo">Ativo</option>
-          <option value="Interessado">Interessado</option>
-          <option value="Inativo">Inativo</option>
-        </select>
-        <button class="btn btn-light" id="btnExportar">⬇ Exportar CSV</button>
+      <!-- ===================== TELA: CURSOS ===================== -->
+      <section class="tela" data-tela="cursos" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Cursos</h1>
+            <p class="subtitle">Catálogo de cursos oferecidos pela instituição</p>
+          </div>
+          <button class="btn btn-primary" id="btnNovoCurso">+ Novo curso</button>
+        </header>
+
+        <section class="cards">
+          <div class="card"><span>Total de cursos</span><strong id="statCursosTotal">0</strong></div>
+          <div class="card"><span>Ativos</span><strong id="statCursosAtivos">0</strong></div>
+          <div class="card"><span>Turmas vinculadas</span><strong id="statCursosTurmas">0</strong></div>
+          <div class="card"><span>Mensalidade média</span><strong id="statCursosValor">R$ 0,00</strong></div>
+        </section>
+
+        <section class="toolbar">
+          <input type="search" id="buscaCursos" placeholder="Buscar por nome, código ou área...">
+          <select id="filtroModalidadeCursos">
+            <option value="">Todas as modalidades</option>
+            <option>Presencial</option>
+            <option>Online</option>
+            <option>Híbrido</option>
+          </select>
+          <select id="filtroStatusCursos">
+            <option value="">Todos os status</option>
+            <option>Ativo</option>
+            <option>Inativo</option>
+          </select>
+        </section>
+
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Curso</th><th>Modalidade</th><th>Carga horária</th><th>Duração</th>
+                <th>Mensalidade</th><th>Turmas</th><th>Status</th><th class="acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="listaCursos"></tbody>
+          </table>
+          <div class="vazio" id="vazioCursos"><p></p></div>
+        </section>
       </section>
 
-      <!-- Tabela -->
-      <section class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>CPF</th>
-              <th>Contato</th>
-              <th>Curso de interesse</th>
-              <th>Status</th>
-              <th>Cadastro</th>
-              <th class="acoes">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="listaAlunos"></tbody>
-        </table>
-        <div class="vazio" id="vazio">
-          <p>Nenhum aluno cadastrado ainda.</p>
-          <button class="btn btn-primary" id="btnNovoVazio">Cadastrar primeiro aluno</button>
-        </div>
+      <!-- ===================== TELA: TURMAS ===================== -->
+      <section class="tela" data-tela="turmas" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Turmas</h1>
+            <p class="subtitle">Turmas, horários, professores e vagas</p>
+          </div>
+          <button class="btn btn-primary" id="btnNovaTurma">+ Nova turma</button>
+        </header>
+
+        <section class="cards">
+          <div class="card"><span>Total de turmas</span><strong id="statTurmasTotal">0</strong></div>
+          <div class="card"><span>Em andamento</span><strong id="statTurmasAndamento">0</strong></div>
+          <div class="card"><span>Planejadas</span><strong id="statTurmasPlanejadas">0</strong></div>
+          <div class="card"><span>Vagas ofertadas</span><strong id="statTurmasVagas">0</strong></div>
+        </section>
+
+        <section class="toolbar">
+          <input type="search" id="buscaTurmas" placeholder="Buscar por código, curso, professor ou sala...">
+          <select id="filtroCursoTurmas"></select>
+          <select id="filtroStatusTurmas">
+            <option value="">Todos os status</option>
+            <option>Planejada</option>
+            <option>Em andamento</option>
+            <option>Concluída</option>
+            <option>Cancelada</option>
+          </select>
+        </section>
+
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Turma</th><th>Professor</th><th>Horário</th><th>Período</th>
+                <th>Vagas</th><th>Status</th><th class="acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="listaTurmas"></tbody>
+          </table>
+          <div class="vazio" id="vazioTurmas"><p></p></div>
+        </section>
       </section>
     </main>
   </div>
 
-  <!-- Modal de cadastro / edição -->
-  <div class="modal" id="modal" aria-hidden="true">
-    <div class="modal-box" role="dialog" aria-labelledby="modalTitulo">
+  <!-- ===================== MODAL: ALUNO ===================== -->
+  <div class="modal" id="modalAluno" aria-hidden="true">
+    <div class="modal-box" role="dialog">
       <header class="modal-header">
-        <h2 id="modalTitulo">Novo aluno</h2>
-        <button class="btn-icon" id="btnFechar" aria-label="Fechar">✕</button>
+        <h2 class="modal-titulo">Novo aluno</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
       </header>
 
       <form id="formAluno" novalidate>
-        <input type="hidden" id="alunoId">
+        <input type="hidden" name="id">
 
         <fieldset>
           <legend>Dados pessoais</legend>
           <div class="grid">
             <label class="col-2">Nome completo *
-              <input type="text" id="nome" required maxlength="120">
+              <input type="text" name="nome" maxlength="120">
             </label>
             <label>CPF *
-              <input type="text" id="cpf" required inputmode="numeric" placeholder="000.000.000-00">
+              <input type="text" name="cpf" inputmode="numeric" placeholder="000.000.000-00">
             </label>
             <label>Data de nascimento
-              <input type="date" id="nascimento">
+              <input type="date" name="nascimento">
             </label>
           </div>
         </fieldset>
@@ -113,10 +198,10 @@
           <legend>Contato</legend>
           <div class="grid">
             <label>E-mail *
-              <input type="email" id="email" required>
+              <input type="email" name="email">
             </label>
             <label>Telefone / WhatsApp *
-              <input type="tel" id="telefone" required placeholder="(00) 00000-0000">
+              <input type="tel" name="telefone" placeholder="(00) 00000-0000">
             </label>
           </div>
         </fieldset>
@@ -125,22 +210,22 @@
           <legend>Endereço</legend>
           <div class="grid">
             <label>CEP
-              <input type="text" id="cep" inputmode="numeric" placeholder="00000-000">
+              <input type="text" name="cep" inputmode="numeric" placeholder="00000-000">
             </label>
             <label class="col-2">Logradouro
-              <input type="text" id="endereco">
+              <input type="text" name="endereco">
             </label>
             <label>Número
-              <input type="text" id="numero">
+              <input type="text" name="numero">
             </label>
             <label>Bairro
-              <input type="text" id="bairro">
+              <input type="text" name="bairro">
             </label>
             <label>Cidade
-              <input type="text" id="cidade">
+              <input type="text" name="cidade">
             </label>
             <label>UF
-              <input type="text" id="uf" maxlength="2">
+              <input type="text" name="uf" maxlength="2">
             </label>
           </div>
         </fieldset>
@@ -149,30 +234,201 @@
           <legend>Acadêmico</legend>
           <div class="grid">
             <label class="col-2">Curso de interesse
-              <input type="text" id="curso" list="cursosSugeridos" placeholder="Ex.: Informática Básica">
-              <datalist id="cursosSugeridos">
-                <option value="Informática Básica">
-                <option value="Inglês">
-                <option value="Administração">
-                <option value="Design Gráfico">
-                <option value="Programação Web">
-              </datalist>
+              <input type="text" name="curso" list="listaNomesCursos" placeholder="Digite ou escolha um curso">
+              <datalist id="listaNomesCursos"></datalist>
             </label>
             <label>Status
-              <select id="status">
-                <option value="Interessado">Interessado</option>
-                <option value="Ativo">Ativo</option>
-                <option value="Inativo">Inativo</option>
+              <select name="status">
+                <option>Interessado</option>
+                <option>Ativo</option>
+                <option>Inativo</option>
               </select>
             </label>
             <label class="col-full">Observações
-              <textarea id="observacoes" rows="3"></textarea>
+              <textarea name="observacoes" rows="3"></textarea>
             </label>
           </div>
         </fieldset>
 
         <footer class="modal-footer">
-          <button type="button" class="btn btn-light" id="btnCancelar">Cancelar</button>
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: CURSO ===================== -->
+  <div class="modal" id="modalCurso" aria-hidden="true">
+    <div class="modal-box" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Novo curso</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+
+      <form id="formCurso" novalidate>
+        <input type="hidden" name="id">
+
+        <fieldset>
+          <legend>Identificação</legend>
+          <div class="grid">
+            <label class="col-2">Nome do curso *
+              <input type="text" name="nome" maxlength="120" placeholder="Ex.: Inglês Intermediário">
+            </label>
+            <label>Código
+              <input type="text" name="codigo" maxlength="20" placeholder="Ex.: ING-INT">
+            </label>
+            <label>Área
+              <input type="text" name="area" list="listaAreas" placeholder="Ex.: Idiomas">
+              <datalist id="listaAreas">
+                <option value="Idiomas">
+                <option value="Tecnologia">
+                <option value="Gestão e Negócios">
+                <option value="Design">
+                <option value="Saúde">
+                <option value="Profissionalizante">
+              </datalist>
+            </label>
+            <label>Modalidade
+              <select name="modalidade">
+                <option>Presencial</option>
+                <option>Online</option>
+                <option>Híbrido</option>
+              </select>
+            </label>
+            <label>Status
+              <select name="status">
+                <option>Ativo</option>
+                <option>Inativo</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Carga e valores</legend>
+          <div class="grid">
+            <label>Carga horária (h) *
+              <input type="number" name="cargaHoraria" min="1" step="1">
+            </label>
+            <label>Duração (meses)
+              <input type="number" name="duracaoMeses" min="1" step="1">
+            </label>
+            <label>Mensalidade (R$)
+              <input type="number" name="mensalidade" min="0" step="0.01">
+            </label>
+            <label>Taxa de matrícula (R$)
+              <input type="number" name="taxaMatricula" min="0" step="0.01">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Descrição</legend>
+          <div class="grid">
+            <label class="col-full">Ementa / descrição
+              <textarea name="descricao" rows="3"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: TURMA ===================== -->
+  <div class="modal" id="modalTurma" aria-hidden="true">
+    <div class="modal-box" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Nova turma</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+
+      <form id="formTurma" novalidate>
+        <input type="hidden" name="id">
+
+        <fieldset>
+          <legend>Identificação</legend>
+          <div class="grid">
+            <label class="col-2">Curso *
+              <select name="cursoId"></select>
+            </label>
+            <label>Código da turma *
+              <input type="text" name="codigo" maxlength="30" placeholder="Ex.: ING-2026-1A">
+            </label>
+            <label>Professor(a)
+              <input type="text" name="professor">
+            </label>
+            <label>Sala / Local
+              <input type="text" name="sala" placeholder="Ex.: Sala 3 ou Online">
+            </label>
+            <label>Status
+              <select name="status">
+                <option>Planejada</option>
+                <option>Em andamento</option>
+                <option>Concluída</option>
+                <option>Cancelada</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Horário</legend>
+          <div class="grid">
+            <div class="col-full campo">
+              <span>Dias da semana</span>
+              <div class="dias">
+                <label><input type="checkbox" name="dias" value="Seg">Seg</label>
+                <label><input type="checkbox" name="dias" value="Ter">Ter</label>
+                <label><input type="checkbox" name="dias" value="Qua">Qua</label>
+                <label><input type="checkbox" name="dias" value="Qui">Qui</label>
+                <label><input type="checkbox" name="dias" value="Sex">Sex</label>
+                <label><input type="checkbox" name="dias" value="Sáb">Sáb</label>
+                <label><input type="checkbox" name="dias" value="Dom">Dom</label>
+              </div>
+            </div>
+            <label>Turno
+              <select name="turno">
+                <option>Manhã</option>
+                <option>Tarde</option>
+                <option>Noite</option>
+                <option>Integral</option>
+              </select>
+            </label>
+            <label>Início da aula
+              <input type="time" name="horaInicio">
+            </label>
+            <label>Fim da aula
+              <input type="time" name="horaFim">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Período e vagas</legend>
+          <div class="grid">
+            <label>Data de início *
+              <input type="date" name="dataInicio">
+            </label>
+            <label>Data de término
+              <input type="date" name="dataFim">
+            </label>
+            <label>Vagas *
+              <input type="number" name="vagas" min="1" step="1">
+            </label>
+            <label class="col-full">Observações
+              <textarea name="observacoes" rows="2"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
           <button type="submit" class="btn btn-primary">Salvar</button>
         </footer>
       </form>
@@ -183,7 +439,13 @@
 
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
-  <script src="js/alunos.js"></script>
+  <script src="js/modelos/alunos.js"></script>
+  <script src="js/modelos/cursos.js"></script>
+  <script src="js/modelos/turmas.js"></script>
+  <script src="js/telas/alunos.js"></script>
+  <script src="js/telas/cursos.js"></script>
+  <script src="js/telas/turmas.js"></script>
+  <script src="js/exemplos.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

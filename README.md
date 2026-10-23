@@ -5,32 +5,47 @@ Desenvolvido em **HTML, CSS e JavaScript puro**, sem dependências.
 
 🔗 **Demonstração:** https://lorranbrs.github.io/CRM-Plus/
 
-## Etapa atual – v0.1: Cadastro de alunos
+## Funcionalidades
 
+> Use o botão **"Carregar dados de exemplo"** no menu lateral para ver o sistema preenchido.
+
+### Etapa 1 – Alunos
 - Cadastro, edição e exclusão de alunos
-- Validação de CPF (dígitos verificadores), e-mail e telefone
-- Bloqueio de CPF duplicado
-- Máscaras de CPF, telefone e CEP
-- Preenchimento automático de endereço pelo CEP (API ViaCEP)
-- Busca por nome, CPF, e-mail ou telefone e filtro por status
-- Indicadores: total, ativos, interessados e novos no mês
-- Exportação para CSV (abre no Excel)
-- Layout responsivo (desktop e celular)
+- Validação de CPF (dígitos verificadores), e-mail e telefone; bloqueio de CPF duplicado
+- Máscaras de CPF, telefone e CEP; endereço automático pelo CEP (API ViaCEP)
+- Busca, filtro por status, indicadores e exportação para CSV
+- Curso de interesse sugerido a partir dos cursos cadastrados
 
-> Nesta etapa os dados ficam salvos no **localStorage** do navegador (cada navegador tem seus próprios dados).
+### Etapa 2 – Cursos e Turmas
+- **Cursos:** nome, código, área, modalidade (Presencial/Online/Híbrido), carga horária,
+  duração, mensalidade, taxa de matrícula, descrição e status
+- **Turmas:** curso, código, professor(a), sala, dias da semana, turno, horário,
+  período (início/término), vagas e status (Planejada, Em andamento, Concluída, Cancelada)
+- Regras: código de curso/turma único, datas e horários coerentes, curso com turmas não pode ser excluído
+- Atalho "ver turmas" a partir do curso; filtros por curso e status
+- Indicadores: cursos ativos, mensalidade média, turmas em andamento e vagas ofertadas
+
+> Os dados ficam salvos no **localStorage** do navegador (cada navegador tem seus próprios dados).
 
 ## Estrutura
 
 ```
 CRM-Plus/
-├── index.html        # Tela principal (módulo Alunos)
-├── css/
-│   └── style.css     # Estilos globais
+├── index.html            # Layout, telas e formulários
+├── css/style.css         # Estilos globais
 └── js/
-    ├── utils.js      # Máscaras, validações e helpers
-    ├── storage.js    # Camada de dados (localStorage → futura API)
-    ├── alunos.js     # Regras de negócio do módulo Alunos
-    └── app.js        # Eventos e renderização da interface
+    ├── utils.js          # Máscaras, validações, formulários, modais
+    ├── storage.js        # Camada de dados + CRUD genérico (criarRepositorio)
+    ├── modelos/          # Regras de negócio
+    │   ├── alunos.js
+    │   ├── cursos.js
+    │   └── turmas.js
+    ├── telas/            # Eventos e renderização de cada tela
+    │   ├── alunos.js
+    │   ├── cursos.js
+    │   └── turmas.js
+    ├── exemplos.js       # Dados de demonstração
+    └── app.js            # Navegação entre telas (#alunos, #cursos, #turmas)
 ```
 
 ## Como rodar localmente
@@ -40,7 +55,7 @@ Basta abrir o `index.html` no navegador.
 ## Roadmap
 
 - [x] Cadastro de alunos
-- [ ] Cursos e turmas
+- [x] Cursos e turmas
 - [ ] Matrículas
 - [ ] Leads e funil de vendas (captação)
 - [ ] Financeiro (mensalidades, boletos)
