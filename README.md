@@ -3,7 +3,7 @@
 Sistema web de CRM voltado para instituições de ensino (cursos livres, escolas técnicas, etc.).
 Desenvolvido em **HTML, CSS e JavaScript puro**, sem dependências.
 
-🔗 **Demonstração:** https://lorranbrs.github.io/crm-plus/
+🔗 **Demonstração:** https://lorranbrs.github.io/CRM-Plus/
 
 ## Etapa atual – v0.1: Cadastro de alunos
 
@@ -22,7 +22,7 @@ Desenvolvido em **HTML, CSS e JavaScript puro**, sem dependências.
 ## Estrutura
 
 ```
-crm-plus/
+CRM-Plus/
 ├── index.html        # Tela principal (módulo Alunos)
 ├── css/
 │   └── style.css     # Estilos globais
