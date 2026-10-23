@@ -1,0 +1,37 @@
+/* ===== Estilo dos documentos impressos (fatura, recibo, grade) ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Segoe UI", system-ui, Roboto, sans-serif; color: #111827; padding: 32px; font-size: 14px; max-width: 800px; margin: 0 auto; }
+h1 { font-size: 20px; }
+h2 { font-size: 22px; letter-spacing: 2px; color: #4f46e5; }
+h3 { font-size: 13px; text-transform: uppercase; color: #6b7280; margin-bottom: 6px; }
+p { margin: 3px 0; line-height: 1.5; }
+small { color: #6b7280; }
+
+.doc-cabecalho { display: flex; justify-content: space-between; gap: 24px; border-bottom: 2px solid #4f46e5; padding-bottom: 16px; margin-bottom: 20px; }
+.doc-cabecalho p { color: #4b5563; font-size: 12px; }
+.doc-titulo { text-align: right; }
+.doc-bloco { margin: 18px 0; }
+.doc-texto { font-size: 16px; line-height: 1.8; margin: 32px 0; }
+
+.doc-tabela { width: 100%; border-collapse: collapse; margin: 18px 0; }
+.doc-tabela th, .doc-tabela td { border-bottom: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; vertical-align: top; }
+.doc-tabela th { background: #f3f4f6; font-size: 12px; text-transform: uppercase; }
+.doc-tabela tfoot td { font-weight: 700; border-top: 2px solid #111827; }
+
+.doc-assinatura { margin: 64px auto 24px; width: 320px; text-align: center; }
+.doc-assinatura span { display: block; border-top: 1px solid #111827; margin-bottom: 6px; }
+.doc-rodape { margin-top: 32px; font-size: 11px; color: #9ca3af; border-top: 1px dashed #e5e7eb; padding-top: 8px; }
+
+@media print { body { padding: 0; } }
+
+/* Agenda semanal e listas (quando impressas a partir da janela de visualização) */
+.agenda { display: grid; grid-template-columns: repeat(var(--colunas, 5), 1fr); gap: 6px; margin: 12px 0; }
+.agenda-dia header { font-weight: 700; text-align: center; background: #f3f4f6; padding: 4px; }
+.agenda-aula { border: 1px solid #c7d2fe; border-left: 3px solid #4f46e5; padding: 4px 6px; margin-top: 4px; font-size: 11px; display: flex; flex-direction: column; }
+.agenda-livre { text-align: center; color: #9ca3af; }
+.lista-simples { list-style: none; }
+.lista-simples li { display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; padding: 6px 0; }
+.lista-simples small { display: block; }
+.resumo-professor { display: flex; gap: 24px; margin: 8px 0 16px; }
+.titulo-secao { margin-top: 16px; }
+.graf-vazio { color: #9ca3af; }

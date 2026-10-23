@@ -1,0 +1,26 @@
+// ===== Modelo: dados da instituição (usados em faturas, recibos e grades) =====
+const Instituicao = {
+  CHAVE: 'crmplus_config',
+
+  ler() {
+    try {
+      return JSON.parse(localStorage.getItem(this.CHAVE)) || {};
+    } catch {
+      return {};
+    }
+  },
+
+  salvar(dados) {
+    localStorage.setItem(this.CHAVE, JSON.stringify({ ...this.ler(), ...dados }));
+  },
+
+  nome() {
+    return this.ler().nome || 'Instituição de Ensino';
+  },
+
+  proximoNumeroFatura() {
+    const numero = (this.ler().ultimaFatura || 0) + 1;
+    this.salvar({ ultimaFatura: numero });
+    return numero;
+  },
+};

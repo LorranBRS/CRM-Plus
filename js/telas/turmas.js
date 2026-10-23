@@ -7,6 +7,12 @@ const TelaTurmas = {
     $('buscaTurmas').addEventListener('input', () => this.renderizar());
     $('filtroCursoTurmas').addEventListener('change', () => this.renderizar());
     $('filtroStatusTurmas').addEventListener('change', () => this.renderizar());
+    document.querySelector('[data-tela=turmas] .alternar').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-visao]');
+      if (!btn) return;
+      this.visao = btn.dataset.visao;
+      this.renderizar();
+    });
 
     $('listaTurmas').addEventListener('click', (e) => {
       const btn = e.target.closest('button');
@@ -19,6 +25,7 @@ const TelaTurmas = {
         }
         if (!confirm(`Excluir a turma "${turma.codigo}"?`)) return;
         Turmas.excluir(turma.id);
+        Atividades.registrar('turmas', 'Turma excluída', turma.codigo, { refId: turma.id });
         this.renderizar();
         Utils.toast('Turma excluída.');
       }
@@ -33,7 +40,10 @@ const TelaTurmas = {
       if (erros.length) return Utils.mostrarErros(form, erros);
 
       const editando = Boolean(turma.id);
-      Turmas.salvar(turma);
+      const salvo = Turmas.salvar(turma);
+      Atividades.registrar('turmas', editando ? 'Turma editada' : 'Turma cadastrada',
+        `${turma.codigo} – ${Turmas.nomeCurso(turma)}${turma.professorId ? ` (prof. ${Professores.nome(turma.professorId)})` : ''}`,
+        { refId: salvo.id });
       Utils.fecharModal('modalTurma');
       this.renderizar();
       Utils.toast(editando ? 'Turma atualizada!' : 'Turma cadastrada!');
@@ -51,6 +61,9 @@ const TelaTurmas = {
       location.hash = '#cursos';
       return;
     }
+
+    $('formTurma').elements.professorId.innerHTML = Utils.opcoes(Professores.ativos(turma?.professorId),
+      { valor: (p) => p.id, texto: (p) => p.nome, vazio: 'A definir' });
 
     $('formTurma').elements.cursoId.innerHTML = '<option value="">Selecione o curso...</option>' +
       cursos.map((c) => `<option value="${c.id}">${Utils.escapar(c.nome)}</option>`).join('');
@@ -95,11 +108,21 @@ const TelaTurmas = {
     const lista = Turmas.filtrar($('buscaTurmas').value,
       $('filtroCursoTurmas').value, $('filtroStatusTurmas').value);
 
+    // Alterna entre lista e grade semanal
+    const agenda = this.visao === 'agenda';
+    document.querySelectorAll('[data-tela=turmas] [data-visao]').forEach((b) =>
+      b.classList.toggle('ativo', b.dataset.visao === (agenda ? 'agenda' : 'lista')));
+    $('agendaTurmas').hidden = !agenda;
+    $('tabelaTurmas').hidden = agenda;
+    if (agenda) {
+      Agenda.render($('agendaTurmas'), lista.filter((t) => Turmas.estaAberta(t)));
+    }
+
     $('listaTurmas').innerHTML = lista.map((t) => `
       <tr>
         <td><strong>${Utils.escapar(t.codigo)}</strong>
             <small>${Utils.escapar(Turmas.nomeCurso(t))}</small></td>
-        <td>${Utils.escapar(t.professor) || '-'}<small>${Utils.escapar(t.sala)}</small></td>
+        <td>${Utils.escapar(Turmas.nomeProfessor(t)) || '<span class="texto-alerta">A definir</span>'}<small>${Utils.escapar(t.sala)}</small></td>
         <td>${this.horario(t)}</td>
         <td>${Utils.formatarData(t.dataInicio)}<small>até ${Utils.formatarData(t.dataFim)}</small></td>
         <td>${this.ocupacao(t)}</td>

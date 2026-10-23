@@ -3,6 +3,7 @@ const TelaRelatorios = {
   // Planilhas disponíveis para exportação
   EXPORTACOES: {
     alunos: {
+      modulo: 'alunos',
       titulo: '👩‍🎓 Alunos',
       lista: () => Alunos.listar(),
       colunas: [
@@ -13,6 +14,7 @@ const TelaRelatorios = {
       ],
     },
     cursos: {
+      modulo: 'cursos',
       titulo: '📚 Cursos',
       lista: () => Cursos.listar(),
       colunas: [
@@ -22,11 +24,32 @@ const TelaRelatorios = {
         ['Taxa matrícula', (c) => c.taxaMatricula], ['Status', (c) => c.status],
       ],
     },
+    professores: {
+      modulo: 'professores',
+      titulo: '👨‍🏫 Professores',
+      lista: () => Professores.listar(),
+      colunas: [
+        ['Nome', (p) => p.nome], ['CPF', (p) => p.cpf], ['E-mail', (p) => p.email], ['Telefone', (p) => p.telefone],
+        ['Formação', (p) => p.formacao], ['Especialidades', (p) => p.especialidades],
+        ['Valor hora', (p) => p.valorHora], ['Turmas abertas', (p) => Professores.turmas(p.id).filter((t) => Turmas.estaAberta(t)).map((t) => t.codigo).join(', ')],
+        ['Horas/semana', (p) => Professores.horasSemana(p.id).toFixed(1).replace('.', ',')], ['Status', (p) => p.status],
+      ],
+    },
+    grade: {
+      modulo: 'cursos',
+      titulo: '🗂️ Grades curriculares',
+      lista: () => Cursos.listar().flatMap((c) => (c.grade || []).map((g, i) => ({ ...g, ordem: i + 1, curso: c }))),
+      colunas: [
+        ['Curso', (g) => g.curso.nome], ['Ordem', (g) => g.ordem], ['Módulo', (g) => g.nome],
+        ['Carga horária', (g) => g.cargaHoraria], ['Professor', (g) => Professores.nome(g.professorId)], ['Ementa', (g) => g.ementa],
+      ],
+    },
     turmas: {
+      modulo: 'turmas',
       titulo: '🏫 Turmas',
       lista: () => Turmas.listar(),
       colunas: [
-        ['Código', (t) => t.codigo], ['Curso', (t) => Turmas.nomeCurso(t)], ['Professor', (t) => t.professor],
+        ['Código', (t) => t.codigo], ['Curso', (t) => Turmas.nomeCurso(t)], ['Professor', (t) => Turmas.nomeProfessor(t)],
         ['Sala', (t) => t.sala], ['Dias', (t) => (t.dias || []).join(', ')], ['Turno', (t) => t.turno],
         ['Horário', (t) => [t.horaInicio, t.horaFim].filter(Boolean).join(' às ')],
         ['Início', (t) => Utils.formatarData(t.dataInicio)], ['Término', (t) => Utils.formatarData(t.dataFim)],
@@ -34,6 +57,7 @@ const TelaRelatorios = {
       ],
     },
     matriculas: {
+      modulo: 'matriculas',
       titulo: '📝 Matrículas',
       lista: () => Matriculas.listar(),
       colunas: [
@@ -41,15 +65,17 @@ const TelaRelatorios = {
         ['Turma', (m) => Matriculas.turma(m)?.codigo], ['Curso', (m) => { const t = Matriculas.turma(m); return t ? Turmas.nomeCurso(t) : ''; }],
         ['Data', (m) => Utils.formatarData(m.dataMatricula)], ['Mensalidade', (m) => m.valorMensalidade],
         ['Desconto %', (m) => m.desconto], ['Valor final', (m) => m.valorFinal], ['Parcelas', (m) => m.parcelas],
-        ['Status', (m) => m.status],
+        ['Status', (m) => m.status], ['Atendente', (m) => Usuarios.nome(m.criadoPor)],
       ],
     },
     financeiro: {
+      modulo: 'financeiro',
       titulo: '💰 Financeiro',
       lista: () => Financeiro.listar().sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
       colunas: Financeiro.colunasCSV,
     },
     inadimplentes: {
+      modulo: 'financeiro',
       titulo: '⚠️ Inadimplência',
       lista: () => Financeiro.atrasados().sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
       colunas: [
@@ -59,20 +85,18 @@ const TelaRelatorios = {
       ],
     },
     leads: {
+      modulo: 'leads',
       titulo: '🎯 Leads',
       lista: () => Leads.listar(),
       colunas: [
         ['Nome', (l) => l.nome], ['Telefone', (l) => l.telefone], ['E-mail', (l) => l.email],
         ['Origem', (l) => l.origem], ['Curso', (l) => Leads.nomeCurso(l)], ['Etapa', (l) => l.etapa],
-        ['Responsável', (l) => l.responsavel], ['Próximo contato', (l) => Utils.formatarData(l.proximoContato)],
+        ['Responsável', (l) => Leads.nomeResponsavel(l)], ['Próximo contato', (l) => Utils.formatarData(l.proximoContato)],
       ],
     },
   },
 
   iniciar() {
-    $('botoesExportar').innerHTML = Object.entries(this.EXPORTACOES).map(([chave, e]) =>
-      `<button class="btn btn-light" data-exportar="${chave}">${e.titulo}</button>`).join('');
-
     $('botoesExportar').addEventListener('click', (e) => {
       const chave = e.target.closest('[data-exportar]')?.dataset.exportar;
       if (!chave) return;
@@ -80,11 +104,13 @@ const TelaRelatorios = {
       const lista = exp.lista();
       if (!lista.length) return Utils.toast('Não há dados para exportar.', 'erro');
       Utils.baixarCSV(lista, exp.colunas, chave);
+      Atividades.registrar('relatorios', 'Relatório exportado', exp.titulo.replace(/^\S+\s/, ''));
     });
 
     $('btnBackup').addEventListener('click', () => {
       Utils.baixarArquivo(JSON.stringify(Storage.exportarTudo(), null, 2),
         `crmplus_backup_${Utils.hoje()}.json`, 'application/json');
+      Atividades.registrar('relatorios', 'Backup gerado', 'Backup completo dos dados baixado');
     });
 
     $('inputRestaurar').addEventListener('change', async (e) => {
@@ -95,8 +121,10 @@ const TelaRelatorios = {
         const backup = JSON.parse(await arquivo.text());
         if (!confirm('Restaurar este backup? Os dados atuais serão substituídos.')) return;
         Storage.importarTudo(backup);
+        Atividades.registrar('relatorios', 'Backup restaurado', `Backup de ${Utils.formatarDataHora(backup.geradoEm)}`);
         Utils.toast('Backup restaurado!');
-        App.renderizarAtual();
+        if (!Sessao.usuario()) return App.iniciarSessao();
+        App.aposEntrar();
       } catch (erro) {
         Utils.toast(erro.message.includes('inválido') ? erro.message : 'Arquivo de backup inválido.', 'erro');
       }
@@ -106,12 +134,17 @@ const TelaRelatorios = {
       if (!confirm('Apagar TODOS os dados deste navegador? Esta ação não pode ser desfeita.')) return;
       if (prompt('Para confirmar, digite APAGAR') !== 'APAGAR') return Utils.toast('Operação cancelada.');
       Storage.limparTudo();
+      Atividades.registrar('relatorios', 'Dados apagados', 'Todos os cadastros foram apagados');
       Utils.toast('Todos os dados foram apagados.');
       App.renderizarAtual();
     });
   },
 
   renderizar() {
+    // Só mostra exportações dos módulos que o usuário pode acessar
+    $('botoesExportar').innerHTML = Object.entries(this.EXPORTACOES).filter(([, e]) => Sessao.pode(e.modulo))
+      .map(([chave, e]) => `<button class="btn btn-light" data-exportar="${chave}">${e.titulo}</button>`).join('');
+
     const turmas = Turmas.listar().filter((t) => t.status !== 'Cancelada')
       .sort((a, b) => a.codigo.localeCompare(b.codigo));
     $('resumoTurmas').innerHTML = turmas.map((t) => {

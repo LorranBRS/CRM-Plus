@@ -24,6 +24,7 @@ const TelaAlunos = {
         if (vinculos) return Utils.toast('Aluno possui matrículas ou lançamentos. Altere o status para Inativo.', 'erro');
         if (!confirm(`Excluir o aluno "${aluno.nome}"?`)) return;
         Alunos.excluir(aluno.id);
+        Atividades.registrar('alunos', 'Aluno excluído', aluno.nome, { refId: aluno.id });
         this.renderizar();
         Utils.toast('Aluno excluído.');
       }
@@ -46,6 +47,7 @@ const TelaAlunos = {
 
       const editando = Boolean(aluno.id);
       const salvo = Alunos.salvar(aluno);
+      Atividades.registrar('alunos', editando ? 'Aluno editado' : 'Aluno cadastrado', aluno.nome, { refId: salvo.id });
       Utils.fecharModal('modalAluno');
       this.renderizar();
       Utils.toast(editando ? 'Aluno atualizado!' : 'Aluno cadastrado!');

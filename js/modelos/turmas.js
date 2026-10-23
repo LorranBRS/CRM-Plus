@@ -29,7 +29,27 @@ const Turmas = {
     if (turma.codigo && this.listar().some((t) => t.id !== turma.id && t.codigo === turma.codigo)) {
       erros.push({ campo: 'codigo', msg: 'Já existe uma turma com este código.' });
     }
+
+    const conflito = this.conflitoProfessor(turma);
+    if (conflito) {
+      erros.push({ campo: 'professorId', msg: `Conflito de horário: o professor já dá aula na turma ${conflito.codigo} (${conflito.dias.join(', ')} ${conflito.horaInicio}–${conflito.horaFim}).` });
+    }
     return erros;
+  },
+
+  // Outra turma aberta do mesmo professor com dia e horário sobrepostos no mesmo período
+  conflitoProfessor(turma) {
+    if (!turma.professorId || !turma.horaInicio || !turma.horaFim || !this.estaAberta(turma)) return null;
+    return this.listar().find((t) =>
+      t.id !== turma.id && t.professorId === turma.professorId && this.estaAberta(t) &&
+      t.horaInicio && t.horaFim && (t.dias || []).some((d) => (turma.dias || []).includes(d)) &&
+      t.horaInicio < turma.horaFim && turma.horaInicio < t.horaFim &&
+      (t.dataFim || '9999') >= turma.dataInicio && (turma.dataFim || '9999') >= t.dataInicio) || null;
+  },
+
+  // Turmas antigas guardavam o nome do professor como texto
+  nomeProfessor(turma) {
+    return Professores.nome(turma.professorId) || turma.professor || '';
   },
 
   estaAberta(turma) {
@@ -50,7 +70,7 @@ const Turmas = {
     return this.listar()
       .filter((x) => !cursoId || x.cursoId === cursoId)
       .filter((x) => !status || x.status === status)
-      .filter((x) => !t || [x.codigo, x.professor, x.sala, this.nomeCurso(x)]
+      .filter((x) => !t || [x.codigo, this.nomeProfessor(x), x.sala, this.nomeCurso(x)]
         .some((v) => (v || '').toLowerCase().includes(t)))
       .sort((a, b) => (b.dataInicio || '').localeCompare(a.dataInicio || ''));
   },

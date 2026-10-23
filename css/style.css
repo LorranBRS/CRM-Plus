@@ -292,6 +292,135 @@ legend { font-weight: 700; font-size: 13px; color: var(--primaria); text-transfo
 .toast.visivel { opacity: 1; transform: none; }
 .toast.erro { background: var(--perigo); }
 
+/* ===== Entrada (escolha de perfil) ===== */
+.entrada {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+  background: radial-gradient(circle at 20% 20%, #312e81 0, var(--sidebar) 55%);
+}
+.entrada-box {
+  background: var(--superficie); border-radius: 18px; width: 100%; max-width: 620px;
+  padding: 32px; box-shadow: 0 25px 60px rgba(0, 0, 0, .35); text-align: center;
+}
+.brand-entrada { justify-content: center; margin-bottom: 24px; text-align: left; }
+.brand-entrada small { color: var(--texto-suave); }
+.entrada h2 { font-size: 22px; }
+.entrada-sub { color: var(--texto-suave); margin: 4px 0 22px; }
+.entrada-perfis { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.perfil-card {
+  font: inherit; cursor: pointer; background: #f8f9fc; border: 2px solid var(--borda); border-radius: 14px;
+  padding: 22px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: .15s;
+}
+.perfil-card:hover { border-color: var(--primaria); background: #eef2ff; transform: translateY(-2px); }
+.perfil-card strong { font-size: 18px; }
+.perfil-card small { color: var(--texto-suave); font-size: 13px; line-height: 1.4; }
+.perfil-icone { font-size: 40px; }
+.entrada-demo { margin-top: 24px; padding-top: 18px; border-top: 1px dashed var(--borda); }
+.entrada-demo p { color: var(--texto-suave); font-size: 13px; margin-bottom: 8px; }
+.entrada-usuarios { display: flex; flex-direction: column; gap: 8px; text-align: left; max-height: 340px; overflow-y: auto; }
+.usuario-item {
+  font: inherit; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: #fff; border: 1px solid var(--borda); border-radius: 10px;
+}
+.usuario-item:hover { border-color: var(--primaria); background: #eef2ff; }
+.usuario-item small { display: block; color: var(--texto-suave); font-size: 12px; }
+.usuario-pin { margin-left: auto; }
+.entrada-aviso { background: #fef3c7; color: #92400e; padding: 14px; border-radius: 10px; line-height: 1.5; }
+.entrada-form { display: flex; flex-direction: column; gap: 12px; text-align: left; max-width: 320px; margin: 0 auto; }
+.entrada-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
+.entrada-form input[name=pin] { font-size: 22px; letter-spacing: 6px; text-align: center; }
+.entrada-pin-usuario { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.btn-voltar { margin-top: 18px; }
+
+/* ===== Avatar / usuário logado ===== */
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: #e0e7ff; color: var(--primaria); font-size: 12px; font-weight: 700;
+  display: inline-grid; place-items: center;
+}
+.avatar-grande { width: 64px; height: 64px; font-size: 22px; }
+.avatar-mini { width: 22px; height: 22px; font-size: 9px; }
+.usuario-logado {
+  display: flex; align-items: center; gap: 10px; margin: 0 6px 10px; padding: 10px;
+  background: rgba(255, 255, 255, .07); border-radius: 10px;
+}
+.usuario-logado > div { flex: 1; min-width: 0; }
+.usuario-logado strong { display: block; color: #fff; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.usuario-logado small { color: #a5b4fc; font-size: 11px; }
+.btn-trocar {
+  background: rgba(255, 255, 255, .12); color: #fff; border: none; border-radius: 8px;
+  width: 32px; height: 32px; cursor: pointer; font-size: 16px;
+}
+.btn-trocar:hover { background: var(--primaria); }
+.celula-usuario { display: flex; align-items: center; gap: 10px; }
+.chip { display: inline-block; background: #f3f4f6; border-radius: 6px; padding: 2px 6px; font-size: 11px; margin: 2px 2px 0 0; white-space: nowrap; }
+.texto-alerta { color: var(--alerta); font-weight: 600; }
+
+/* ===== Equipe / atividades ===== */
+.painel-tabela { margin-bottom: 16px; }
+.table-plana { box-shadow: none; }
+.rotulo-filtro { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--texto-suave); }
+.rotulo-filtro select { width: auto; }
+.painel h3 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+.timeline { list-style: none; }
+.timeline li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--borda); }
+.timeline li:last-child { border-bottom: none; }
+.timeline li > div { flex: 1; min-width: 0; font-size: 14px; }
+.timeline time { color: var(--texto-suave); font-size: 12px; white-space: nowrap; }
+.acao-atividade { color: var(--primaria); font-weight: 600; }
+.descricao-atividade { color: var(--texto-suave); font-size: 13px; margin-top: 2px; }
+.timeline-compacta li { padding: 7px 0; }
+.timeline-compacta .avatar { width: 28px; height: 28px; font-size: 10px; }
+.timeline-dia { font-size: 12px; text-transform: uppercase; color: var(--texto-suave); margin: 16px 0 4px; }
+.timeline-dia:first-child { margin-top: 0; }
+.btn-mais { display: block; margin: 12px auto 0; }
+
+/* ===== Alternar lista / agenda ===== */
+.alternar { display: inline-flex; border: 1px solid var(--borda); border-radius: 8px; overflow: hidden; background: #fff; }
+.alternar button { font: inherit; border: none; background: none; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.alternar button.ativo { background: var(--primaria); color: #fff; }
+
+/* ===== Agenda semanal ===== */
+.agenda { display: grid; grid-template-columns: repeat(var(--colunas, 5), minmax(120px, 1fr)); gap: 8px; overflow-x: auto; }
+.agenda-dia { background: #f8f9fc; border-radius: 8px; padding: 8px; min-height: 120px; }
+.agenda-dia header { font-weight: 700; text-align: center; font-size: 13px; margin-bottom: 6px; }
+.agenda-aula {
+  background: #fff; border-left: 3px solid #2a78d6; border-radius: 6px; padding: 6px 8px; margin-bottom: 6px;
+  display: flex; flex-direction: column; gap: 1px; font-size: 12px; box-shadow: var(--sombra);
+}
+.agenda-aula strong { font-size: 12px; }
+.agenda-aula small { color: var(--texto-suave); }
+.agenda-livre { text-align: center; color: #c0c4cc; }
+.resumo-professor { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-bottom: 16px; font-size: 14px; }
+.titulo-secao { font-size: 13px; text-transform: uppercase; color: var(--texto-suave); margin: 18px 0 8px; }
+
+/* ===== Editor da grade curricular ===== */
+.grade-editor { display: flex; flex-direction: column; gap: 8px; }
+.grade-linha {
+  display: grid; grid-template-columns: 28px 1fr 80px 190px auto; gap: 6px; align-items: center;
+  background: #f8f9fc; border: 1px solid var(--borda); border-radius: 8px; padding: 8px;
+}
+.grade-ordem {
+  width: 24px; height: 24px; border-radius: 50%; background: var(--primaria); color: #fff;
+  font-size: 12px; font-weight: 700; display: grid; place-items: center;
+}
+.grade-ementa { grid-column: 2 / -1; font-size: 13px; }
+.grade-botoes { display: flex; }
+.grade-botoes .btn-icon { font-size: 14px; padding: 4px 6px; }
+.grade-rodape { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 13px; flex-wrap: wrap; }
+
+/* ===== Modal de visualização ===== */
+.modal-grande { max-width: 960px; }
+.modal-corpo { padding: 18px 22px; max-height: 70vh; overflow-y: auto; }
+.modal-corpo .doc-cabecalho { display: none; }
+.modal-corpo .doc-tabela { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.modal-corpo .doc-tabela th, .modal-corpo .doc-tabela td { padding: 8px 10px; border-bottom: 1px solid var(--borda); text-align: left; vertical-align: top; }
+.modal-corpo .doc-tabela th { font-size: 12px; text-transform: uppercase; color: var(--texto-suave); background: #fafafa; }
+.modal-corpo .doc-tabela tfoot td { font-weight: 700; }
+.modal-corpo .doc-bloco { margin-bottom: 12px; }
+.modal-corpo .doc-bloco h3 { font-size: 16px; }
+.modal-corpo .doc-rodape { font-size: 12px; color: var(--texto-suave); }
+
 /* ===== Responsivo ===== */
 @media (max-width: 900px) {
   .cards { grid-template-columns: repeat(2, 1fr); }
@@ -304,6 +433,11 @@ legend { font-weight: 700; font-size: 13px; color: var(--primaria); text-transfo
   .content { padding: 16px; }
 }
 @media (max-width: 600px) {
+  .entrada-perfis { grid-template-columns: 1fr; }
+  .entrada-box { padding: 24px 18px; }
+  .grade-linha { grid-template-columns: 28px 1fr 70px; }
+  .grade-linha select { grid-column: 2 / -1; }
+  .grade-botoes { grid-column: 2 / -1; justify-content: flex-end; }
   .grid, .grid-2 { grid-template-columns: 1fr; }
   .graf-linha { grid-template-columns: 90px 1fr 48px; }
   .modal-footer { flex-wrap: wrap; }

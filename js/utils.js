@@ -78,6 +78,44 @@ const Utils = {
     return Utils.paraISO(new Date(a, m - 1, d + n));
   },
 
+  // Período a partir de uma opção de filtro -> { de, ate } ("AAAA-MM-DD")
+  periodo(opcao) {
+    const hoje = Utils.hoje();
+    const inicioMes = `${Utils.mesAtual()}-01`;
+    switch (opcao) {
+      case 'hoje': return { de: hoje, ate: hoje };
+      case '7dias': return { de: Utils.somarDias(hoje, -6), ate: hoje };
+      case '30dias': return { de: Utils.somarDias(hoje, -29), ate: hoje };
+      case 'mes': return { de: inicioMes, ate: hoje };
+      case 'mesPassado': return { de: Utils.somarMeses(inicioMes, -1), ate: Utils.somarDias(inicioMes, -1) };
+      default: return {};
+    }
+  },
+
+  // Aceita data ISO completa ou "AAAA-MM-DD"
+  noPeriodo(data, periodo = {}) {
+    if (!data) return !periodo.de && !periodo.ate;
+    const dia = data.length > 10 ? Utils.paraISO(new Date(data)) : data;
+    return (!periodo.de || dia >= periodo.de) && (!periodo.ate || dia <= periodo.ate);
+  },
+
+  // "19:00", "20:40" -> 1.67
+  duracaoHoras(inicio, fim) {
+    if (!inicio || !fim) return 0;
+    const min = (h) => { const [a, b] = h.split(':').map(Number); return a * 60 + b; };
+    return Math.max(0, (min(fim) - min(inicio)) / 60);
+  },
+
+  formatarHoras(horas) {
+    const h = Math.floor(horas);
+    const m = Math.round((horas - h) * 60);
+    return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+  },
+
+  formatarDataHora(iso) {
+    return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  },
+
   // "2026-10" -> "out/26"
   nomeMes(anoMes) {
     const [a, m] = anoMes.split('-').map(Number);
@@ -185,6 +223,16 @@ const Utils = {
   baixarCSV(lista, colunas, nome) {
     Utils.baixarArquivo(Utils.gerarCSV(lista, colunas),
       `${nome}_${Utils.hoje()}.csv`, 'text/csv;charset=utf-8');
+  },
+
+  // Abre uma janela pronta para imprimir/salvar em PDF
+  imprimir(titulo, corpo) {
+    const janela = window.open('', '_blank');
+    if (!janela) return Utils.toast('Permita pop-ups deste site para imprimir.', 'erro');
+    janela.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+      <title>${Utils.escapar(titulo)}</title><link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}">
+      </head><body>${corpo}<script>window.onload = () => setTimeout(() => window.print(), 300);<\/script></body></html>`);
+    janela.document.close();
   },
 
   baixarArquivo(conteudo, nome, tipo) {

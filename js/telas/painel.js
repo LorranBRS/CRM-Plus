@@ -53,12 +53,21 @@ const TelaPainel = {
       }).sort((a, b) => b.valor - a.valor),
       { max: 100 });
 
-    // Próximos contatos
-    const contatos = Leads.proximosContatos(7).slice(0, 8);
+    // Atividades recentes (diretor)
+    if (Sessao.pode('atividades')) {
+      const recentes = Atividades.filtrar().filter((a) => a.acao !== 'Entrada').slice(0, 8);
+      $('painelAtividades').innerHTML = recentes.length ? TelaAtividades.itens(recentes)
+        : '<li class="graf-vazio">Nenhuma atividade registrada ainda.</li>';
+    }
+
+    // Próximos contatos (funcionário vê os seus)
+    const meu = Sessao.ehDiretor() ? null : Sessao.idAtual();
+    $('tituloContatos').textContent = meu ? 'Meus próximos contatos (7 dias)' : 'Próximos contatos (7 dias)';
+    const contatos = Leads.proximosContatos(7, meu).slice(0, 8);
     $('listaContatos').innerHTML = contatos.length ? contatos.map((l) => `
       <li data-lead="${l.id}" class="clicavel">
         <div><strong>${Utils.escapar(l.nome)}</strong>
-          <small>${Utils.escapar([l.etapa, Leads.nomeCurso(l)].filter(Boolean).join(' · '))}</small></div>
+          <small>${Utils.escapar([l.etapa, Leads.nomeCurso(l), !meu && Leads.nomeResponsavel(l)].filter(Boolean).join(' · '))}</small></div>
         <span class="${l.proximoContato < hoje ? 'texto-perigo' : ''}">
           ${l.proximoContato < hoje ? '⚠ ' : ''}${Utils.formatarData(l.proximoContato)}</span>
       </li>`).join('') : '<li class="graf-vazio">Nenhum contato agendado.</li>';

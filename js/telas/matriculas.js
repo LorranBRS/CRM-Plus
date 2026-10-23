@@ -47,14 +47,21 @@ const TelaMatriculas = {
       const anterior = m.id ? Matriculas.buscarPorId(m.id) : null;
       const salva = Matriculas.salvar(m);
 
+      const nomeAluno = Matriculas.nomeAluno(salva);
+      const codigoTurma = Matriculas.turma(salva)?.codigo || '';
       if (!anterior) {
+        Atividades.registrar('matriculas', 'Matrícula realizada',
+          `${nomeAluno} em ${codigoTurma} – ${Utils.formatarMoeda(salva.valorFinal)}/mês`, { refId: salva.id });
         if ($('gerarFinanceiro').checked) Matriculas.gerarFinanceiro(salva);
         // Aluno matriculado passa a ser "Ativo"
         const aluno = Alunos.buscarPorId(salva.alunoId);
         const turma = Turmas.buscarPorId(salva.turmaId);
         Alunos.salvar({ id: aluno.id, status: 'Ativo', curso: aluno.curso || Turmas.nomeCurso(turma) });
-      } else if (anterior.status === 'Ativa' && ['Cancelada', 'Trancada'].includes(salva.status)) {
-        this.perguntarCancelarParcelas(salva.id);
+      } else {
+        Atividades.registrar('matriculas', anterior.status !== salva.status ? 'Status da matrícula alterado' : 'Matrícula editada',
+          `${nomeAluno} em ${codigoTurma}${anterior.status !== salva.status ? `: ${anterior.status} → ${salva.status}` : ''}`,
+          { refId: salva.id });
+        if (anterior.status === 'Ativa' && ['Cancelada', 'Trancada'].includes(salva.status)) this.perguntarCancelarParcelas(salva.id);
       }
 
       Utils.fecharModal('modalMatricula');
@@ -74,6 +81,7 @@ const TelaMatriculas = {
     if (!confirm(`Excluir a matrícula de "${Matriculas.nomeAluno(m)}"?`)) return;
     const qtd = Financeiro.cancelarPendentes(m.id);
     Matriculas.excluir(m.id);
+    Atividades.registrar('matriculas', 'Matrícula excluída', `${Matriculas.nomeAluno(m)} – ${Matriculas.turma(m)?.codigo || ''}`, { refId: m.id });
     this.renderizar();
     Utils.toast(qtd ? `Matrícula excluída e ${qtd} parcela(s) pendente(s) cancelada(s).` : 'Matrícula excluída.');
   },
@@ -142,11 +150,12 @@ const TelaMatriculas = {
         <td><strong>${Utils.escapar(Matriculas.nomeAluno(m))}</strong><small>${Utils.escapar(aluno?.cpf)}</small></td>
         <td>${Utils.escapar(turma?.codigo || '(turma removida)')}<small>${Utils.escapar(turma ? Turmas.nomeCurso(turma) : '')}</small></td>
         <td>${Utils.formatarData(m.dataMatricula)}</td>
+        <td>${Utils.escapar(Usuarios.nome(m.criadoPor)) || '-'}</td>
         <td>${Utils.formatarMoeda(m.valorFinal)}${m.desconto ? `<small>${m.desconto}% de desconto</small>` : ''}</td>
         <td>${fin.total ? `${fin.pagos}/${fin.total}` : '-'}</td>
         <td>${Utils.badge(m.status)}</td>
         <td class="acoes">
-          <button class="btn-icon" data-acao="financeiro" data-id="${m.id}" title="Ver financeiro">💰</button>
+          ${Sessao.pode('financeiro') ? `<button class="btn-icon" data-acao="financeiro" data-id="${m.id}" title="Ver financeiro">💰</button>` : ''}
           <button class="btn-icon" data-acao="editar" data-id="${m.id}" title="Editar">✏️</button>
           <button class="btn-icon" data-acao="excluir" data-id="${m.id}" title="Excluir">🗑️</button>
         </td>

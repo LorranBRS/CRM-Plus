@@ -17,12 +17,30 @@ const Financeiro = {
     return erros;
   },
 
-  pagar(id, { dataPagamento, valorPago, formaPagamento }) {
-    return this.salvar({ id, status: 'Pago', dataPagamento, valorPago: Number(valorPago), formaPagamento });
+  pagar(id, { dataPagamento, valorPago, formaPagamento, recebidoPor }) {
+    return this.salvar({
+      id, status: 'Pago', dataPagamento, valorPago: Number(valorPago), formaPagamento,
+      recebidoPor: recebidoPor || Sessao.idAtual(),
+    });
   },
 
   estornar(id) {
-    return this.salvar({ id, status: 'Pendente', dataPagamento: '', valorPago: '', formaPagamento: '' });
+    return this.salvar({ id, status: 'Pendente', dataPagamento: '', valorPago: '', formaPagamento: '', recebidoPor: '' });
+  },
+
+  // Gera o número da fatura na primeira emissão
+  emitirFatura(id, { usuarioId, data } = {}) {
+    const l = this.buscarPorId(id);
+    if (l.numeroFatura) return l;
+    return this.salvar({
+      id, numeroFatura: Instituicao.proximoNumeroFatura(),
+      faturaEmitidaEm: data || new Date().toISOString(), faturaEmitidaPor: usuarioId || Sessao.idAtual(),
+    });
+  },
+
+  // Texto curto para o registro de atividades
+  resumo(l) {
+    return `${this.nomeAluno(l)} – ${l.descricao} (${Utils.formatarMoeda(l.valor)})`;
   },
 
   // Cancela as parcelas ainda não pagas de uma matrícula; retorna quantas
@@ -82,5 +100,7 @@ const Financeiro = {
     ['Data pagamento', (l) => (l.dataPagamento ? Utils.formatarData(l.dataPagamento) : '')],
     ['Valor pago', (l) => (l.valorPago ? Number(l.valorPago).toFixed(2).replace('.', ',') : '')],
     ['Forma', (l) => l.formaPagamento || ''],
+    ['Recebido por', (l) => Usuarios.nome(l.recebidoPor)],
+    ['Nº fatura', (l) => l.numeroFatura || ''],
   ],
 };

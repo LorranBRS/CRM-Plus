@@ -13,30 +13,132 @@ const Exemplos = {
     return Utils.mascaraCPF(d.join(''));
   },
 
-  carregar() {
+  // Data/hora ISO de um dia "AAAA-MM-DD" num horário comercial (nunca no futuro)
+  quando(dia, seq = 0) {
+    const minutos = 9 * 60 + ((seq * 37) % (9 * 60));
+    const [a, m, d] = dia.split('-').map(Number);
+    const data = new Date(a, m - 1, d, Math.floor(minutos / 60), minutos % 60);
+    return (data > new Date() ? new Date(Date.now() - (seq % 50 + 5) * 60000) : data).toISOString();
+  },
+
+  // Cria (ou reaproveita pelo nome) os funcionários de exemplo
+  equipe() {
+    const existentes = Usuarios.listar();
+    const criar = (nome, funcao) => existentes.find((u) => u.nome === nome) || Usuarios.salvar({
+      nome, perfil: 'Funcionário', funcao, email: `${nome.split(' ')[0].toLowerCase()}@escola.com`,
+      modulos: Usuarios.FUNCOES[funcao], status: 'Ativo', pinHash: '',
+    });
+    return {
+      diretor: Sessao.ehDiretor() ? Sessao.usuario() : Usuarios.doPerfil('Diretor')[0],
+      ana: criar('Ana Souza', 'Secretaria'),
+      diego: criar('Diego Ramos', 'Comercial'),
+      bianca: criar('Bianca Torres', 'Comercial'),
+      patricia: criar('Patrícia Melo', 'Financeiro'),
+      marcos: criar('Marcos Lima', 'Coordenação pedagógica'),
+    };
+  },
+
+  carregar(confirmar = true) {
     if (!Storage.estaVazio()) {
       return Utils.toast('Os exemplos só podem ser carregados com o sistema vazio.', 'erro');
     }
-    if (!confirm('Carregar cursos, turmas, alunos, matrículas, financeiro e leads de exemplo?')) return;
+    if (confirmar && !confirm('Carregar equipe, professores, cursos, turmas, alunos, matrículas, financeiro e leads de exemplo?')) return;
 
     const hoje = Utils.hoje();
     const mes = (n, dia) => Utils.somarMeses(hoje, n, dia);
     const dia = (n) => Utils.somarDias(hoje, n);
+    const eq = this.equipe();
+    const log = (usuario, modulo, acao, descricao, data, refId) =>
+      Atividades.registrar(modulo, acao, descricao, { usuarioId: usuario.id, data, refId });
 
-    // ---------- Cursos ----------
-    const curso = (dados) => Cursos.salvar({ status: 'Ativo', descricao: '', ...dados });
-    const ingles = curso({ nome: 'Inglês Intermediário', codigo: 'ING-INT', area: 'Idiomas', modalidade: 'Presencial', cargaHoraria: 120, duracaoMeses: 10, mensalidade: 289.9, taxaMatricula: 99 });
-    const web = curso({ nome: 'Programação Web', codigo: 'PROG-WEB', area: 'Tecnologia', modalidade: 'Híbrido', cargaHoraria: 180, duracaoMeses: 9, mensalidade: 349, taxaMatricula: 120 });
-    const info = curso({ nome: 'Informática Básica', codigo: 'INFO-BAS', area: 'Tecnologia', modalidade: 'Presencial', cargaHoraria: 60, duracaoMeses: 4, mensalidade: 159.9, taxaMatricula: 0 });
-    const adm = curso({ nome: 'Administração para Pequenos Negócios', codigo: 'ADM-PN', area: 'Gestão e Negócios', modalidade: 'Online', cargaHoraria: 80, duracaoMeses: 6, mensalidade: 199, taxaMatricula: 50 });
+    if (!Instituicao.ler().nome) {
+      Instituicao.salvar({
+        nome: 'Escola Futuro Cursos Livres', cnpj: '12.345.678/0001-90', telefone: '(11) 3333-4444',
+        email: 'contato@escolafuturo.com.br', endereco: 'Rua das Flores, 100 – Centro – São Paulo/SP',
+        chavePix: 'financeiro@escolafuturo.com.br',
+      });
+    }
+
+    // ---------- Professores ----------
+    const inicioCadastros = mes(-8, 2);
+    const professor = (dados, i) => {
+      const p = Professores.salvar({ cpf: '', status: 'Ativo', observacoes: '', criadoPor: eq.diretor.id, ...dados });
+      log(eq.diretor, 'professores', 'Professor cadastrado', p.nome, this.quando(inicioCadastros, i), p.id);
+      return p;
+    };
+    const carla = professor({ nome: 'Carla Mendes', email: 'carla@escola.com', telefone: '(11) 98111-2233', formacao: 'Letras – Inglês (USP)', especialidades: 'Inglês, conversação, TOEFL', valorHora: 65 }, 1);
+    const juliana = professor({ nome: 'Juliana Prado', email: 'juliana@escola.com', telefone: '(11) 98222-3344', formacao: 'Letras – Inglês/Português', especialidades: 'Gramática, escrita, pronúncia', valorHora: 55 }, 2);
+    const rafael = professor({ nome: 'Rafael Souza', email: 'rafael@escola.com', telefone: '(11) 98333-4455', formacao: 'Ciência da Computação (Unicamp)', especialidades: 'HTML, CSS, JavaScript, React', valorHora: 80 }, 3);
+    const fabio = professor({ nome: 'Fábio Nogueira', email: 'fabio@escola.com', telefone: '(11) 98444-5566', formacao: 'Sistemas de Informação', especialidades: 'Banco de dados, Node.js, Git', valorHora: 75 }, 4);
+    const anaLima = professor({ nome: 'Ana Lima', email: 'analima@escola.com', telefone: '(11) 98555-6677', formacao: 'Licenciatura em Computação', especialidades: 'Informática básica, Office', valorHora: 45 }, 5);
+    const paulo = professor({ nome: 'Paulo Reis', email: 'paulo@escola.com', telefone: '(11) 98666-7788', formacao: 'Administração – MBA em Gestão', especialidades: 'Gestão, finanças, marketing', valorHora: 70 }, 6);
+
+    // ---------- Cursos com grade curricular ----------
+    const modulo = (nome, cargaHoraria, professorId, ementa) => ({ id: Utils.gerarId(), nome, cargaHoraria, professorId: professorId.id, ementa });
+    const curso = (dados, i) => {
+      const c = Cursos.salvar({ status: 'Ativo', descricao: '', criadoPor: eq.diretor.id, ...dados });
+      log(eq.diretor, 'cursos', 'Curso cadastrado', `${c.nome} – grade com ${c.grade.length} módulo(s)`, this.quando(inicioCadastros, 10 + i), c.id);
+      return c;
+    };
+    const ingles = curso({
+      nome: 'Inglês Intermediário', codigo: 'ING-INT', area: 'Idiomas', modalidade: 'Presencial', cargaHoraria: 120,
+      duracaoMeses: 10, mensalidade: 289.9, taxaMatricula: 99, coordenadorId: carla.id,
+      descricao: 'Desenvolver comunicação oral e escrita em situações do dia a dia e do trabalho.',
+      grade: [
+        modulo('Revisão de fundamentos', 20, juliana, 'Tempos verbais, vocabulário essencial'),
+        modulo('Conversação I', 30, carla, 'Situações do cotidiano, apresentações'),
+        modulo('Leitura e escrita', 25, juliana, 'Textos, e-mails e redação'),
+        modulo('Conversação II', 30, carla, 'Debates, entrevistas, ambiente profissional'),
+        modulo('Preparatório para certificação', 15, carla, 'Simulados no formato TOEFL/IELTS'),
+      ],
+    }, 1);
+    const web = curso({
+      nome: 'Programação Web', codigo: 'PROG-WEB', area: 'Tecnologia', modalidade: 'Híbrido', cargaHoraria: 180,
+      duracaoMeses: 9, mensalidade: 349, taxaMatricula: 120, coordenadorId: rafael.id,
+      descricao: 'Formar desenvolvedores capazes de criar sites e aplicações web completas.',
+      grade: [
+        modulo('Lógica de programação', 30, fabio, 'Algoritmos, variáveis, condições e laços'),
+        modulo('HTML e CSS', 35, rafael, 'Estrutura, layout responsivo, flexbox e grid'),
+        modulo('JavaScript', 45, rafael, 'DOM, eventos, funções, fetch e APIs'),
+        modulo('Banco de dados', 30, fabio, 'Modelagem, SQL e integração'),
+        modulo('Projeto final', 40, rafael, 'Desenvolvimento e publicação de um projeto real'),
+      ],
+    }, 2);
+    const info = curso({
+      nome: 'Informática Básica', codigo: 'INFO-BAS', area: 'Tecnologia', modalidade: 'Presencial', cargaHoraria: 60,
+      duracaoMeses: 4, mensalidade: 159.9, taxaMatricula: 0, coordenadorId: anaLima.id,
+      grade: [
+        modulo('Windows e arquivos', 12, anaLima, 'Uso do computador, pastas e arquivos'),
+        modulo('Internet e e-mail', 12, anaLima, 'Navegação segura, e-mail e serviços online'),
+        modulo('Word', 12, anaLima, 'Documentos, formatação e impressão'),
+        modulo('Excel', 16, anaLima, 'Planilhas, fórmulas e gráficos'),
+        modulo('PowerPoint', 8, anaLima, 'Apresentações'),
+      ],
+    }, 3);
+    const adm = curso({
+      nome: 'Administração para Pequenos Negócios', codigo: 'ADM-PN', area: 'Gestão e Negócios', modalidade: 'Online',
+      cargaHoraria: 80, duracaoMeses: 6, mensalidade: 199, taxaMatricula: 50, coordenadorId: paulo.id,
+      grade: [
+        modulo('Planejamento estratégico', 20, paulo, 'Missão, metas e plano de negócios'),
+        modulo('Finanças e fluxo de caixa', 25, paulo, 'Custos, preço de venda e controle financeiro'),
+        modulo('Marketing digital', 20, paulo, 'Redes sociais e captação de clientes'),
+        modulo('Gestão de pessoas', 15, paulo, 'Contratação, liderança e rotinas'),
+      ],
+    }, 4);
 
     // ---------- Turmas ----------
-    const turma = (dados) => Turmas.salvar({ sala: '', observacoes: '', ...dados });
-    const tIng = turma({ cursoId: ingles.id, codigo: 'ING-A-NOITE', professor: 'Carla Mendes', sala: 'Sala 2', dias: ['Seg', 'Qua'], turno: 'Noite', horaInicio: '19:00', horaFim: '20:40', dataInicio: mes(-6, 3), dataFim: mes(4, 15), vagas: 12, status: 'Em andamento' });
-    const tIngB = turma({ cursoId: ingles.id, codigo: 'ING-B-MANHA', professor: 'Carla Mendes', sala: 'Sala 2', dias: ['Ter', 'Qui'], turno: 'Manhã', horaInicio: '08:00', horaFim: '09:40', dataInicio: mes(1, 5), dataFim: mes(11, 15), vagas: 15, status: 'Planejada' });
-    const tWeb = turma({ cursoId: web.id, codigo: 'WEB-NOITE', professor: 'Rafael Souza', sala: 'Laboratório 1', dias: ['Ter', 'Qui'], turno: 'Noite', horaInicio: '19:00', horaFim: '22:00', dataInicio: mes(-3, 4), dataFim: mes(6, 28), vagas: 10, status: 'Em andamento' });
-    const tInfo = turma({ cursoId: info.id, codigo: 'INFO-SABADO', professor: 'Ana Lima', sala: 'Laboratório 2', dias: ['Sáb'], turno: 'Manhã', horaInicio: '08:00', horaFim: '12:00', dataInicio: mes(-2, 6), dataFim: mes(2, 20), vagas: 8, status: 'Em andamento' });
-    const tAdm = turma({ cursoId: adm.id, codigo: 'ADM-ONLINE', professor: 'Paulo Reis', sala: 'Online', dias: ['Qua'], turno: 'Noite', horaInicio: '20:00', horaFim: '21:30', dataInicio: mes(1, 10), dataFim: mes(7, 10), vagas: 30, status: 'Planejada' });
+    const turma = (dados, i) => {
+      const t = Turmas.salvar({ observacoes: '', criadoPor: eq.ana.id, ...dados });
+      log(eq.ana, 'turmas', 'Turma cadastrada', `${t.codigo} – ${Turmas.nomeCurso(t)} (prof. ${Professores.nome(t.professorId)})`,
+        this.quando(Utils.somarDias(t.dataInicio, -40), i), t.id);
+      return t;
+    };
+    const tIng = turma({ cursoId: ingles.id, codigo: 'ING-A-NOITE', professorId: carla.id, sala: 'Sala 2', dias: ['Seg', 'Qua'], turno: 'Noite', horaInicio: '19:00', horaFim: '20:40', dataInicio: mes(-6, 3), dataFim: mes(4, 15), vagas: 12, status: 'Em andamento' }, 1);
+    const tIngB = turma({ cursoId: ingles.id, codigo: 'ING-B-MANHA', professorId: juliana.id, sala: 'Sala 2', dias: ['Ter', 'Qui'], turno: 'Manhã', horaInicio: '08:00', horaFim: '09:40', dataInicio: mes(1, 5), dataFim: mes(11, 15), vagas: 15, status: 'Planejada' }, 2);
+    const tWeb = turma({ cursoId: web.id, codigo: 'WEB-NOITE', professorId: rafael.id, sala: 'Laboratório 1', dias: ['Ter', 'Qui'], turno: 'Noite', horaInicio: '19:00', horaFim: '22:00', dataInicio: mes(-3, 4), dataFim: mes(6, 28), vagas: 10, status: 'Em andamento' }, 3);
+    const tInfo = turma({ cursoId: info.id, codigo: 'INFO-SABADO', professorId: anaLima.id, sala: 'Laboratório 2', dias: ['Sáb'], turno: 'Manhã', horaInicio: '08:00', horaFim: '12:00', dataInicio: mes(-2, 6), dataFim: mes(2, 20), vagas: 8, status: 'Em andamento' }, 4);
+    const tAdm = turma({ cursoId: adm.id, codigo: 'ADM-ONLINE', professorId: paulo.id, sala: 'Online', dias: ['Qua'], turno: 'Noite', horaInicio: '20:00', horaFim: '21:30', dataInicio: mes(1, 10), dataFim: mes(7, 10), vagas: 30, status: 'Planejada' }, 5);
+    turma({ cursoId: web.id, codigo: 'WEB-SABADO', sala: 'Laboratório 1', dias: ['Sáb'], turno: 'Tarde', horaInicio: '13:30', horaFim: '17:30', dataInicio: mes(2, 7), dataFim: mes(11, 20), vagas: 12, status: 'Planejada' }, 6);
 
     // ---------- Alunos ----------
     const nomes = [
@@ -53,18 +155,23 @@ const Exemplos = {
       telefone: Utils.mascaraTelefone(`119${String(87650000 + i * 1111).slice(0, 8)}`),
       nascimento: `${1990 + (i % 12)}-0${1 + (i % 9)}-1${i % 9}`,
       cep: '', endereco: '', numero: '', bairro: '', observacoes: '',
-      curso: '', status: 'Interessado',
+      curso: '', status: 'Interessado', criadoPor: i % 3 ? eq.ana.id : eq.diego.id,
     }));
 
     // ---------- Matrículas (+ financeiro gerado automaticamente) ----------
-    const matricular = (aluno, t, curso, n, extras = {}) => {
+    let seq = 0;
+    const matricular = (aluno, t, c, n, extras = {}) => {
+      const atendente = (seq++ % 3 === 0) ? eq.diego : eq.ana;
       const m = Matriculas.salvar(Matriculas.preparar({
         alunoId: aluno.id, turmaId: t.id, dataMatricula: Utils.somarDias(t.dataInicio, -n),
-        status: 'Ativa', valorMensalidade: curso.mensalidade, desconto: 0,
-        taxaMatricula: curso.taxaMatricula, parcelas: curso.duracaoMeses, diaVencimento: 10, observacoes: '', ...extras,
+        status: 'Ativa', valorMensalidade: c.mensalidade, desconto: 0,
+        taxaMatricula: c.taxaMatricula, parcelas: c.duracaoMeses, diaVencimento: 10, observacoes: '',
+        criadoPor: atendente.id, ...extras,
       }));
       Matriculas.gerarFinanceiro(m);
-      Alunos.salvar({ id: aluno.id, status: extras.status === 'Cancelada' ? 'Inativo' : 'Ativo', curso: curso.nome });
+      Alunos.salvar({ id: aluno.id, status: 'Ativo', curso: c.nome });
+      log(atendente, 'matriculas', 'Matrícula realizada', `${aluno.nome} em ${t.codigo} – ${Utils.formatarMoeda(m.valorFinal)}/mês`,
+        this.quando(m.dataMatricula, seq), m.id);
       return m;
     };
     [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach((i) => matricular(alunos[i], tIng, ingles, 5 + i, i === 2 ? { desconto: 10 } : {}));
@@ -74,45 +181,74 @@ const Exemplos = {
     matricular(alunos[7], tAdm, adm, 25);
     const cancelada = matricular(alunos[3], tWeb, web, 1);
 
-    // Simula pagamentos: tudo que já venceu foi pago, exceto alguns atrasos
+    // ---------- Faturas e pagamentos ----------
+    // Tudo que já venceu foi pago (pela Patrícia ou pela Ana), exceto alguns atrasos
     const formas = ['PIX', 'Boleto', 'Cartão de crédito', 'PIX', 'Dinheiro'];
     const devedores = [alunos[1].id, alunos[10].id, alunos[6].id];
     Financeiro.listar()
       .filter((l) => l.vencimento < hoje)
       .forEach((l, i) => {
-        const atrasaUltimo = devedores.includes(l.alunoId) && l.vencimento >= mes(-1, 1);
-        if (atrasaUltimo) return;
-        const atrasoDias = i % 4 === 0 ? 3 : 0;
-        const pagoEm = Utils.somarDias(l.vencimento, atrasoDias - (i % 3));
-        Financeiro.pagar(l.id, {
-          dataPagamento: pagoEm > hoje ? hoje : pagoEm,
-          valorPago: l.valor, formaPagamento: formas[i % formas.length],
-        });
+        if (devedores.includes(l.alunoId) && l.vencimento >= mes(-1, 1)) return;
+        const caixa = i % 5 === 0 ? eq.ana : eq.patricia;
+        const pagoEm = Utils.somarDias(l.vencimento, (i % 4 === 0 ? 3 : 0) - (i % 3));
+        const dataPagamento = pagoEm > hoje ? hoje : pagoEm;
+        Financeiro.pagar(l.id, { dataPagamento, valorPago: l.valor, formaPagamento: formas[i % formas.length], recebidoPor: caixa.id });
+        log(caixa, 'financeiro', 'Pagamento recebido',
+          `${Financeiro.nomeAluno(l)} – ${l.descricao}: ${Utils.formatarMoeda(l.valor)} via ${formas[i % formas.length]}`,
+          this.quando(dataPagamento, i), l.id);
+      });
+
+    // Faturas emitidas pelo financeiro para o mês atual e para os atrasados
+    Financeiro.listar()
+      .filter((l) => l.status === 'Pendente' && l.vencimento <= mes(0, 28) && l.vencimento >= mes(-1, 1))
+      .forEach((l, i) => {
+        const data = this.quando(Utils.somarDias(l.vencimento, -7), i);
+        const f = Financeiro.emitirFatura(l.id, { usuarioId: eq.patricia.id, data });
+        log(eq.patricia, 'financeiro', 'Fatura emitida', `Nº ${String(f.numeroFatura).padStart(6, '0')} – ${Financeiro.resumo(f)}`, data, l.id);
       });
 
     // Uma matrícula cancelada (parcelas futuras canceladas)
     Matriculas.salvar({ id: cancelada.id, status: 'Cancelada' });
     Financeiro.cancelarPendentes(cancelada.id);
+    log(eq.ana, 'matriculas', 'Status da matrícula alterado', `${alunos[3].nome} em WEB-NOITE: Ativa → Cancelada`, this.quando(dia(-4), 3), cancelada.id);
 
-    // ---------- Leads ----------
-    const lead = (dados, nota) => Leads.salvarComNota({ email: '', responsavel: 'Patrícia', observacoes: '', ...dados }, nota);
-    lead({ nome: 'Ricardo Nunes', telefone: '(11) 97123-4567', origem: 'Instagram', cursoId: web.id, etapa: 'Novo', proximoContato: hoje });
-    lead({ nome: 'Sofia Lima', telefone: '(11) 96234-5678', email: 'sofia@exemplo.com', origem: 'Google', cursoId: ingles.id, etapa: 'Novo', proximoContato: dia(1) });
-    lead({ nome: 'Marcos Vieira', telefone: '(21) 95345-6789', origem: 'Indicação', cursoId: adm.id, etapa: 'Contato feito', proximoContato: dia(-2), responsavel: 'Diego' }, 'Pediu a grade do curso.');
-    lead({ nome: 'Helena Prado', telefone: '(11) 94456-7890', origem: 'WhatsApp', cursoId: ingles.id, etapa: 'Contato feito', proximoContato: dia(3) });
-    lead({ nome: 'Otávio Freitas', telefone: '(31) 93567-8901', origem: 'Site', cursoId: web.id, etapa: 'Visita agendada', proximoContato: dia(2), responsavel: 'Diego' });
-    lead({ nome: 'Isabela Moura', telefone: '(11) 92678-9012', origem: 'Facebook', cursoId: info.id, etapa: 'Negociação', proximoContato: dia(-1) });
-    lead({ nome: 'Caio Antunes', telefone: '(11) 91789-0123', origem: 'Instagram', cursoId: ingles.id, etapa: 'Negociação', proximoContato: dia(5) });
-    lead({ nome: 'Valéria Campos', telefone: '(41) 99890-1234', origem: 'Presencial', cursoId: adm.id, etapa: 'Perdido', proximoContato: '' });
-    lead({ nome: 'Diana Lopes', telefone: '(11) 98901-2345', origem: 'Instagram', cursoId: web.id, etapa: 'Perdido', proximoContato: '' });
-    [[4, 'Instagram', ingles], [7, 'Indicação', adm], [12, 'Google', web], [13, 'Site', info]].forEach(([i, origem, c]) =>
-      lead({ nome: alunos[i].nome, telefone: alunos[i].telefone, email: alunos[i].email, origem, cursoId: c.id, etapa: 'Matriculado', proximoContato: '', alunoId: alunos[i].id }));
+    // ---------- Leads (com histórico de contatos da equipe comercial) ----------
+    const lead = ({ criadoNoDia: inicio = -10, ...dados }, eventos = []) => {
+      const resp = dados.responsavelId === eq.bianca.id ? eq.bianca : eq.diego;
+      const etapaFinal = dados.etapa;
+      let l = Leads.salvarComNota({ email: '', observacoes: '', ...dados, etapa: 'Novo' }, '',
+        { usuarioId: resp.id, data: this.quando(dia(inicio), 2) });
+      // Percorre as etapas até a atual, registrando cada avanço
+      const alvo = Leads.ETAPAS.indexOf(etapaFinal);
+      const caminho = etapaFinal === 'Perdido' ? ['Contato feito', 'Perdido'] : Leads.ETAPAS.slice(1, alvo + 1);
+      caminho.forEach((etapa, i) => {
+        l = Leads.salvarComNota({ ...Leads.buscarPorId(l.id), etapa }, eventos[i] || '',
+          { usuarioId: resp.id, data: this.quando(dia(Math.min(-1, inicio + 2 + i * 2)), 4 + i) });
+      });
+      return l;
+    };
+    const diegoId = eq.diego.id;
+    const biancaId = eq.bianca.id;
+    lead({ nome: 'Ricardo Nunes', telefone: '(11) 97123-4567', origem: 'Instagram', cursoId: web.id, etapa: 'Novo', proximoContato: hoje, responsavelId: diegoId, criadoNoDia: -1 });
+    lead({ nome: 'Sofia Lima', telefone: '(11) 96234-5678', email: 'sofia@exemplo.com', origem: 'Google', cursoId: ingles.id, etapa: 'Novo', proximoContato: dia(1), responsavelId: biancaId, criadoNoDia: -2 });
+    lead({ nome: 'Marcos Vieira', telefone: '(21) 95345-6789', origem: 'Indicação', cursoId: adm.id, etapa: 'Contato feito', proximoContato: dia(-2), responsavelId: diegoId }, ['Ligação feita, pediu a grade do curso por e-mail.']);
+    lead({ nome: 'Helena Prado', telefone: '(11) 94456-7890', origem: 'WhatsApp', cursoId: ingles.id, etapa: 'Contato feito', proximoContato: dia(3), responsavelId: biancaId }, ['Conversa pelo WhatsApp; quer turma de manhã.']);
+    lead({ nome: 'Otávio Freitas', telefone: '(31) 93567-8901', origem: 'Site', cursoId: web.id, etapa: 'Visita agendada', proximoContato: dia(2), responsavelId: diegoId }, ['Respondeu o formulário do site.', 'Visita marcada para conhecer o laboratório.']);
+    lead({ nome: 'Isabela Moura', telefone: '(11) 92678-9012', origem: 'Facebook', cursoId: info.id, etapa: 'Negociação', proximoContato: dia(-1), responsavelId: biancaId }, ['Primeiro contato por telefone.', 'Visitou a escola com a mãe.', 'Pediu desconto à vista – enviada proposta.']);
+    lead({ nome: 'Caio Antunes', telefone: '(11) 91789-0123', origem: 'Instagram', cursoId: ingles.id, etapa: 'Negociação', proximoContato: dia(5), responsavelId: diegoId }, ['Interessado na turma da noite.', 'Fez teste de nivelamento.', 'Aguardando aprovação da empresa.']);
+    lead({ nome: 'Valéria Campos', telefone: '(41) 99890-1234', origem: 'Presencial', cursoId: adm.id, etapa: 'Perdido', proximoContato: '', responsavelId: biancaId }, ['Achou o horário incompatível.', 'Fechou com outra escola.']);
+    lead({ nome: 'Diana Lopes', telefone: '(11) 98901-2345', origem: 'Instagram', cursoId: web.id, etapa: 'Perdido', proximoContato: '', responsavelId: diegoId }, ['Sem retorno após 3 tentativas.', 'Desistiu por enquanto.']);
+    [[4, 'Instagram', ingles, biancaId], [7, 'Indicação', adm, diegoId], [12, 'Google', web, diegoId], [13, 'Site', info, biancaId]].forEach(([i, origem, c, resp]) =>
+      lead({ nome: alunos[i].nome, telefone: alunos[i].telefone, email: alunos[i].email, origem, cursoId: c.id, etapa: 'Matriculado',
+        proximoContato: '', alunoId: alunos[i].id, responsavelId: resp, criadoNoDia: -30 }, ['Primeiro contato.', 'Visita realizada.', 'Proposta aceita.', 'Matrícula efetuada.']));
 
     // Um aluno só interessado (sem matrícula)
-    Alunos.salvar({ nome: 'Fernando Dias', cpf: this.cpf(741852963), email: 'fernando@exemplo.com', telefone: '(11) 98000-1122', cidade: 'Osasco', uf: 'SP', curso: adm.nome, status: 'Interessado', nascimento: '', cep: '', endereco: '', numero: '', bairro: '', observacoes: '' });
+    Alunos.salvar({ nome: 'Fernando Dias', cpf: this.cpf(741852963), email: 'fernando@exemplo.com', telefone: '(11) 98000-1122', cidade: 'Osasco', uf: 'SP', curso: adm.nome, status: 'Interessado', nascimento: '', cep: '', endereco: '', numero: '', bairro: '', observacoes: '', criadoPor: eq.ana.id });
 
-    location.hash = '#painel';
-    App.renderizarAtual();
+    if (confirmar) {
+      location.hash = '#painel';
+      App.renderizarAtual();
+    }
     Utils.toast('Dados de exemplo carregados!');
   },
 };

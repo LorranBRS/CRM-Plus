@@ -7,7 +7,21 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="layout">
+  <!-- ===================== ENTRADA (escolha de perfil) ===================== -->
+  <section class="entrada" id="entrada" hidden>
+    <div class="entrada-box">
+      <div class="brand brand-entrada">
+        <span class="brand-logo">C+</span>
+        <div>
+          <strong>CRM Plus</strong>
+          <small>Gestão Educacional</small>
+        </div>
+      </div>
+      <div id="entradaConteudo"></div>
+    </div>
+  </section>
+
+  <div class="layout" id="sistema" hidden>
     <!-- Menu lateral -->
     <aside class="sidebar" id="sidebar">
       <div class="brand">
@@ -17,18 +31,17 @@
           <small>Gestão Educacional</small>
         </div>
       </div>
-      <nav class="menu">
-        <a href="#painel" class="menu-item" data-tela="painel">🏠 Painel</a>
-        <a href="#leads" class="menu-item" data-tela="leads">🎯 Leads / Funil</a>
-        <a href="#alunos" class="menu-item" data-tela="alunos">👩‍🎓 Alunos</a>
-        <a href="#cursos" class="menu-item" data-tela="cursos">📚 Cursos</a>
-        <a href="#turmas" class="menu-item" data-tela="turmas">🏫 Turmas</a>
-        <a href="#matriculas" class="menu-item" data-tela="matriculas">📝 Matrículas</a>
-        <a href="#financeiro" class="menu-item" data-tela="financeiro">💰 Financeiro</a>
-        <a href="#relatorios" class="menu-item" data-tela="relatorios">📊 Relatórios</a>
-      </nav>
-      <button class="btn-exemplos" id="btnExemplos">Carregar dados de exemplo</button>
-      <footer class="sidebar-footer">v1.0</footer>
+      <nav class="menu" id="menu"></nav>
+      <button class="btn-exemplos" id="btnExemplos" data-somente-diretor>Carregar dados de exemplo</button>
+      <div class="usuario-logado">
+        <span class="avatar" id="usuarioAvatar"></span>
+        <div>
+          <strong id="usuarioNome"></strong>
+          <small id="usuarioPerfil"></small>
+        </div>
+        <button class="btn-trocar" id="btnTrocarUsuario" title="Trocar de usuário">⇄</button>
+      </div>
+      <footer class="sidebar-footer">v2.0</footer>
     </aside>
 
     <main class="content">
@@ -46,33 +59,37 @@
         <section class="cards cards-5">
           <div class="card"><span>Alunos ativos</span><strong id="kpiAlunos">0</strong></div>
           <div class="card"><span>Matrículas ativas</span><strong id="kpiMatriculas">0</strong></div>
-          <div class="card"><span>Leads em aberto</span><strong id="kpiLeads">0</strong></div>
-          <div class="card"><span>Recebido no mês</span><strong id="kpiRecebido">R$ 0,00</strong></div>
-          <div class="card card-alerta"><span>Em atraso</span><strong id="kpiAtraso">R$ 0,00</strong></div>
+          <div class="card" data-modulo="leads"><span>Leads em aberto</span><strong id="kpiLeads">0</strong></div>
+          <div class="card" data-modulo="financeiro"><span>Recebido no mês</span><strong id="kpiRecebido">R$ 0,00</strong></div>
+          <div class="card card-alerta" data-modulo="financeiro"><span>Em atraso</span><strong id="kpiAtraso">R$ 0,00</strong></div>
         </section>
 
         <section class="paineis">
-          <article class="painel painel-largo">
+          <article class="painel painel-largo" data-modulo="atividades">
+            <h3>Atividades recentes da equipe <a href="#atividades" class="link-mais">ver tudo →</a></h3>
+            <ul class="timeline timeline-compacta" id="painelAtividades"></ul>
+          </article>
+          <article class="painel painel-largo" data-modulo="financeiro">
             <h3>Receita – últimos 6 meses</h3>
             <div id="grafReceita"></div>
           </article>
-          <article class="painel">
+          <article class="painel" data-modulo="leads">
             <h3>Funil de leads</h3>
             <div id="grafFunil"></div>
           </article>
-          <article class="painel">
+          <article class="painel" data-modulo="turmas">
             <h3>Ocupação das turmas abertas</h3>
             <div id="grafOcupacao"></div>
           </article>
-          <article class="painel">
+          <article class="painel" data-modulo="leads">
             <h3>Leads por origem</h3>
             <div id="grafOrigem"></div>
           </article>
-          <article class="painel">
-            <h3>Próximos contatos (7 dias)</h3>
+          <article class="painel" data-modulo="leads">
+            <h3 id="tituloContatos">Próximos contatos (7 dias)</h3>
             <ul class="lista-simples" id="listaContatos"></ul>
           </article>
-          <article class="painel painel-largo">
+          <article class="painel painel-largo" data-modulo="financeiro">
             <h3>Mensalidades em atraso</h3>
             <ul class="lista-simples" id="listaAtrasos"></ul>
           </article>
@@ -101,6 +118,7 @@
           <input type="search" id="buscaLeads" placeholder="Buscar por nome, telefone, e-mail ou responsável...">
           <select id="filtroOrigemLeads"></select>
           <select id="filtroCursoLeads"></select>
+          <select id="filtroResponsavelLeads"></select>
         </section>
 
         <section class="kanban" id="kanban"></section>
@@ -186,13 +204,54 @@
           <table>
             <thead>
               <tr>
-                <th>Curso</th><th>Modalidade</th><th>Carga horária</th><th>Duração</th>
+                <th>Curso</th><th>Modalidade</th><th>Carga horária</th><th>Grade</th><th>Duração</th>
                 <th>Mensalidade</th><th>Turmas</th><th>Status</th><th class="acoes">Ações</th>
               </tr>
             </thead>
             <tbody id="listaCursos"></tbody>
           </table>
           <div class="vazio" id="vazioCursos"><p></p></div>
+        </section>
+      </section>
+
+      <!-- ===================== TELA: PROFESSORES ===================== -->
+      <section class="tela" data-tela="professores" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Professores</h1>
+            <p class="subtitle">Corpo docente, turmas, disciplinas e agenda</p>
+          </div>
+          <button class="btn btn-primary" id="btnNovoProfessor">+ Novo professor</button>
+        </header>
+
+        <section class="cards">
+          <div class="card"><span>Professores ativos</span><strong id="statProfAtivos">0</strong></div>
+          <div class="card"><span>Turmas abertas atribuídas</span><strong id="statProfTurmas">0</strong></div>
+          <div class="card card-alerta"><span>Turmas sem professor</span><strong id="statProfSem">0</strong></div>
+          <div class="card"><span>Horas de aula / semana</span><strong id="statProfHoras">0h</strong></div>
+        </section>
+
+        <section class="toolbar">
+          <input type="search" id="buscaProfessores" placeholder="Buscar por nome, e-mail, formação ou especialidade...">
+          <select id="filtroStatusProfessores">
+            <option value="">Todos os status</option>
+            <option>Ativo</option>
+            <option>Inativo</option>
+          </select>
+        </section>
+
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Professor(a)</th><th>Contato</th><th>Especialidades</th><th>Turmas</th>
+                <th>Disciplinas</th><th>Horas/semana</th><th>Status</th><th class="acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="listaProfessores"></tbody>
+          </table>
+          <div class="vazio" id="vazioProfessores"><p></p></div>
         </section>
       </section>
 
@@ -224,9 +283,15 @@
             <option>Concluída</option>
             <option>Cancelada</option>
           </select>
+          <div class="alternar" role="group" aria-label="Modo de visualização">
+            <button class="ativo" data-visao="lista">☰ Lista</button>
+            <button data-visao="agenda">📅 Grade semanal</button>
+          </div>
         </section>
 
-        <section class="table-wrap">
+        <section class="painel" id="agendaTurmas" hidden></section>
+
+        <section class="table-wrap" id="tabelaTurmas">
           <table>
             <thead>
               <tr>
@@ -274,7 +339,7 @@
           <table>
             <thead>
               <tr>
-                <th>Aluno</th><th>Turma</th><th>Data</th><th>Mensalidade</th>
+                <th>Aluno</th><th>Turma</th><th>Data</th><th>Atendente</th><th>Mensalidade</th>
                 <th>Parcelas pagas</th><th>Status</th><th class="acoes">Ações</th>
               </tr>
             </thead>
@@ -358,7 +423,7 @@
             </div>
           </article>
 
-          <article class="painel">
+          <article class="painel" data-somente-diretor>
             <h3>Backup</h3>
             <p class="ajuda">Os dados ficam salvos neste navegador. Faça backup para não perder nada
               ou para levar os dados para outro computador.</p>
@@ -370,11 +435,103 @@
             </div>
           </article>
 
-          <article class="painel">
+          <article class="painel" data-somente-diretor>
             <h3>Zona de perigo</h3>
-            <p class="ajuda">Apaga todos os cadastros deste navegador. Faça um backup antes.</p>
+            <p class="ajuda">Apaga todos os cadastros deste navegador (a equipe e o registro de atividades são mantidos). Faça um backup antes.</p>
             <button class="btn btn-perigo" id="btnLimparTudo">Apagar todos os dados</button>
           </article>
+        </section>
+      </section>
+
+      <!-- ===================== TELA: EQUIPE (diretor) ===================== -->
+      <section class="tela" data-tela="equipe" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Equipe</h1>
+            <p class="subtitle">Funcionários, acessos e desempenho</p>
+          </div>
+          <button class="btn btn-light" id="btnInstituicao">⚙️ Instituição</button>
+          <button class="btn btn-primary" id="btnNovoUsuario">+ Novo usuário</button>
+        </header>
+
+        <section class="toolbar">
+          <label class="rotulo-filtro">Período
+            <select id="filtroPeriodoEquipe">
+              <option value="hoje">Hoje</option>
+              <option value="7dias">Últimos 7 dias</option>
+              <option value="mes" selected>Este mês</option>
+              <option value="mesPassado">Mês passado</option>
+              <option value="30dias">Últimos 30 dias</option>
+              <option value="tudo">Todo o período</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="cards">
+          <div class="card"><span>Usuários ativos</span><strong id="statEquipeAtivos">0</strong></div>
+          <div class="card"><span>Interações com leads</span><strong id="statEquipeContatos">0</strong></div>
+          <div class="card"><span>Matrículas</span><strong id="statEquipeMatriculas">0</strong></div>
+          <div class="card"><span>Recebido</span><strong id="statEquipeRecebido">R$ 0,00</strong></div>
+        </section>
+
+        <section class="painel painel-tabela">
+          <h3>Desempenho no período</h3>
+          <div class="table-wrap table-plana">
+            <table>
+              <thead>
+                <tr>
+                  <th>Usuário</th><th>Leads em carteira</th><th>Interações com leads</th><th>Matrículas</th>
+                  <th>Faturas emitidas</th><th>Pagamentos recebidos</th><th>Última atividade</th>
+                </tr>
+              </thead>
+              <tbody id="listaDesempenho"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="painel painel-tabela">
+          <h3>Usuários e acessos</h3>
+          <div class="table-wrap table-plana">
+            <table>
+              <thead>
+                <tr><th>Nome</th><th>Perfil</th><th>Acesso aos módulos</th><th>PIN</th><th>Status</th><th class="acoes">Ações</th></tr>
+              </thead>
+              <tbody id="listaUsuarios"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <!-- ===================== TELA: ATIVIDADES (diretor) ===================== -->
+      <section class="tela" data-tela="atividades" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Atividades</h1>
+            <p class="subtitle">Tudo o que a equipe fez no sistema: contatos, matrículas, faturas e pagamentos</p>
+          </div>
+          <button class="btn btn-light" id="btnExportarAtividades">⬇ Exportar CSV</button>
+        </header>
+
+        <section class="toolbar">
+          <input type="search" id="buscaAtividades" placeholder="Buscar por aluno, lead, ação...">
+          <select id="filtroUsuarioAtividades"></select>
+          <select id="filtroModuloAtividades"></select>
+          <select id="filtroPeriodoAtividades">
+            <option value="hoje">Hoje</option>
+            <option value="7dias" selected>Últimos 7 dias</option>
+            <option value="mes">Este mês</option>
+            <option value="mesPassado">Mês passado</option>
+            <option value="30dias">Últimos 30 dias</option>
+            <option value="tudo">Todo o período</option>
+          </select>
+        </section>
+
+        <section class="painel">
+          <p class="ajuda" id="totalAtividades"></p>
+          <div id="listaAtividades"></div>
+          <button class="btn btn-light btn-mais" id="btnMaisAtividades" hidden>Carregar mais</button>
         </section>
       </section>
     </main>
@@ -418,7 +575,7 @@
               <select name="etapa"></select>
             </label>
             <label>Responsável
-              <input type="text" name="responsavel" placeholder="Quem atende este lead">
+              <select name="responsavelId"></select>
             </label>
             <label>Próximo contato
               <input type="date" name="proximoContato">
@@ -582,6 +739,9 @@
                 <option>Inativo</option>
               </select>
             </label>
+            <label class="col-2">Coordenador(a) do curso
+              <select name="coordenadorId"></select>
+            </label>
           </div>
         </fieldset>
 
@@ -606,9 +766,19 @@
         <fieldset>
           <legend>Descrição</legend>
           <div class="grid">
-            <label class="col-full">Ementa / descrição
-              <textarea name="descricao" rows="3"></textarea>
+            <label class="col-full">Objetivo / descrição geral
+              <textarea name="descricao" rows="2"></textarea>
             </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Grade curricular</legend>
+          <p class="ajuda">Monte os módulos/disciplinas do curso na ordem em que serão dados.</p>
+          <div class="grade-editor" id="gradeEditor"></div>
+          <div class="grade-rodape">
+            <button type="button" class="btn btn-light" id="btnAddModulo">+ Adicionar módulo</button>
+            <span id="gradeTotal" class="texto-suave"></span>
           </div>
         </fieldset>
 
@@ -641,7 +811,7 @@
               <input type="text" name="codigo" maxlength="30" placeholder="Ex.: ING-2026-1A">
             </label>
             <label>Professor(a)
-              <input type="text" name="professor">
+              <select name="professorId"></select>
             </label>
             <label>Sala / Local
               <input type="text" name="sala" placeholder="Ex.: Sala 3 ou Online">
@@ -862,26 +1032,208 @@
     </div>
   </div>
 
+  <!-- ===================== MODAL: PROFESSOR ===================== -->
+  <div class="modal" id="modalProfessor" aria-hidden="true">
+    <div class="modal-box" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Novo professor</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formProfessor" novalidate>
+        <input type="hidden" name="id">
+        <fieldset>
+          <legend>Dados pessoais</legend>
+          <div class="grid">
+            <label class="col-2">Nome completo *
+              <input type="text" name="nome" maxlength="120">
+            </label>
+            <label>CPF
+              <input type="text" name="cpf" inputmode="numeric" placeholder="000.000.000-00">
+            </label>
+            <label>E-mail
+              <input type="email" name="email">
+            </label>
+            <label>Telefone / WhatsApp *
+              <input type="tel" name="telefone" placeholder="(00) 00000-0000">
+            </label>
+            <label>Status
+              <select name="status">
+                <option>Ativo</option>
+                <option>Inativo</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Perfil profissional</legend>
+          <div class="grid">
+            <label class="col-2">Formação
+              <input type="text" name="formacao" placeholder="Ex.: Licenciatura em Letras – USP">
+            </label>
+            <label>Valor hora-aula (R$)
+              <input type="number" name="valorHora" min="0" step="0.01">
+            </label>
+            <label class="col-full">Especialidades
+              <input type="text" name="especialidades" placeholder="Ex.: Inglês, conversação, preparatório TOEFL">
+            </label>
+            <label class="col-full">Observações
+              <textarea name="observacoes" rows="2"></textarea>
+            </label>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: VISUALIZAR (agenda, grade...) ===================== -->
+  <div class="modal" id="modalVisualizar" aria-hidden="true">
+    <div class="modal-box modal-grande" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo"></h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <div class="modal-corpo" id="visualizarCorpo"></div>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-light" id="btnImprimirVisualizar">🖨 Imprimir</button>
+        <button type="button" class="btn btn-primary" data-fechar>Fechar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: USUÁRIO ===================== -->
+  <div class="modal" id="modalUsuario" aria-hidden="true">
+    <div class="modal-box" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Novo usuário</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formUsuario" novalidate>
+        <input type="hidden" name="id">
+        <fieldset>
+          <legend>Identificação</legend>
+          <div class="grid">
+            <label class="col-2">Nome *
+              <input type="text" name="nome" maxlength="80">
+            </label>
+            <label>Perfil
+              <select name="perfil">
+                <option>Funcionário</option>
+                <option>Diretor</option>
+              </select>
+            </label>
+            <label>E-mail
+              <input type="email" name="email">
+            </label>
+            <label>Função
+              <select name="funcao"></select>
+            </label>
+            <label>Status
+              <select name="status">
+                <option>Ativo</option>
+                <option>Inativo</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset id="campoModulos">
+          <legend>Acesso aos módulos</legend>
+          <p class="ajuda">Ao trocar a função, os acessos sugeridos são marcados automaticamente.</p>
+          <div class="dias" id="modulosUsuario"></div>
+        </fieldset>
+        <fieldset>
+          <legend>PIN de acesso</legend>
+          <div class="grid">
+            <label>Novo PIN (4 a 8 números)
+              <input type="password" name="pin" inputmode="numeric" autocomplete="new-password" placeholder="Opcional">
+            </label>
+            <label class="col-2 checkbox-linha" id="linhaRemoverPin">
+              <input type="checkbox" id="removerPin"> Remover PIN atual
+            </label>
+          </div>
+          <p class="ajuda" id="ajudaPin">Deixe em branco para manter o PIN atual.</p>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: INSTITUIÇÃO ===================== -->
+  <div class="modal" id="modalInstituicao" aria-hidden="true">
+    <div class="modal-box" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Dados da instituição</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formInstituicao" novalidate>
+        <fieldset>
+          <p class="ajuda">Aparecem no cabeçalho das faturas, recibos e grades impressas.</p>
+          <div class="grid">
+            <label class="col-2">Nome da instituição
+              <input type="text" name="nome">
+            </label>
+            <label>CNPJ
+              <input type="text" name="cnpj" placeholder="00.000.000/0000-00">
+            </label>
+            <label>Telefone
+              <input type="tel" name="telefone">
+            </label>
+            <label>E-mail
+              <input type="email" name="email">
+            </label>
+            <label>Chave PIX
+              <input type="text" name="chavePix">
+            </label>
+            <label class="col-full">Endereço
+              <input type="text" name="endereco">
+            </label>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
   <div class="dica" id="dica" role="tooltip"></div>
 
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/graficos.js"></script>
+  <script src="js/agenda.js"></script>
+  <script src="js/modelos/usuarios.js"></script>
+  <script src="js/modelos/atividades.js"></script>
+  <script src="js/modelos/instituicao.js"></script>
+  <script src="js/sessao.js"></script>
+  <script src="js/modelos/professores.js"></script>
   <script src="js/modelos/alunos.js"></script>
   <script src="js/modelos/cursos.js"></script>
   <script src="js/modelos/turmas.js"></script>
   <script src="js/modelos/matriculas.js"></script>
   <script src="js/modelos/financeiro.js"></script>
   <script src="js/modelos/leads.js"></script>
+  <script src="js/documentos.js"></script>
+  <script src="js/telas/entrada.js"></script>
   <script src="js/telas/painel.js"></script>
   <script src="js/telas/leads.js"></script>
   <script src="js/telas/alunos.js"></script>
   <script src="js/telas/cursos.js"></script>
+  <script src="js/telas/professores.js"></script>
   <script src="js/telas/turmas.js"></script>
   <script src="js/telas/matriculas.js"></script>
   <script src="js/telas/financeiro.js"></script>
   <script src="js/telas/relatorios.js"></script>
+  <script src="js/telas/equipe.js"></script>
+  <script src="js/telas/atividades.js"></script>
   <script src="js/exemplos.js"></script>
   <script src="js/app.js"></script>
 </body>

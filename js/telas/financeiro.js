@@ -21,24 +21,30 @@ const TelaFinanceiro = {
       const acao = btn.dataset.acao;
 
       if (acao === 'pagar') this.abrirPagamento(l);
+      if (acao === 'fatura') this.emitirFatura(l);
+      if (acao === 'recibo') this.emitirRecibo(l);
       if (acao === 'editar') this.abrir(l);
       if (acao === 'estornar' && confirm('Desfazer o pagamento deste lançamento?')) {
         Financeiro.estornar(l.id);
+        Atividades.registrar('financeiro', 'Pagamento estornado', Financeiro.resumo(l), { refId: l.id });
         this.renderizar();
         Utils.toast('Pagamento estornado.');
       }
       if (acao === 'cancelar' && confirm(`Cancelar "${l.descricao}"?`)) {
         Financeiro.salvar({ id: l.id, status: 'Cancelado' });
+        Atividades.registrar('financeiro', 'Lançamento cancelado', Financeiro.resumo(l), { refId: l.id });
         this.renderizar();
         Utils.toast('Lançamento cancelado.');
       }
       if (acao === 'reativar') {
         Financeiro.salvar({ id: l.id, status: 'Pendente' });
+        Atividades.registrar('financeiro', 'Lançamento reativado', Financeiro.resumo(l), { refId: l.id });
         this.renderizar();
         Utils.toast('Lançamento reativado.');
       }
       if (acao === 'excluir' && confirm(`Excluir definitivamente "${l.descricao}"?`)) {
         Financeiro.excluir(l.id);
+        Atividades.registrar('financeiro', 'Lançamento excluído', Financeiro.resumo(l), { refId: l.id });
         this.renderizar();
         Utils.toast('Lançamento excluído.');
       }
@@ -56,7 +62,9 @@ const TelaFinanceiro = {
       if (erros.length) return Utils.mostrarErros(form, erros);
 
       const editando = Boolean(l.id);
-      Financeiro.salvar(l);
+      const salvo = Financeiro.salvar(l);
+      Atividades.registrar('financeiro', editando ? 'Lançamento editado' : 'Lançamento criado',
+        Financeiro.resumo(Financeiro.buscarPorId(salvo.id)), { refId: salvo.id });
       Utils.fecharModal('modalLancamento');
       this.renderizar();
       Utils.toast(editando ? 'Lançamento atualizado!' : 'Lançamento criado!');
@@ -72,6 +80,9 @@ const TelaFinanceiro = {
       if (erros.length) return Utils.mostrarErros(form, erros);
 
       Financeiro.pagar(p.id, p);
+      const pago = Financeiro.buscarPorId(p.id);
+      Atividades.registrar('financeiro', 'Pagamento recebido',
+        `${Financeiro.nomeAluno(pago)} – ${pago.descricao}: ${Utils.formatarMoeda(pago.valorPago)} via ${pago.formaPagamento}`, { refId: pago.id });
       Utils.fecharModal('modalPagamento');
       App.renderizarAtual();
       Utils.toast('Pagamento registrado!');
@@ -95,6 +106,20 @@ const TelaFinanceiro = {
     Utils.abrirModal('modalPagamento');
   },
 
+  emitirFatura(l) {
+    const primeira = !l.numeroFatura;
+    const fatura = Financeiro.emitirFatura(l.id);
+    Atividades.registrar('financeiro', 'Fatura emitida',
+      `Nº ${String(fatura.numeroFatura).padStart(6, '0')} – ${Financeiro.resumo(fatura)}${primeira ? '' : ' (2ª via)'}`, { refId: l.id });
+    Utils.imprimir(`Fatura ${fatura.numeroFatura}`, Documentos.fatura(fatura));
+    this.renderizar();
+  },
+
+  emitirRecibo(l) {
+    Atividades.registrar('financeiro', 'Recibo emitido', Financeiro.resumo(l), { refId: l.id });
+    Utils.imprimir('Recibo', Documentos.recibo(l));
+  },
+
   listaFiltrada() {
     return Financeiro.filtrar($('buscaFinanceiro').value, $('filtroMesFinanceiro').value,
       $('filtroSituacaoFinanceiro').value);
@@ -103,9 +128,11 @@ const TelaFinanceiro = {
   acoes(l, situacao) {
     const b = (acao, icone, titulo) =>
       `<button class="btn-icon" data-acao="${acao}" data-id="${l.id}" title="${titulo}">${icone}</button>`;
-    if (situacao === 'Pago') return b('estornar', '↩️', 'Desfazer pagamento');
+    if (situacao === 'Pago') return b('recibo', '🧾', 'Imprimir recibo') + b('estornar', '↩️', 'Desfazer pagamento');
     if (situacao === 'Cancelado') return b('reativar', '♻️', 'Reativar') + b('excluir', '🗑️', 'Excluir');
-    return b('pagar', '💲', 'Registrar pagamento') + b('editar', '✏️', 'Editar') + b('cancelar', '🚫', 'Cancelar');
+    return b('pagar', '💲', 'Registrar pagamento') +
+      b('fatura', '📄', l.numeroFatura ? `Fatura Nº ${l.numeroFatura} (2ª via)` : 'Emitir fatura') +
+      b('editar', '✏️', 'Editar') + b('cancelar', '🚫', 'Cancelar');
   },
 
   renderizar() {
@@ -116,11 +143,13 @@ const TelaFinanceiro = {
       return `
       <tr>
         <td><strong>${Utils.escapar(Financeiro.nomeAluno(l))}</strong></td>
-        <td>${Utils.escapar(l.descricao)}</td>
+        <td>${Utils.escapar(l.descricao)}${l.numeroFatura
+          ? `<small>Fatura Nº ${String(l.numeroFatura).padStart(6, '0')} · ${Utils.escapar(Usuarios.nome(l.faturaEmitidaPor))}</small>` : ''}</td>
         <td>${Utils.formatarData(l.vencimento)}</td>
         <td>${Utils.formatarMoeda(l.valor)}</td>
         <td>${l.status === 'Pago'
-          ? `${Utils.formatarData(l.dataPagamento)}<small>${Utils.formatarMoeda(l.valorPago)} · ${Utils.escapar(l.formaPagamento)}</small>`
+          ? `${Utils.formatarData(l.dataPagamento)}<small>${Utils.formatarMoeda(l.valorPago)} · ${Utils.escapar(l.formaPagamento)}</small>${
+            l.recebidoPor ? `<small>por ${Utils.escapar(Usuarios.nome(l.recebidoPor))}</small>` : ''}`
           : '-'}</td>
         <td>${Utils.badge(situacao)}</td>
         <td class="acoes">${this.acoes(l, situacao)}</td>

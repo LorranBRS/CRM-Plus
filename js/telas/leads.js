@@ -10,6 +10,7 @@ const TelaLeads = {
     $('buscaLeads').addEventListener('input', () => this.renderizar());
     $('filtroOrigemLeads').addEventListener('change', () => this.renderizar());
     $('filtroCursoLeads').addEventListener('change', () => this.renderizar());
+    $('filtroResponsavelLeads').addEventListener('change', () => this.renderizar());
     form.elements.telefone.addEventListener('input', (e) => { e.target.value = Utils.mascaraTelefone(e.target.value); });
 
     // Clique no card abre o lead; setas movem de etapa (funciona no celular)
@@ -73,14 +74,17 @@ const TelaLeads = {
 
   abrir(lead = null) {
     const form = $('formLead');
+    form.elements.responsavelId.innerHTML = Utils.opcoes(
+      Usuarios.ativos().filter((u) => u.perfil === 'Diretor' || (u.modulos || []).includes('leads') || u.id === lead?.responsavelId),
+      { valor: (u) => u.id, texto: (u) => u.nome, vazio: 'Sem responsável' });
     form.elements.cursoId.innerHTML = Utils.opcoes(
       Cursos.listar().filter((c) => c.status === 'Ativo' || c.id === lead?.cursoId),
       { valor: (c) => c.id, texto: (c) => c.nome, vazio: 'Não definido' });
 
-    Utils.preencherForm(form, lead || { etapa: 'Novo', proximoContato: Utils.hoje() });
+    Utils.preencherForm(form, lead || { etapa: 'Novo', proximoContato: Utils.hoje(), responsavelId: Sessao.idAtual() });
     $('novaNotaLead').value = '';
     $('historicoLead').innerHTML = (lead?.historico || []).slice().reverse().map((h) => `
-      <li><small>${new Date(h.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</small>
+      <li><small>${Utils.formatarDataHora(h.data)}${h.usuarioId ? ` · ${Utils.escapar(Usuarios.nome(h.usuarioId))}` : ''}</small>
         ${Utils.escapar(h.texto)}</li>`).join('') || '<li class="graf-vazio">Sem interações ainda.</li>';
 
     $('btnConverterLead').hidden = !lead || Boolean(lead.alunoId);
@@ -103,6 +107,7 @@ const TelaLeads = {
       aposSalvar: (aluno) => {
         const atual = Leads.buscarPorId(lead.id);
         Leads.salvarComNota({ ...atual, etapa: 'Matriculado', alunoId: aluno.id }, 'Convertido em aluno.');
+        Atividades.registrar('leads', 'Lead convertido', `${lead.nome} virou aluno`, { refId: lead.id });
         location.hash = '#matriculas';
         TelaMatriculas.abrir(null, { alunoId: aluno.id, cursoId: lead.cursoId });
         Utils.toast('Aluno criado! Agora conclua a matrícula.');
@@ -117,7 +122,13 @@ const TelaLeads = {
     sel.value = atual;
     if (sel.selectedIndex < 0) sel.value = '';
 
-    const lista = Leads.filtrar($('buscaLeads').value, $('filtroOrigemLeads').value, sel.value);
+    const selResp = $('filtroResponsavelLeads');
+    const respAtual = selResp.value;
+    selResp.innerHTML = Utils.opcoes(Usuarios.ativos(), { valor: (u) => u.id, texto: (u) => u.nome, vazio: 'Todos os responsáveis' });
+    selResp.value = respAtual;
+    if (selResp.selectedIndex < 0) selResp.value = '';
+
+    const lista = Leads.filtrar($('buscaLeads').value, $('filtroOrigemLeads').value, sel.value, selResp.value);
     const hoje = Utils.hoje();
 
     $('kanban').innerHTML = Leads.ETAPAS.map((etapa, i) => {
@@ -133,6 +144,8 @@ const TelaLeads = {
               <small>📱 ${Utils.escapar(l.telefone)}</small>
               <div class="lead-rodape">
                 <span class="tag-origem">${Utils.escapar(l.origem)}</span>
+                ${Leads.nomeResponsavel(l) ? `<span class="avatar avatar-mini" title="Responsável: ${Utils.escapar(Leads.nomeResponsavel(l))}">${
+                  Utils.escapar(Usuarios.iniciais(Leads.nomeResponsavel(l)))}</span>` : ''}
                 ${l.proximoContato && Leads.emAberto(l) ? `<span class="${l.proximoContato < hoje ? 'texto-perigo' : 'texto-suave'}"
                   title="Próximo contato">📅 ${Utils.formatarData(l.proximoContato).slice(0, 5)}</span>` : ''}
               </div>

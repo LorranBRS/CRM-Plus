@@ -12,7 +12,16 @@ const Cursos = {
       duracaoMeses: numero(dados.duracaoMeses),
       mensalidade: numero(dados.mensalidade),
       taxaMatricula: numero(dados.taxaMatricula),
+      grade: (dados.grade || []).map((g) => ({ ...g, cargaHoraria: numero(g.cargaHoraria) })),
     };
+  },
+
+  cargaDaGrade(curso) {
+    return (curso.grade || []).reduce((s, g) => s + Number(g.cargaHoraria || 0), 0);
+  },
+
+  nomeCoordenador(curso) {
+    return Professores.nome(curso.coordenadorId);
   },
 
   validar(curso) {
@@ -26,6 +35,10 @@ const Cursos = {
     if (curso.codigo && this.listar().some((c) => c.id !== curso.id && c.codigo === curso.codigo)) {
       erros.push({ campo: 'codigo', msg: 'Já existe um curso com este código.' });
     }
+    (curso.grade || []).forEach((g, i) => {
+      if (!g.nome) erros.push({ campo: 'grade', msg: `Grade: informe o nome do módulo ${i + 1}.` });
+      else if (!(g.cargaHoraria > 0)) erros.push({ campo: 'grade', msg: `Grade: informe a carga horária de "${g.nome}".` });
+    });
     return erros;
   },
 
