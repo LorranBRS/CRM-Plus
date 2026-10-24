@@ -37,10 +37,43 @@ const TelaEquipe = {
       this.salvar();
     });
 
+    // ---------- Identidade visual ----------
+    $('coresSugeridas').innerHTML = this.CORES.map((c) =>
+      `<button type="button" class="cor-sugerida" style="background:${c}" data-cor="${c}" title="${c}"></button>`).join('');
+    $('coresSugeridas').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-cor]');
+      if (!btn) return;
+      $('inputCor').value = btn.dataset.cor;
+      this.previaCor();
+    });
+    $('inputCor').addEventListener('input', () => this.previaCor());
+    $('inputLogo').addEventListener('change', async (e) => {
+      const arquivo = e.target.files[0];
+      e.target.value = '';
+      if (!arquivo) return;
+      try {
+        this.logoTemp = await Utils.lerImagem(arquivo, 320, 'image/png');
+        this.previaLogo();
+      } catch (erro) {
+        Utils.toast(erro.message, 'erro');
+      }
+    });
+    $('btnRemoverLogo').addEventListener('click', () => { this.logoTemp = ''; this.previaLogo(); });
+    // Cancelar volta para a cor salva
+    $('modalInstituicao').addEventListener('click', (e) => {
+      if (e.target === $('modalInstituicao') || e.target.closest('[data-fechar]')) Tema.aplicarCor();
+    });
+
     $('formInstituicao').addEventListener('submit', (e) => {
       e.preventDefault();
-      Instituicao.salvar(Utils.lerForm($('formInstituicao')));
-      Atividades.registrar('equipe', 'Instituição atualizada', 'Dados da instituição atualizados');
+      const dados = Utils.lerForm($('formInstituicao'));
+      const media = Number(dados.mediaMinima || 7);
+      const freq = Number(dados.frequenciaMinima || 75);
+      if (media < 0 || media > 10) return Utils.toast('A média mínima deve ficar entre 0 e 10.', 'erro');
+      if (freq < 0 || freq > 100) return Utils.toast('A frequência mínima deve ficar entre 0 e 100%.', 'erro');
+      Instituicao.salvar({ ...dados, logo: this.logoTemp });
+      Atividades.registrar('equipe', 'Instituição atualizada', 'Dados e identidade visual da instituição atualizados');
+      App.atualizarMarca();
       Utils.fecharModal('modalInstituicao');
       Utils.toast('Dados da instituição salvos!');
     });
@@ -95,9 +128,29 @@ const TelaEquipe = {
     else this.renderizar();
   },
 
+  // Cores sugeridas para a escola (todas com bom contraste com texto branco)
+  CORES: ['#4f46e5', '#2563eb', '#0f766e', '#15803d', '#b45309', '#be123c', '#7e22ce', '#334155'],
+
   abrirInstituicao() {
-    Utils.preencherForm($('formInstituicao'), Instituicao.ler());
+    const dados = Instituicao.ler();
+    Utils.preencherForm($('formInstituicao'), { ...dados, corPrimaria: dados.corPrimaria || Tema.COR_PADRAO });
+    this.logoTemp = dados.logo || '';
+    this.previaLogo();
+    this.previaCor();
     Utils.abrirModal('modalInstituicao');
+  },
+
+  previaLogo() {
+    const el = $('previewLogo');
+    el.innerHTML = this.logoTemp ? `<img src="${this.logoTemp}" alt="Logo">` : Utils.escapar(Usuarios.iniciais(Instituicao.ler().nome || 'C P'));
+    $('btnRemoverLogo').hidden = !this.logoTemp;
+  },
+
+  // Mostra a cor escolhida no sistema antes de salvar
+  previaCor() {
+    document.documentElement.style.setProperty('--primaria', $('inputCor').value);
+    $('coresSugeridas').querySelectorAll('[data-cor]').forEach((b) =>
+      b.classList.toggle('ativo', b.dataset.cor.toLowerCase() === $('inputCor').value.toLowerCase()));
   },
 
   renderizar() {

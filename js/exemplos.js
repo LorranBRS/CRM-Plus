@@ -21,6 +21,21 @@ const Exemplos = {
     return (data > new Date() ? new Date(Date.now() - (seq % 50 + 5) * 60000) : data).toISOString();
   },
 
+  // Logo de exemplo (capelo de formatura) em SVG
+  logo() {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="28" fill="#4f46e5"/>
+      <path d="M60 22 103 42 60 62 17 42Z" fill="#fff"/><path d="M35 52v17c0 10 50 10 50 0V52L60 64Z" fill="#c7d2fe"/>
+      <path d="M97 45v22" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/><circle cx="97" cy="70" r="5" fill="#fde68a"/>
+      <text x="60" y="104" font-family="Arial,sans-serif" font-size="19" font-weight="700" fill="#fff" text-anchor="middle">FUTURO</text></svg>`;
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  },
+
+  // Número pseudoaleatório fixo (a demonstração fica sempre igual)
+  sorteio(semente) {
+    const x = Math.sin(semente * 9301 + 49297) * 233280;
+    return x - Math.floor(x);
+  },
+
   // Cria (ou reaproveita pelo nome) os funcionários de exemplo
   equipe() {
     const existentes = Usuarios.listar();
@@ -55,7 +70,8 @@ const Exemplos = {
       Instituicao.salvar({
         nome: 'Escola Futuro Cursos Livres', cnpj: '12.345.678/0001-90', telefone: '(11) 3333-4444',
         email: 'contato@escolafuturo.com.br', endereco: 'Rua das Flores, 100 – Centro – São Paulo/SP',
-        chavePix: 'financeiro@escolafuturo.com.br',
+        chavePix: 'financeiro@escolafuturo.com.br', mediaMinima: 7, frequenciaMinima: 75,
+        responsavelCertificado: eq.diretor.nome, logo: this.logo(),
       });
     }
 
@@ -129,7 +145,7 @@ const Exemplos = {
     // ---------- Turmas ----------
     const turma = (dados, i) => {
       const t = Turmas.salvar({ observacoes: '', criadoPor: eq.ana.id, ...dados });
-      log(eq.ana, 'turmas', 'Turma cadastrada', `${t.codigo} – ${Turmas.nomeCurso(t)} (prof. ${Professores.nome(t.professorId)})`,
+      log(eq.ana, 'turmas', 'Turma cadastrada', `${t.codigo} – ${Turmas.nomeCurso(t)}${t.professorId ? ` (prof. ${Professores.nome(t.professorId)})` : ''}`,
         this.quando(Utils.somarDias(t.dataInicio, -40), i), t.id);
       return t;
     };
@@ -180,6 +196,10 @@ const Exemplos = {
     matricular(alunos[4], tIngB, ingles, 20);
     matricular(alunos[7], tAdm, adm, 25);
     const cancelada = matricular(alunos[3], tWeb, web, 1);
+
+    // Turma já concluída (para demonstrar notas finais e certificados)
+    const tInfoA = turma({ cursoId: info.id, codigo: 'INFO-TARDE-A', professorId: anaLima.id, sala: 'Laboratório 2', dias: ['Ter', 'Qui'], turno: 'Tarde', horaInicio: '14:00', horaFim: '16:00', dataInicio: mes(-7, 3), dataFim: mes(-3, 26), vagas: 10, status: 'Concluída' }, 7);
+    const concluidas = [2, 8, 11].map((i) => matricular(alunos[i], tInfoA, info, 4 + i));
 
     // ---------- Faturas e pagamentos ----------
     // Tudo que já venceu foi pago (pela Patrícia ou pela Ana), exceto alguns atrasos
@@ -241,6 +261,80 @@ const Exemplos = {
     [[4, 'Instagram', ingles, biancaId], [7, 'Indicação', adm, diegoId], [12, 'Google', web, diegoId], [13, 'Site', info, biancaId]].forEach(([i, origem, c, resp]) =>
       lead({ nome: alunos[i].nome, telefone: alunos[i].telefone, email: alunos[i].email, origem, cursoId: c.id, etapa: 'Matriculado',
         proximoContato: '', alunoId: alunos[i].id, responsavelId: resp, criadoNoDia: -30 }, ['Primeiro contato.', 'Visita realizada.', 'Proposta aceita.', 'Matrícula efetuada.']));
+
+    // ---------- Acadêmico: chamadas e notas ----------
+    const faltosos = [alunos[6].id, alunos[11].id];
+    const chamadas = (t) => {
+      const curso = Cursos.buscarPorId(t.cursoId);
+      const ate = t.status === 'Concluída' ? t.dataFim : Utils.somarDias(hoje, -1);
+      const dias = Academico.diasDeAula(t, ate);
+      if (t.status !== 'Concluída') dias.pop(); // deixa a última aula sem chamada
+      dias.forEach((d, n) => {
+        const presencas = {};
+        Academico.alunosDaTurma(t.id).filter(({ matricula }) => matricula.dataMatricula <= d).forEach(({ aluno }, i) => {
+          const r = this.sorteio(n * 31 + i * 7 + t.codigo.length);
+          presencas[aluno.id] = faltosos.includes(aluno.id) ? (r < 0.4 ? 'F' : 'P') : (r < 0.06 ? 'F' : r < 0.09 ? 'J' : 'P');
+        });
+        const grade = curso.grade || [];
+        const modulo = grade[Math.min(grade.length - 1, Math.floor((n / Math.max(dias.length, 1)) * grade.length))];
+        const quem = n % 2 ? eq.ana : eq.marcos;
+        Frequencias.salvarAula({ turmaId: t.id, data: d, conteudo: modulo ? `${modulo.nome} – aula ${n + 1}` : `Aula ${n + 1}`, presencas },
+          { usuarioId: quem.id });
+        if (d >= dia(-20)) {
+          const faltas = Object.values(presencas).filter((v) => v === 'F').length;
+          log(quem, 'academico', 'Chamada registrada', `${t.codigo} – ${Utils.formatarData(d)}: ${Object.keys(presencas).length - faltas} presente(s), ${faltas} falta(s)`,
+            this.quando(d, n + 20), t.id);
+        }
+      });
+    };
+    const notas = (t, modulosFeitos, reprovados = []) => {
+      const valores = {};
+      Academico.alunosDaTurma(t.id).forEach(({ aluno }, i) => {
+        valores[aluno.id] = {};
+        Notas.avaliacoes(t).slice(0, modulosFeitos).forEach((a, j) => {
+          const r = this.sorteio(i * 17 + j * 5 + t.codigo.length);
+          valores[aluno.id][a.id] = Math.round((reprovados.includes(aluno.id) ? 4 + r * 2.5 : 7 + r * 3) * 10) / 10;
+        });
+      });
+      Notas.salvarTurma(t.id, valores);
+      log(eq.marcos, 'academico', 'Notas lançadas', `${t.codigo} – ${Turmas.nomeCurso(t)}`, this.quando(dia(-6), t.codigo.length), t.id);
+    };
+    [tIng, tWeb, tInfo, tInfoA].forEach(chamadas);
+    notas(tIng, 3);
+    notas(tWeb, 2);
+    notas(tInfo, 3);
+    notas(tInfoA, 5, [alunos[11].id]);
+
+    // Turma concluída: matrículas concluídas e um certificado já emitido
+    concluidas.forEach((m) => Matriculas.salvar({ id: m.id, status: 'Concluída' }));
+    const certData = this.quando(Utils.somarDias(tInfoA.dataFim, 6), 2);
+    Matriculas.salvar({ id: concluidas[0].id, certificadoNumero: Instituicao.proximoNumeroCertificado(),
+      certificadoEmitidoEm: certData, certificadoEmitidoPor: eq.ana.id });
+    log(eq.ana, 'academico', 'Certificado emitido', `Nº 000001 – ${alunos[2].nome} – ${info.nome}`, certData, concluidas[0].id);
+
+    // ---------- Conversas de WhatsApp ----------
+    const msg = (tipo, id, direcao, texto, quando, usuario = eq.ana) => Mensagens.registrar({
+      contatoTipo: tipo, contatoId: id, direcao, texto, data: quando, usuarioId: usuario.id });
+    const ricardo = Leads.listar().find((l) => l.nome === 'Ricardo Nunes');
+    const caio = Leads.listar().find((l) => l.nome === 'Caio Antunes');
+    const joaoAtraso = Financeiro.atrasados().find((l) => l.alunoId === alunos[1].id);
+    msg('aluno', alunos[0].id, 'enviada', `Olá, Maria! 🎉 Seja muito bem-vinda ao curso ${ingles.nome} da Escola Futuro. Suas aulas na turma ING-A-NOITE serão Seg, Qua, das 19:00 às 20:40, com Carla Mendes. Qualquer dúvida, é só chamar por aqui!`, this.quando(tIng.dataInicio, 1));
+    msg('aluno', alunos[0].id, 'recebida', 'Obrigada!! Estou muito animada 😊', this.quando(tIng.dataInicio, 3));
+    if (joaoAtraso) {
+      msg('aluno', alunos[1].id, 'enviada', `Olá, João, tudo bem? Identificamos que a ${joaoAtraso.descricao.toLowerCase()} (${Utils.formatarMoeda(joaoAtraso.valor)}), com vencimento em ${Utils.formatarData(joaoAtraso.vencimento)}, ainda está em aberto. Para pagar via PIX: financeiro@escolafuturo.com.br.`, this.quando(dia(-3), 4), eq.patricia);
+      msg('aluno', alunos[1].id, 'recebida', 'Oi! Desculpa, esqueci. Vou pagar amanhã sem falta.', this.quando(dia(-3), 9), eq.patricia);
+      msg('aluno', alunos[1].id, 'enviada', 'Combinado, João! Obrigado pelo retorno. 👍', this.quando(dia(-3), 10), eq.patricia);
+    }
+    msg('aluno', alunos[6].id, 'enviada', `Olá, Juliana! Sentimos sua falta nas aulas de ${ingles.nome}. Sua frequência está abaixo do mínimo de 75%. Está tudo bem? Podemos ajudar em algo?`, this.quando(dia(-2), 5), eq.marcos);
+    msg('aluno', alunos[6].id, 'recebida', 'Oi, Marcos. Estive doente nas últimas semanas, vou levar o atestado na secretaria.', this.quando(dia(-2), 12), eq.marcos);
+    msg('aluno', alunos[2].id, 'enviada', `Parabéns, Fernanda! 🎓 Você concluiu o curso ${info.nome} e o seu certificado já está disponível na secretaria da Escola Futuro.`, certData);
+    if (ricardo) msg('lead', ricardo.id, 'enviada', `Olá, Ricardo! Aqui é Diego, da Escola Futuro. Vi seu interesse no curso ${web.nome} e quero te ajudar com todas as informações. Posso te enviar os detalhes?`, this.quando(hoje, 1), eq.diego);
+    if (caio) {
+      msg('lead', caio.id, 'enviada', `Oi, Caio! Tudo bem? Conseguiu avaliar a proposta do curso ${ingles.nome}? Estou à disposição para tirar qualquer dúvida. 😊`, this.quando(dia(-1), 2), eq.diego);
+      msg('lead', caio.id, 'recebida', 'Opa, Diego! Ainda aguardando o RH da empresa aprovar. Te aviso até sexta.', this.quando(dia(-1), 8), eq.diego);
+    }
+    msg('professor', rafael.id, 'enviada', 'Rafael, lembrete: reunião pedagógica na sexta às 18h, na sala dos professores.', this.quando(dia(-1), 6));
+    msg('professor', rafael.id, 'recebida', 'Confirmado, estarei lá!', this.quando(dia(-1), 7));
 
     // Um aluno só interessado (sem matrícula)
     Alunos.salvar({ nome: 'Fernando Dias', cpf: this.cpf(741852963), email: 'fernando@exemplo.com', telefone: '(11) 98000-1122', cidade: 'Osasco', uf: 'SP', curso: adm.nome, status: 'Interessado', nascimento: '', cep: '', endereco: '', numero: '', bairro: '', observacoes: '', criadoPor: eq.ana.id });

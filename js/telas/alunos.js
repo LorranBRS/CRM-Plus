@@ -17,6 +17,8 @@ const TelaAlunos = {
       const btn = e.target.closest('button');
       if (!btn) return;
       const aluno = Alunos.buscarPorId(btn.dataset.id);
+      if (btn.dataset.acao === 'ficha') FichaAluno.abrir(aluno.id);
+      if (btn.dataset.acao === 'whats') Mensageiro.abrir({ tipo: 'aluno', id: aluno.id });
       if (btn.dataset.acao === 'editar') this.abrir(aluno);
       if (btn.dataset.acao === 'excluir') {
         const vinculos = Matriculas.listar().some((m) => m.alunoId === aluno.id) ||
@@ -91,14 +93,17 @@ const TelaAlunos = {
 
     $('listaAlunos').innerHTML = lista.map((a) => `
       <tr>
-        <td><strong>${Utils.escapar(a.nome)}</strong>
-            <small>${Utils.escapar([a.cidade, a.uf].filter(Boolean).join(' / '))}</small></td>
+        <td><div class="celula-usuario">${App.avatar(a)}<div>
+            <button class="link link-nome" data-acao="ficha" data-id="${a.id}">${Utils.escapar(a.nome)}</button>
+            <small>${Utils.escapar([a.cidade, a.uf].filter(Boolean).join(' / '))}</small></div></div></td>
         <td>${Utils.escapar(a.cpf)}</td>
         <td>${Utils.escapar(a.telefone)}<small>${Utils.escapar(a.email)}</small></td>
         <td>${Utils.escapar(a.curso) || '-'}</td>
         <td>${Utils.badge(a.status)}</td>
         <td>${Utils.formatarData(a.criadoEm)}</td>
         <td class="acoes">
+          <button class="btn-icon" data-acao="ficha" data-id="${a.id}" title="Ficha do aluno">👁️</button>
+          <button class="btn-icon" data-acao="whats" data-id="${a.id}" title="Enviar WhatsApp">💬</button>
           <button class="btn-icon" data-acao="editar" data-id="${a.id}" title="Editar">✏️</button>
           <button class="btn-icon" data-acao="excluir" data-id="${a.id}" title="Excluir">🗑️</button>
         </td>

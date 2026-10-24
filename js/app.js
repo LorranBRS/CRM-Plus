@@ -3,10 +3,12 @@ const App = {
   TELAS: {
     painel: TelaPainel,
     leads: TelaLeads,
+    conversas: TelaConversas,
     alunos: TelaAlunos,
     cursos: TelaCursos,
     professores: TelaProfessores,
     turmas: TelaTurmas,
+    academico: TelaAcademico,
     matriculas: TelaMatriculas,
     financeiro: TelaFinanceiro,
     relatorios: TelaRelatorios,
@@ -16,8 +18,16 @@ const App = {
 
   iniciar() {
     TelaEntrada.iniciar();
+    Mensageiro.iniciar();
+    FichaAluno.iniciar();
     Object.values(this.TELAS).forEach((tela) => tela.iniciar());
     Graficos.iniciarDicas();
+    this.atualizarMarca();
+
+    // Modo claro/escuro
+    document.querySelectorAll('[data-alternar-tema]').forEach((btn) =>
+      btn.addEventListener('click', () => { Tema.alternar(); this.atualizarBotoesTema(); }));
+    this.atualizarBotoesTema();
 
     // Fechar modais: botões [data-fechar], clique fora e tecla Esc
     document.querySelectorAll('.modal').forEach((modal) => {
@@ -26,7 +36,9 @@ const App = {
       });
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') document.querySelectorAll('.modal.aberto').forEach((m) => m.classList.remove('aberto'));
+      if (e.key !== 'Escape') return;
+      document.querySelectorAll('.modal.aberto').forEach((m) => m.classList.remove('aberto'));
+      Tema.aplicarCor(); // desfaz a prévia de cor não salva
     });
 
     // Menu lateral no celular
@@ -58,6 +70,7 @@ const App = {
 
     $('entrada').hidden = true;
     $('sistema').hidden = false;
+    this.atualizarMarca();
     $('usuarioAvatar').textContent = Usuarios.iniciais(u.nome);
     $('usuarioNome').textContent = u.nome;
     $('usuarioPerfil').textContent = Usuarios.descricao(u);
@@ -101,6 +114,32 @@ const App = {
   renderizarAtual() {
     $('btnExemplos').hidden = !Sessao.ehDiretor() || !Storage.estaVazio();
     this.TELAS[this.telaAtual()].renderizar();
+  },
+
+  atualizarBotoesTema() {
+    const escuro = Tema.atual() === 'escuro';
+    document.querySelectorAll('[data-alternar-tema]').forEach((btn) => {
+      btn.textContent = btn.classList.contains('btn-tema-entrada') ? (escuro ? '☀️' : '🌙') : (escuro ? '☀️ Modo claro' : '🌙 Modo escuro');
+    });
+  },
+
+  // Logo, nome e cor da escola no menu e na tela de entrada
+  atualizarMarca() {
+    const i = Instituicao.ler();
+    Tema.aplicarCor();
+    document.querySelectorAll('[data-marca-logo]').forEach((el) => {
+      el.classList.toggle('com-logo', Boolean(i.logo));
+      el.innerHTML = i.logo ? `<img src="${i.logo}" alt="">` : Utils.escapar(Usuarios.iniciais(i.nome || 'C P'));
+    });
+    document.querySelectorAll('[data-marca-nome]').forEach((el) => { el.textContent = i.nome || 'CRM Plus'; });
+    document.querySelectorAll('[data-marca-sub]').forEach((el) => { el.textContent = i.nome ? 'CRM Plus · Gestão Educacional' : 'Gestão Educacional'; });
+  },
+
+  // Avatar com foto (se houver) ou iniciais
+  avatar(pessoa, classe = '', id = '') {
+    const e = Utils.escapar;
+    return `<span class="avatar ${classe} ${pessoa?.foto ? 'com-foto' : ''}" ${id ? `id="${id}"` : ''} title="${e(pessoa?.nome || '')}">${
+      pessoa?.foto ? `<img src="${pessoa.foto}" alt="">` : e(Usuarios.iniciais(pessoa?.nome))}</span>`;
   },
 
   // Janela de visualização (agenda do professor, grade do curso...)

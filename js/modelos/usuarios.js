@@ -8,10 +8,12 @@ const Usuarios = {
   MODULOS: [
     { id: 'painel', nome: 'Painel', icone: '🏠' },
     { id: 'leads', nome: 'Leads / Funil', icone: '🎯' },
+    { id: 'conversas', nome: 'Conversas', icone: '💬' },
     { id: 'alunos', nome: 'Alunos', icone: '👩‍🎓' },
     { id: 'cursos', nome: 'Cursos', icone: '📚' },
     { id: 'professores', nome: 'Professores', icone: '👨‍🏫' },
     { id: 'turmas', nome: 'Turmas', icone: '🏫' },
+    { id: 'academico', nome: 'Acadêmico', icone: '🎓' },
     { id: 'matriculas', nome: 'Matrículas', icone: '📝' },
     { id: 'financeiro', nome: 'Financeiro', icone: '💰' },
     { id: 'relatorios', nome: 'Relatórios', icone: '📊' },
@@ -21,10 +23,10 @@ const Usuarios = {
 
   // Acessos sugeridos para cada função (o diretor pode ajustar)
   FUNCOES: {
-    'Secretaria': ['painel', 'alunos', 'cursos', 'professores', 'turmas', 'matriculas'],
-    'Comercial': ['painel', 'leads', 'alunos', 'cursos', 'turmas', 'matriculas'],
-    'Financeiro': ['painel', 'alunos', 'matriculas', 'financeiro', 'relatorios'],
-    'Coordenação pedagógica': ['painel', 'alunos', 'cursos', 'professores', 'turmas'],
+    'Secretaria': ['painel', 'conversas', 'alunos', 'cursos', 'professores', 'turmas', 'academico', 'matriculas'],
+    'Comercial': ['painel', 'leads', 'conversas', 'alunos', 'cursos', 'turmas', 'matriculas'],
+    'Financeiro': ['painel', 'conversas', 'alunos', 'matriculas', 'financeiro', 'relatorios'],
+    'Coordenação pedagógica': ['painel', 'conversas', 'alunos', 'cursos', 'professores', 'turmas', 'academico'],
     'Outro': ['painel'],
   },
 

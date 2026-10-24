@@ -14,6 +14,7 @@ const TelaProfessores = {
       if (!btn) return;
       const p = Professores.buscarPorId(btn.dataset.id);
       if (btn.dataset.acao === 'agenda') this.verAgenda(p);
+      if (btn.dataset.acao === 'whats') Mensageiro.abrir({ tipo: 'professor', id: p.id });
       if (btn.dataset.acao === 'editar') this.abrir(p);
       if (btn.dataset.acao === 'excluir') {
         if (Professores.emUso(p.id)) {
@@ -91,6 +92,7 @@ const TelaProfessores = {
         <td>${Utils.formatarHoras(Professores.horasSemana(p.id))}</td>
         <td>${Utils.badge(p.status || 'Ativo')}</td>
         <td class="acoes">
+          <button class="btn-icon" data-acao="whats" data-id="${p.id}" title="Enviar WhatsApp">💬</button>
           <button class="btn-icon" data-acao="agenda" data-id="${p.id}" title="Agenda semanal">📅</button>
           <button class="btn-icon" data-acao="editar" data-id="${p.id}" title="Editar">✏️</button>
           <button class="btn-icon" data-acao="excluir" data-id="${p.id}" title="Excluir">🗑️</button>

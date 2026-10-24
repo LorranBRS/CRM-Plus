@@ -5,7 +5,8 @@ const Documentos = {
     const e = Utils.escapar;
     return `
       <header class="doc-cabecalho">
-        <div>
+        ${i.logo ? `<img class="doc-logo" src="${i.logo}" alt="">` : ''}
+        <div class="doc-instituicao">
           <h1>${e(i.nome || 'Instituição de Ensino')}</h1>
           <p>${e([i.cnpj && `CNPJ ${i.cnpj}`, i.telefone, i.email].filter(Boolean).join(' · '))}</p>
           <p>${e(i.endereco || '')}</p>
@@ -64,6 +65,84 @@ const Documentos = {
         <p>${e(Instituicao.nome())}<br>${e(Usuarios.nome(l.recebidoPor) || '')}</p>
       </div>
       <footer class="doc-rodape">Emitido em ${Utils.formatarDataHora(new Date().toISOString())}</footer>`;
+  },
+
+  // Certificado de conclusão (página 1) + conteúdo programático (página 2)
+  certificado(m) {
+    const e = Utils.escapar;
+    const i = Instituicao.ler();
+    const aluno = Alunos.buscarPorId(m.alunoId);
+    const turma = Turmas.buscarPorId(m.turmaId);
+    const curso = Cursos.buscarPorId(turma.cursoId);
+    const freq = Frequencias.resumoAluno(turma.id, aluno.id);
+    const media = Notas.media(turma, aluno.id);
+    const codigo = `CP-${(m.certificadoEmitidoEm || '').slice(0, 4)}-${String(m.certificadoNumero).padStart(6, '0')}`;
+    const cidade = (i.endereco || '').split('–').pop().trim() || '';
+    const dataExtenso = new Date(m.certificadoEmitidoEm).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const coordenador = Cursos.nomeCoordenador(curso);
+    return `
+      <section class="cert">
+        <div class="cert-moldura">
+          ${i.logo ? `<img class="cert-logo" src="${i.logo}" alt="">` : ''}
+          <p class="cert-escola">${e(i.nome || 'Instituição de Ensino')}</p>
+          <h1 class="cert-titulo">Certificado</h1>
+          <p class="cert-sub">de conclusão de curso</p>
+          <p class="cert-texto">Certificamos que <strong class="cert-nome">${e(aluno.nome)}</strong>
+            inscrito(a) no CPF ${e(aluno.cpf)}, concluiu com aproveitamento o curso
+            <strong>${e(curso.nome)}</strong>, na modalidade ${e((curso.modalidade || '').toLowerCase())},
+            com carga horária de <strong>${curso.cargaHoraria} horas</strong>, realizado no período de
+            ${Utils.formatarData(turma.dataInicio)} a ${Utils.formatarData(turma.dataFim)}${
+              freq.aulas ? `, com frequência de ${freq.percentual}%` : ''}${
+              media !== null ? ` e média final ${media.toFixed(1).replace('.', ',')}` : ''}.</p>
+          <p class="cert-data">${e(cidade ? `${cidade}, ` : '')}${dataExtenso}.</p>
+          <div class="cert-assinaturas">
+            <div><span></span><p>${e(i.responsavelCertificado || 'Direção')}<br><small>Direção</small></p></div>
+            <div><span></span><p>${e(coordenador || 'Coordenação')}<br><small>Coordenação do curso</small></p></div>
+          </div>
+          <p class="cert-codigo">Certificado Nº ${String(m.certificadoNumero).padStart(6, '0')} · Código de verificação ${codigo}</p>
+        </div>
+      </section>
+      <section class="cert-verso">
+        <h2>Conteúdo programático – ${e(curso.nome)}</h2>
+        <table class="doc-tabela">
+          <thead><tr><th>#</th><th>Módulo / disciplina</th><th>Professor(a)</th><th>Carga</th><th>Nota</th></tr></thead>
+          <tbody>${(curso.grade || []).map((g, n) => `
+            <tr><td>${n + 1}</td><td><strong>${e(g.nome)}</strong>${g.ementa ? `<br><small>${e(g.ementa)}</small>` : ''}</td>
+              <td>${e(Professores.nome(g.professorId) || '-')}</td><td>${g.cargaHoraria}h</td>
+              <td>${Notas.notasDoAluno(turma.id, aluno.id)[g.id] ?? '-'}</td></tr>`).join('') ||
+            `<tr><td colspan="5">${e(curso.descricao || 'Conteúdo conforme plano do curso.')}</td></tr>`}</tbody>
+          <tfoot><tr><td colspan="3">Carga horária total</td><td colspan="2">${curso.cargaHoraria}h</td></tr></tfoot>
+        </table>
+        <p class="doc-rodape">Turma ${e(turma.codigo)} · Professor(a) responsável: ${e(Turmas.nomeProfessor(turma) || '-')}
+          · Registro ${codigo}</p>
+      </section>`;
+  },
+
+  // Ficha cadastral do aluno para impressão
+  fichaAluno(aluno) {
+    const e = Utils.escapar;
+    const matriculas = Matriculas.listar().filter((m) => m.alunoId === aluno.id);
+    return `
+      ${this.cabecalho('FICHA DO ALUNO')}
+      <div class="doc-ficha">
+        ${aluno.foto ? `<img class="doc-foto" src="${aluno.foto}" alt="">` : ''}
+        ${this.dadosAluno(aluno)}
+      </div>
+      <section class="doc-bloco"><h3>Matrículas</h3>
+        <table class="doc-tabela">
+          <thead><tr><th>Turma</th><th>Curso</th><th>Data</th><th>Situação</th><th>Frequência</th><th>Média</th></tr></thead>
+          <tbody>${matriculas.map((m) => {
+            const t = Turmas.buscarPorId(m.turmaId);
+            const f = t ? Frequencias.resumoAluno(t.id, aluno.id) : null;
+            const media = t ? Notas.media(t, aluno.id) : null;
+            return `<tr><td>${e(t?.codigo || '-')}</td><td>${e(t ? Turmas.nomeCurso(t) : '-')}</td>
+              <td>${Utils.formatarData(m.dataMatricula)}</td><td>${e(m.status)}</td>
+              <td>${f?.aulas ? `${f.percentual}%` : '-'}</td><td>${media !== null ? media.toFixed(1) : '-'}</td></tr>`;
+          }).join('') || '<tr><td colspan="6">Nenhuma matrícula.</td></tr>'}</tbody>
+        </table>
+      </section>
+      ${aluno.observacoes ? `<section class="doc-bloco"><h3>Observações</h3><p>${e(aluno.observacoes)}</p></section>` : ''}
+      <footer class="doc-rodape">Impresso em ${Utils.formatarDataHora(new Date().toISOString())}</footer>`;
   },
 
   grade(curso) {

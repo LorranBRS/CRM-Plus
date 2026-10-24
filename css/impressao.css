@@ -35,3 +35,37 @@ small { color: #6b7280; }
 .resumo-professor { display: flex; gap: 24px; margin: 8px 0 16px; }
 .titulo-secao { margin-top: 16px; }
 .graf-vazio { color: #9ca3af; }
+
+/* Logo no cabeçalho */
+.doc-cabecalho { align-items: center; border-bottom-color: var(--cor, #4f46e5); }
+.doc-logo { width: 64px; height: 64px; object-fit: contain; }
+.doc-instituicao { flex: 1; }
+h2 { color: var(--cor, #4f46e5); }
+.doc-ficha { display: flex; gap: 20px; align-items: flex-start; }
+.doc-foto { width: 110px; height: 130px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; }
+
+/* ===== Certificado (A4 paisagem) ===== */
+@page { margin: 12mm; }
+body.certificado { max-width: none; padding: 0; }
+body.certificado .cert { height: 180mm; display: flex; page-break-after: always; break-after: page; }
+.cert-moldura {
+  flex: 1; border: 3px solid var(--cor, #4f46e5); outline: 1px solid var(--cor, #4f46e5); outline-offset: -10px;
+  border-radius: 6px; padding: 18mm 22mm 10mm; text-align: center; display: flex; flex-direction: column; align-items: center;
+  background: radial-gradient(circle at top, color-mix(in srgb, var(--cor, #4f46e5) 6%, #fff), #fff 60%);
+}
+.cert-logo { height: 58px; object-fit: contain; margin-bottom: 6px; }
+.cert-escola { font-size: 15px; letter-spacing: 3px; text-transform: uppercase; color: #4b5563; }
+.cert-titulo { font-family: Georgia, "Times New Roman", serif; font-size: 54px; letter-spacing: 6px; text-transform: uppercase; color: var(--cor, #4f46e5); margin-top: 10px; }
+.cert-sub { font-size: 15px; letter-spacing: 2px; text-transform: uppercase; color: #6b7280; margin-bottom: 22px; }
+.cert-texto { font-size: 17px; line-height: 1.8; max-width: 210mm; }
+.cert-nome { display: block; font-family: Georgia, "Times New Roman", serif; font-size: 30px; margin: 6px 0; color: #111827; }
+.cert-data { margin-top: 18px; font-size: 15px; }
+.cert-assinaturas { display: flex; gap: 40mm; margin-top: auto; padding-top: 18px; }
+.cert-assinaturas div { width: 70mm; }
+.cert-assinaturas span { display: block; border-top: 1px solid #111827; margin-bottom: 6px; }
+.cert-codigo { font-size: 10px; color: #9ca3af; margin-top: 12px; }
+.cert-verso { padding: 8mm 4mm; }
+/* Página nomeada: só o certificado sai em paisagem */
+@page certificado { size: A4 landscape; margin: 10mm; }
+.cert { page: certificado; }
+@media print { body.certificado { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

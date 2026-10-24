@@ -6,6 +6,11 @@ const TelaPainel = {
       if (item) TelaLeads.abrir(Leads.buscarPorId(item.dataset.lead));
     });
     $('listaAtrasos').addEventListener('click', (e) => {
+      const whats = e.target.closest('[data-whats]');
+      if (whats) {
+        const l = Financeiro.buscarPorId(whats.dataset.whats);
+        return Mensageiro.abrir({ tipo: 'aluno', id: l.alunoId, lancamento: l, modelo: 'Cobrança em atraso' });
+      }
       const item = e.target.closest('[data-lancamento]');
       if (item) TelaFinanceiro.abrirPagamento(Financeiro.buscarPorId(item.dataset.lancamento));
     });
@@ -79,6 +84,7 @@ const TelaPainel = {
         <div><strong>${Utils.escapar(Financeiro.nomeAluno(l))}</strong>
           <small>${Utils.escapar(l.descricao)} · venceu ${Utils.formatarData(l.vencimento)}</small></div>
         <span class="texto-perigo">${Utils.formatarMoeda(l.valor)}</span>
+        <button class="btn-icon" data-whats="${l.id}" title="Cobrar por WhatsApp">💬</button>
       </li>`).join('') + (atrasos.length > 6
         ? `<li><a href="#financeiro" class="link-mais" id="verTodosAtrasos">Ver todos os ${atrasos.length} lançamentos em atraso →</a></li>` : '')
       : '<li class="graf-vazio">Nenhuma mensalidade em atraso. 🎉</li>';

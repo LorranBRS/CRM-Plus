@@ -27,6 +27,7 @@ const TelaMatriculas = {
       if (!btn) return;
       const m = Matriculas.buscarPorId(btn.dataset.id);
       if (btn.dataset.acao === 'editar') this.abrir(m);
+      if (btn.dataset.acao === 'ficha') FichaAluno.abrir(m.alunoId);
       if (btn.dataset.acao === 'financeiro') {
         $('buscaFinanceiro').value = Matriculas.nomeAluno(m);
         $('filtroMesFinanceiro').value = '';
@@ -147,7 +148,7 @@ const TelaMatriculas = {
       const fin = Matriculas.resumoFinanceiro(m.id);
       return `
       <tr>
-        <td><strong>${Utils.escapar(Matriculas.nomeAluno(m))}</strong><small>${Utils.escapar(aluno?.cpf)}</small></td>
+        <td><button class="link link-nome" data-acao="ficha" data-id="${m.id}">${Utils.escapar(Matriculas.nomeAluno(m))}</button><small>${Utils.escapar(aluno?.cpf)}</small></td>
         <td>${Utils.escapar(turma?.codigo || '(turma removida)')}<small>${Utils.escapar(turma ? Turmas.nomeCurso(turma) : '')}</small></td>
         <td>${Utils.formatarData(m.dataMatricula)}</td>
         <td>${Utils.escapar(Usuarios.nome(m.criadoPor)) || '-'}</td>

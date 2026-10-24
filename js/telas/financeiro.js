@@ -21,6 +21,12 @@ const TelaFinanceiro = {
       const acao = btn.dataset.acao;
 
       if (acao === 'pagar') this.abrirPagamento(l);
+      if (acao === 'ficha') FichaAluno.abrir(l.alunoId, 'financeiro');
+      if (acao === 'whats') {
+        const sit = Financeiro.situacao(l);
+        Mensageiro.abrir({ tipo: 'aluno', id: l.alunoId, lancamento: l,
+          modelo: sit === 'Atrasado' ? 'Cobrança em atraso' : sit === 'Pago' ? 'Confirmação de pagamento' : 'Mensalidade a vencer' });
+      }
       if (acao === 'fatura') this.emitirFatura(l);
       if (acao === 'recibo') this.emitirRecibo(l);
       if (acao === 'editar') this.abrir(l);
@@ -128,9 +134,9 @@ const TelaFinanceiro = {
   acoes(l, situacao) {
     const b = (acao, icone, titulo) =>
       `<button class="btn-icon" data-acao="${acao}" data-id="${l.id}" title="${titulo}">${icone}</button>`;
-    if (situacao === 'Pago') return b('recibo', '🧾', 'Imprimir recibo') + b('estornar', '↩️', 'Desfazer pagamento');
+    if (situacao === 'Pago') return b('whats', '💬', 'Confirmar pagamento por WhatsApp') + b('recibo', '🧾', 'Imprimir recibo') + b('estornar', '↩️', 'Desfazer pagamento');
     if (situacao === 'Cancelado') return b('reativar', '♻️', 'Reativar') + b('excluir', '🗑️', 'Excluir');
-    return b('pagar', '💲', 'Registrar pagamento') +
+    return b('whats', '💬', situacao === 'Atrasado' ? 'Cobrar por WhatsApp' : 'Lembrete por WhatsApp') + b('pagar', '💲', 'Registrar pagamento') +
       b('fatura', '📄', l.numeroFatura ? `Fatura Nº ${l.numeroFatura} (2ª via)` : 'Emitir fatura') +
       b('editar', '✏️', 'Editar') + b('cancelar', '🚫', 'Cancelar');
   },
@@ -142,7 +148,7 @@ const TelaFinanceiro = {
       const situacao = Financeiro.situacao(l);
       return `
       <tr>
-        <td><strong>${Utils.escapar(Financeiro.nomeAluno(l))}</strong></td>
+        <td><button class="link link-nome" data-acao="ficha" data-id="${l.id}">${Utils.escapar(Financeiro.nomeAluno(l))}</button></td>
         <td>${Utils.escapar(l.descricao)}${l.numeroFatura
           ? `<small>Fatura Nº ${String(l.numeroFatura).padStart(6, '0')} · ${Utils.escapar(Usuarios.nome(l.faturaEmitidaPor))}</small>` : ''}</td>
         <td>${Utils.formatarData(l.vencimento)}</td>

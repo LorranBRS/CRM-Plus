@@ -5,16 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRM Plus – Gestão Educacional</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/tema.js"></script>
 </head>
 <body>
   <!-- ===================== ENTRADA (escolha de perfil) ===================== -->
   <section class="entrada" id="entrada" hidden>
+    <button class="btn-tema btn-tema-entrada" data-alternar-tema title="Alternar modo claro/escuro"></button>
     <div class="entrada-box">
       <div class="brand brand-entrada">
-        <span class="brand-logo">C+</span>
+        <span class="brand-logo" data-marca-logo>C+</span>
         <div>
-          <strong>CRM Plus</strong>
-          <small>Gestão Educacional</small>
+          <strong data-marca-nome>CRM Plus</strong>
+          <small data-marca-sub>Gestão Educacional</small>
         </div>
       </div>
       <div id="entradaConteudo"></div>
@@ -25,14 +27,15 @@
     <!-- Menu lateral -->
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <span class="brand-logo">C+</span>
+        <span class="brand-logo" data-marca-logo>C+</span>
         <div>
-          <strong>CRM Plus</strong>
-          <small>Gestão Educacional</small>
+          <strong data-marca-nome>CRM Plus</strong>
+          <small data-marca-sub>Gestão Educacional</small>
         </div>
       </div>
       <nav class="menu" id="menu"></nav>
       <button class="btn-exemplos" id="btnExemplos" data-somente-diretor>Carregar dados de exemplo</button>
+      <button class="btn-tema" data-alternar-tema title="Alternar modo claro/escuro"></button>
       <div class="usuario-logado">
         <span class="avatar" id="usuarioAvatar"></span>
         <div>
@@ -41,7 +44,7 @@
         </div>
         <button class="btn-trocar" id="btnTrocarUsuario" title="Trocar de usuário">⇄</button>
       </div>
-      <footer class="sidebar-footer">v2.0</footer>
+      <footer class="sidebar-footer">CRM Plus v3.0</footer>
     </aside>
 
     <main class="content">
@@ -122,6 +125,65 @@
         </section>
 
         <section class="kanban" id="kanban"></section>
+      </section>
+
+      <!-- ===================== TELA: CONVERSAS ===================== -->
+      <section class="tela" data-tela="conversas" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Conversas</h1>
+            <p class="subtitle">Mensagens de WhatsApp com alunos, leads e professores</p>
+          </div>
+          <button class="btn btn-light" id="btnModelos">📋 Modelos de mensagem</button>
+        </header>
+
+        <section class="chat" id="chat">
+          <aside class="chat-lista">
+            <div class="chat-busca">
+              <input type="search" id="buscaConversas" placeholder="Buscar contato...">
+              <div class="alternar alternar-pequeno" id="filtroTipoConversas">
+                <button class="ativo" data-tipo="">Todos</button>
+                <button data-tipo="aluno">Alunos</button>
+                <button data-tipo="lead">Leads</button>
+                <button data-tipo="professor">Professores</button>
+              </div>
+            </div>
+            <ul class="chat-contatos" id="chatContatos"></ul>
+          </aside>
+
+          <section class="chat-conversa" id="chatConversa">
+            <div class="chat-vazio" id="chatVazio">
+              <span>💬</span>
+              <p>Selecione um contato para ver o histórico e enviar mensagens.</p>
+              <small>As mensagens são enviadas pelo WhatsApp. As respostas podem ser registradas aqui para manter o histórico.</small>
+            </div>
+            <div class="chat-ativo" id="chatAtivo" hidden>
+              <header class="chat-topo">
+                <button class="btn-icon chat-voltar" id="chatVoltar" aria-label="Voltar">←</button>
+                <span class="avatar" id="chatAvatar"></span>
+                <div class="chat-topo-info">
+                  <strong id="chatNome"></strong>
+                  <small id="chatDetalhe"></small>
+                </div>
+                <button class="btn btn-light" id="chatFicha">Ver ficha</button>
+              </header>
+              <div class="chat-mensagens" id="chatMensagens"></div>
+              <form class="chat-composer" id="chatForm" novalidate>
+                <div class="chat-composer-topo">
+                  <select id="chatModelo"></select>
+                  <label class="checkbox-linha chat-recebida">
+                    <input type="checkbox" id="chatRecebida"> Registrar resposta recebida do contato
+                  </label>
+                </div>
+                <div class="chat-composer-linha">
+                  <textarea id="chatTexto" rows="2" placeholder="Escreva uma mensagem..."></textarea>
+                  <button type="submit" class="btn btn-whatsapp" id="chatEnviar">Enviar ➤</button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </section>
       </section>
 
       <!-- ===================== TELA: ALUNOS ===================== -->
@@ -303,6 +365,37 @@
           </table>
           <div class="vazio" id="vazioTurmas"><p></p></div>
         </section>
+      </section>
+
+      <!-- ===================== TELA: ACADÊMICO ===================== -->
+      <section class="tela" data-tela="academico" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Acadêmico</h1>
+            <p class="subtitle">Chamada, notas, situação dos alunos e certificados</p>
+          </div>
+        </header>
+
+        <section class="toolbar">
+          <label class="rotulo-filtro">Turma
+            <select id="turmaAcademico"></select>
+          </label>
+          <div class="alternar" id="abasAcademico">
+            <button class="ativo" data-aba="chamada">✅ Chamada</button>
+            <button data-aba="notas">📝 Notas</button>
+            <button data-aba="situacao">🎓 Situação e certificados</button>
+          </div>
+        </section>
+
+        <section class="cards">
+          <div class="card"><span>Alunos na turma</span><strong id="statAcadAlunos">0</strong></div>
+          <div class="card"><span>Aulas registradas</span><strong id="statAcadAulas">0</strong></div>
+          <div class="card"><span>Frequência média</span><strong id="statAcadFreq">-</strong></div>
+          <div class="card"><span>Média da turma</span><strong id="statAcadMedia">-</strong></div>
+        </section>
+
+        <section id="academicoConteudo"></section>
       </section>
 
       <!-- ===================== TELA: MATRÍCULAS ===================== -->
@@ -597,7 +690,8 @@
         </fieldset>
 
         <footer class="modal-footer">
-          <button type="button" class="btn btn-light btn-esquerda" id="btnConverterLead">🎓 Converter em aluno</button>
+          <button type="button" class="btn btn-whatsapp btn-esquerda" id="btnWhatsLead">💬 WhatsApp</button>
+          <button type="button" class="btn btn-light" id="btnConverterLead">🎓 Converter em aluno</button>
           <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
           <button type="submit" class="btn btn-primary">Salvar</button>
         </footer>
@@ -1195,11 +1289,124 @@
             </label>
           </div>
         </fieldset>
+        <fieldset>
+          <legend>Identidade visual</legend>
+          <div class="marca-editor">
+            <div class="marca-logo-preview" id="previewLogo">C+</div>
+            <div class="marca-campos">
+              <div class="botoes-relatorio">
+                <label class="btn btn-light">🖼️ Enviar logo
+                  <input type="file" id="inputLogo" accept="image/*" hidden>
+                </label>
+                <button type="button" class="btn btn-light" id="btnRemoverLogo">Remover logo</button>
+              </div>
+              <div class="cores">
+                <span>Cor da escola</span>
+                <input type="color" name="corPrimaria" id="inputCor">
+                <div class="cores-sugeridas" id="coresSugeridas"></div>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Critérios acadêmicos e certificado</legend>
+          <div class="grid">
+            <label>Média mínima para aprovação
+              <input type="number" name="mediaMinima" min="0" max="10" step="0.5" placeholder="7">
+            </label>
+            <label>Frequência mínima (%)
+              <input type="number" name="frequenciaMinima" min="0" max="100" step="1" placeholder="75">
+            </label>
+            <label>Quem assina pela direção
+              <input type="text" name="responsavelCertificado" placeholder="Nome do(a) diretor(a)">
+            </label>
+          </div>
+        </fieldset>
         <footer class="modal-footer">
           <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
           <button type="submit" class="btn btn-primary">Salvar</button>
         </footer>
       </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: FICHA DO ALUNO ===================== -->
+  <div class="modal" id="modalFicha" aria-hidden="true">
+    <div class="modal-box modal-grande" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Ficha do aluno</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <div class="ficha" id="fichaCorpo"></div>
+      <input type="file" id="inputFotoAluno" accept="image/*" hidden>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: ENVIAR MENSAGEM ===================== -->
+  <div class="modal" id="modalMensagem" aria-hidden="true">
+    <div class="modal-box modal-medio" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Enviar WhatsApp</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formMensagem" novalidate>
+        <fieldset>
+          <div class="msg-para" id="msgPara"></div>
+          <div class="grid grid-2">
+            <label class="col-full">Modelo de mensagem
+              <select id="msgModelo"></select>
+            </label>
+            <label class="col-full">Mensagem
+              <textarea id="msgTexto" rows="7"></textarea>
+            </label>
+          </div>
+          <p class="ajuda msg-ajuda">O WhatsApp abrirá numa nova aba com a mensagem pronta. É só conferir e apertar enviar.
+            A mensagem fica registrada no histórico do contato.</p>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-whatsapp">💬 Abrir no WhatsApp</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: MODELOS DE MENSAGEM ===================== -->
+  <div class="modal" id="modalModelos" aria-hidden="true">
+    <div class="modal-box modal-grande" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Modelos de mensagem</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <div class="modelos">
+        <aside class="modelos-lista">
+          <button class="btn btn-primary" id="btnNovoModelo" data-somente-diretor>+ Novo modelo</button>
+          <ul id="listaModelos"></ul>
+        </aside>
+        <form class="modelos-form" id="formModelo" novalidate>
+          <input type="hidden" name="id">
+          <div class="grid grid-2">
+            <label>Nome *
+              <input type="text" name="nome" maxlength="60">
+            </label>
+            <label>Categoria
+              <select name="categoria"></select>
+            </label>
+            <label class="col-full">Texto *
+              <textarea name="texto" rows="7"></textarea>
+            </label>
+          </div>
+          <div class="variaveis">
+            <span class="ajuda">Clique para inserir um campo automático:</span>
+            <div id="listaVariaveis"></div>
+          </div>
+          <div class="modelos-acoes" data-somente-diretor>
+            <button type="button" class="btn btn-light btn-esquerda" id="btnExcluirModelo">🗑️ Excluir</button>
+            <button type="submit" class="btn btn-primary">Salvar modelo</button>
+          </div>
+          <p class="ajuda" id="avisoModelos">Somente a direção pode alterar os modelos.</p>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -1221,9 +1428,15 @@
   <script src="js/modelos/matriculas.js"></script>
   <script src="js/modelos/financeiro.js"></script>
   <script src="js/modelos/leads.js"></script>
+  <script src="js/modelos/academico.js"></script>
+  <script src="js/modelos/mensagens.js"></script>
   <script src="js/documentos.js"></script>
   <script src="js/telas/entrada.js"></script>
   <script src="js/telas/painel.js"></script>
+  <script src="js/telas/mensageiro.js"></script>
+  <script src="js/telas/ficha.js"></script>
+  <script src="js/telas/conversas.js"></script>
+  <script src="js/telas/academico.js"></script>
   <script src="js/telas/leads.js"></script>
   <script src="js/telas/alunos.js"></script>
   <script src="js/telas/cursos.js"></script>

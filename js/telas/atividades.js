@@ -5,7 +5,7 @@ const TelaAtividades = {
 
   ICONES: {
     leads: '🎯', alunos: '👩‍🎓', cursos: '📚', professores: '👨‍🏫', turmas: '🏫',
-    matriculas: '📝', financeiro: '💰', relatorios: '📊', equipe: '👥', sistema: '🔑',
+    matriculas: '📝', financeiro: '💰', academico: '🎓', conversas: '💬', relatorios: '📊', equipe: '👥', sistema: '🔑',
   },
 
   iniciar() {

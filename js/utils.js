@@ -225,13 +225,37 @@ const Utils = {
       `${nome}_${Utils.hoje()}.csv`, 'text/csv;charset=utf-8');
   },
 
+  // Lê uma imagem enviada e reduz para no máximo "tamanho" px (para caber no navegador)
+  lerImagem(arquivo, tamanho = 240, tipo = 'image/jpeg') {
+    return new Promise((resolve, reject) => {
+      if (!arquivo || !arquivo.type.startsWith('image/')) return reject(new Error('Escolha um arquivo de imagem.'));
+      const leitor = new FileReader();
+      leitor.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
+      leitor.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Imagem inválida.'));
+        img.onload = () => {
+          const escala = Math.min(1, tamanho / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * escala);
+          canvas.height = Math.round(img.height * escala);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL(tipo, 0.85));
+        };
+        img.src = leitor.result;
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  },
+
   // Abre uma janela pronta para imprimir/salvar em PDF
-  imprimir(titulo, corpo) {
+  imprimir(titulo, corpo, classe = '') {
     const janela = window.open('', '_blank');
     if (!janela) return Utils.toast('Permita pop-ups deste site para imprimir.', 'erro');
+    const cor = Instituicao.ler().corPrimaria || Tema.COR_PADRAO;
     janela.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
       <title>${Utils.escapar(titulo)}</title><link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}">
-      </head><body>${corpo}<script>window.onload = () => setTimeout(() => window.print(), 300);<\/script></body></html>`);
+      </head><body class="${classe}" style="--cor:${cor}">${corpo}<script>window.onload = () => setTimeout(() => window.print(), 300);<\/script></body></html>`);
     janela.document.close();
   },
 

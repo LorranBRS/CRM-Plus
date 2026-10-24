@@ -17,6 +17,11 @@ const TelaLeads = {
     $('kanban').addEventListener('click', (e) => {
       const card = e.target.closest('.lead-card');
       if (!card) return;
+      const whats = e.target.closest('[data-whats]');
+      if (whats) {
+        const lead = Leads.buscarPorId(card.dataset.id);
+        return Mensageiro.abrir({ tipo: 'lead', id: lead.id, modelo: lead.etapa === 'Novo' ? 'Primeiro contato' : 'Retorno de proposta' });
+      }
       const btn = e.target.closest('button[data-mover]');
       if (btn) {
         const i = Leads.ETAPAS.indexOf(Leads.buscarPorId(card.dataset.id).etapa) + Number(btn.dataset.mover);
@@ -61,6 +66,10 @@ const TelaLeads = {
     });
 
     $('btnConverterLead').addEventListener('click', () => this.converter());
+    $('btnWhatsLead').addEventListener('click', () => {
+      const lead = Leads.buscarPorId($('formLead').elements.id.value);
+      if (lead) Mensageiro.abrir({ tipo: 'lead', id: lead.id, modelo: lead.etapa === 'Novo' ? 'Primeiro contato' : 'Retorno de proposta' });
+    });
   },
 
   lerFormulario() {
@@ -88,6 +97,7 @@ const TelaLeads = {
         ${Utils.escapar(h.texto)}</li>`).join('') || '<li class="graf-vazio">Sem interações ainda.</li>';
 
     $('btnConverterLead').hidden = !lead || Boolean(lead.alunoId);
+    $('btnWhatsLead').hidden = !lead;
     Utils.abrirModal('modalLead', lead ? 'Editar lead' : 'Novo lead');
   },
 
@@ -150,6 +160,7 @@ const TelaLeads = {
                   title="Próximo contato">📅 ${Utils.formatarData(l.proximoContato).slice(0, 5)}</span>` : ''}
               </div>
               <div class="lead-mover">
+                <button class="btn-icon" data-whats title="WhatsApp">💬</button>
                 <button class="btn-icon" data-mover="-1" title="Etapa anterior" ${i === 0 ? 'disabled' : ''}>◀</button>
                 <button class="btn-icon" data-mover="1" title="Próxima etapa" ${i === Leads.ETAPAS.length - 1 ? 'disabled' : ''}>▶</button>
               </div>
