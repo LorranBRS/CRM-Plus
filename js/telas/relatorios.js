@@ -74,6 +74,12 @@ const TelaRelatorios = {
       lista: () => Financeiro.listar().sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
       colunas: Financeiro.colunasCSV,
     },
+    despesas: {
+      modulo: 'financeiro',
+      titulo: '💸 Despesas',
+      lista: () => Despesas.listar().sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
+      colunas: Despesas.colunasCSV,
+    },
     inadimplentes: {
       modulo: 'financeiro',
       titulo: '⚠️ Inadimplência',

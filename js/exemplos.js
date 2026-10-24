@@ -75,6 +75,10 @@ const Exemplos = {
       });
     }
 
+    // Feriados nacionais (antes das chamadas, para não contar aula em feriado)
+    [...new Set([mes(-8).slice(0, 4), hoje.slice(0, 4), mes(12).slice(0, 4)])].forEach((ano) =>
+      Eventos.importarFeriados(Number(ano), { usuarioId: eq.diretor.id }));
+
     // ---------- Professores ----------
     const inicioCadastros = mes(-8, 2);
     const professor = (dados, i) => {
@@ -82,12 +86,12 @@ const Exemplos = {
       log(eq.diretor, 'professores', 'Professor cadastrado', p.nome, this.quando(inicioCadastros, i), p.id);
       return p;
     };
-    const carla = professor({ nome: 'Carla Mendes', email: 'carla@escola.com', telefone: '(11) 98111-2233', formacao: 'Letras – Inglês (USP)', especialidades: 'Inglês, conversação, TOEFL', valorHora: 65 }, 1);
-    const juliana = professor({ nome: 'Juliana Prado', email: 'juliana@escola.com', telefone: '(11) 98222-3344', formacao: 'Letras – Inglês/Português', especialidades: 'Gramática, escrita, pronúncia', valorHora: 55 }, 2);
-    const rafael = professor({ nome: 'Rafael Souza', email: 'rafael@escola.com', telefone: '(11) 98333-4455', formacao: 'Ciência da Computação (Unicamp)', especialidades: 'HTML, CSS, JavaScript, React', valorHora: 80 }, 3);
-    const fabio = professor({ nome: 'Fábio Nogueira', email: 'fabio@escola.com', telefone: '(11) 98444-5566', formacao: 'Sistemas de Informação', especialidades: 'Banco de dados, Node.js, Git', valorHora: 75 }, 4);
-    const anaLima = professor({ nome: 'Ana Lima', email: 'analima@escola.com', telefone: '(11) 98555-6677', formacao: 'Licenciatura em Computação', especialidades: 'Informática básica, Office', valorHora: 45 }, 5);
-    const paulo = professor({ nome: 'Paulo Reis', email: 'paulo@escola.com', telefone: '(11) 98666-7788', formacao: 'Administração – MBA em Gestão', especialidades: 'Gestão, finanças, marketing', valorHora: 70 }, 6);
+    const carla = professor({ nome: 'Carla Mendes', email: 'carla@escola.com', telefone: '(11) 98111-2233', formacao: 'Letras – Inglês (USP)', especialidades: 'Inglês, conversação, TOEFL', valorHora: 35 }, 1);
+    const juliana = professor({ nome: 'Juliana Prado', email: 'juliana@escola.com', telefone: '(11) 98222-3344', formacao: 'Letras – Inglês/Português', especialidades: 'Gramática, escrita, pronúncia', valorHora: 32 }, 2);
+    const rafael = professor({ nome: 'Rafael Souza', email: 'rafael@escola.com', telefone: '(11) 98333-4455', formacao: 'Ciência da Computação (Unicamp)', especialidades: 'HTML, CSS, JavaScript, React', valorHora: 42 }, 3);
+    const fabio = professor({ nome: 'Fábio Nogueira', email: 'fabio@escola.com', telefone: '(11) 98444-5566', formacao: 'Sistemas de Informação', especialidades: 'Banco de dados, Node.js, Git', valorHora: 40 }, 4);
+    const anaLima = professor({ nome: 'Ana Lima', email: 'analima@escola.com', telefone: '(11) 98555-6677', formacao: 'Licenciatura em Computação', especialidades: 'Informática básica, Office', valorHora: 30 }, 5);
+    const paulo = professor({ nome: 'Paulo Reis', email: 'paulo@escola.com', telefone: '(11) 98666-7788', formacao: 'Administração – MBA em Gestão', especialidades: 'Gestão, finanças, marketing', valorHora: 38 }, 6);
 
     // ---------- Cursos com grade curricular ----------
     const modulo = (nome, cargaHoraria, professorId, ementa) => ({ id: Utils.gerarId(), nome, cargaHoraria, professorId: professorId.id, ementa });
@@ -311,6 +315,58 @@ const Exemplos = {
     Matriculas.salvar({ id: concluidas[0].id, certificadoNumero: Instituicao.proximoNumeroCertificado(),
       certificadoEmitidoEm: certData, certificadoEmitidoPor: eq.ana.id });
     log(eq.ana, 'academico', 'Certificado emitido', `Nº 000001 – ${alunos[2].nome} – ${info.nome}`, certData, concluidas[0].id);
+
+    // ---------- Despesas (últimos 6 meses + próximos 2) ----------
+    const pagadora = eq.patricia;
+    const despesa = (dados) => Despesas.criar({ fornecedor: '', observacoes: '', ...dados }, 1, { usuarioId: pagadora.id })[0];
+    for (let n = -6; n <= 1; n++) {
+      const variacao = (k) => Math.round((this.sorteio(n * 13 + k) - 0.5) * 60);
+      despesa({ descricao: 'Aluguel da sede', categoria: 'Aluguel', fornecedor: 'Imobiliária Central', valor: 900, vencimento: mes(n, 5) });
+      despesa({ descricao: 'Energia elétrica', categoria: 'Água, luz e internet', fornecedor: 'Enel', valor: 180 + variacao(1), vencimento: mes(n, 12) });
+      despesa({ descricao: 'Água e esgoto', categoria: 'Água, luz e internet', fornecedor: 'Sabesp', valor: 70 + Math.round(variacao(2) / 4), vencimento: mes(n, 12) });
+      despesa({ descricao: 'Internet fibra', categoria: 'Água, luz e internet', fornecedor: 'Vivo', valor: 120, vencimento: mes(n, 15) });
+      despesa({ descricao: 'Anúncios Instagram/Google', categoria: 'Marketing', fornecedor: 'Meta / Google', valor: 300 + variacao(3) * 2, vencimento: mes(n, 18) });
+      despesa({ descricao: 'Simples Nacional', categoria: 'Impostos e taxas', valor: 210 + variacao(4), vencimento: mes(n, 20) });
+      if (n % 2 === 0) despesa({ descricao: 'Material didático e impressões', categoria: 'Material didático', fornecedor: 'Gráfica Rápida', valor: 160 + variacao(5), vencimento: mes(n, 22) });
+    }
+    despesa({ descricao: 'Manutenção dos computadores', categoria: 'Manutenção', fornecedor: 'TecInfo', valor: 350, vencimento: mes(-2, 8) });
+    // Pagamento dos professores dos meses anteriores (o mês passado fica para testar o botão)
+    for (let n = -6; n <= -2; n++) {
+      const competencia = mes(n, 1).slice(0, 7);
+      Despesas.calcularProfessores(competencia).forEach((c) => Despesas.gerarProfessor(c, competencia, mes(n + 1, 5), { usuarioId: pagadora.id }));
+    }
+    // Paga o que já venceu (uma conta fica em atraso)
+    const contaAtrasada = Despesas.listar().find((d) => d.descricao === 'Material didático e impressões' && d.vencimento < hoje && d.vencimento >= mes(-1, 1))
+      || Despesas.listar().filter((d) => d.vencimento < hoje).pop();
+    Despesas.listar().filter((d) => d.vencimento < hoje && d.id !== contaAtrasada?.id).forEach((d, i) => {
+      const pagoEm = Utils.somarDias(d.vencimento, -(i % 3));
+      Despesas.pagar(d.id, { dataPagamento: pagoEm, valorPago: d.valor, formaPagamento: ['PIX', 'Boleto', 'Débito automático'][i % 3], pagoPor: pagadora.id });
+      if (pagoEm >= dia(-15)) log(pagadora, 'financeiro', 'Despesa paga', `${d.descricao}: ${Utils.formatarMoeda(d.valor)}`, this.quando(pagoEm, i), d.id);
+    });
+
+    // ---------- Metas (últimos 5 meses + atual) ----------
+    for (let n = -5; n <= 0; n++) {
+      Metas.salvarMes(mes(n, 1).slice(0, 7), { matriculas: 4, leads: 8, receita: 4500, lucro: 900 }, {
+        [eq.ana.id]: { matriculas: 2 }, [eq.diego.id]: { matriculas: 2, leads: 5 }, [eq.bianca.id]: { matriculas: 1, leads: 4 },
+      }, { usuarioId: eq.diretor.id });
+    }
+    log(eq.diretor, 'metas', 'Metas definidas', `Metas de ${Utils.nomeMes(Utils.mesAtual())}: Matrículas 4, Novos leads 8, Receita recebida R$ 4.500,00, Lucro R$ 900,00`,
+      this.quando(mes(0, 1), 1));
+
+    // ---------- Eventos da agenda ----------
+    const evento = (dados) => Eventos.salvar({ dataFim: '', diaInteiro: false, horaInicio: '', horaFim: '', local: '', descricao: '',
+      semAula: false, turmaId: '', criadoPor: eq.diretor.id, ...dados });
+    evento({ titulo: 'Reunião pedagógica', tipo: 'Reunião', data: dia(1), horaInicio: '18:00', horaFim: '19:30', local: 'Sala dos professores', descricao: 'Pauta: resultados do bimestre e planejamento.' });
+    evento({ titulo: 'Prova de nivelamento – Inglês', tipo: 'Prova', data: dia(5), horaInicio: '19:00', horaFim: '20:40', local: 'Sala 2', turmaId: tIng.id });
+    evento({ titulo: 'Reunião de vendas (comercial)', tipo: 'Reunião', data: dia(2), horaInicio: '09:00', horaFim: '10:00', descricao: 'Metas do mês e funil de leads.' });
+    evento({ titulo: 'Aula inaugural – Administração', tipo: 'Evento', data: tAdm.dataInicio, horaInicio: '20:00', horaFim: '21:30', local: 'Online', turmaId: tAdm.id });
+    evento({ titulo: 'Entrega de certificados', tipo: 'Evento', data: dia(12), horaInicio: '19:00', horaFim: '21:00', local: 'Auditório' });
+    evento({ titulo: 'Fechamento do mês (financeiro)', tipo: 'Tarefa', data: Utils.somarDias(Utils.somarMeses(`${Utils.mesAtual()}-01`, 1), -1), diaInteiro: true });
+    evento({ titulo: 'Recesso de fim de ano', tipo: 'Recesso', data: `${hoje.slice(0, 4)}-12-22`, dataFim: `${Number(hoje.slice(0, 4)) + 1}-01-04`, diaInteiro: true, semAula: true });
+
+    // Dois aniversariantes neste mês
+    Alunos.salvar({ id: alunos[4].id, nascimento: `1999-${hoje.slice(5, 7)}-${String(Math.min(28, Number(hoje.slice(8)) + 2)).padStart(2, '0')}` });
+    Alunos.salvar({ id: alunos[9].id, nascimento: `2001-${hoje.slice(5, 7)}-${String(Math.max(1, Number(hoje.slice(8)) - 5)).padStart(2, '0')}` });
 
     // ---------- Conversas de WhatsApp ----------
     const msg = (tipo, id, direcao, texto, quando, usuario = eq.ana) => Mensagens.registrar({

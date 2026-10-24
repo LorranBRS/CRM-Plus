@@ -52,6 +52,15 @@ const TelaAcademico = {
       .sort((a, b) => ordem[a.status] - ordem[b.status] || a.codigo.localeCompare(b.codigo));
   },
 
+  // Chamado pela Agenda: abre a chamada da turma na data da aula
+  abrirChamada(turmaId, data) {
+    this.aba = 'chamada';
+    this.dataChamada = data;
+    this.turmaPreferida = turmaId;
+    if (location.hash !== '#academico') location.hash = '#academico';
+    else this.renderizar();
+  },
+
   turmaAtual() {
     return Turmas.buscarPorId($('turmaAcademico').value);
   },
@@ -61,7 +70,8 @@ const TelaAcademico = {
     const atual = sel.value;
     const turmas = this.turmasDisponiveis();
     sel.innerHTML = Utils.opcoes(turmas, { valor: (t) => t.id, texto: (t) => `${t.codigo} – ${Turmas.nomeCurso(t)} (${t.status})` });
-    sel.value = atual;
+    sel.value = this.turmaPreferida || atual;
+    this.turmaPreferida = null;
     if (sel.selectedIndex < 0 && turmas.length) sel.value = turmas[0].id;
 
     document.querySelectorAll('#abasAcademico [data-aba]').forEach((b) => b.classList.toggle('ativo', b.dataset.aba === this.aba));

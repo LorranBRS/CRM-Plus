@@ -123,6 +123,15 @@ const Utils = {
       .replace('. de ', '/').replace(' de ', '/').replace('.', '');
   },
 
+  // "sexta-feira, 23 de outubro" -> "Sexta-feira, 23 de outubro"
+  capitalizar(texto) {
+    return (texto || '').replace(/^./, (c) => c.toUpperCase());
+  },
+
+  dataPorExtenso(dataISO) {
+    return Utils.capitalizar(new Date(`${dataISO}T12:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }));
+  },
+
   formatarMoeda(valor) {
     if (valor === '' || valor === null || valor === undefined) return '-';
     return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -132,7 +141,7 @@ const Utils = {
   escapar(texto) {
     const div = document.createElement('div');
     div.textContent = texto ?? '';
-    return div.innerHTML;
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   },
 
   // "Em andamento" -> badge-em-andamento

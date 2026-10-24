@@ -2,6 +2,7 @@
 const App = {
   TELAS: {
     painel: TelaPainel,
+    agenda: TelaCalendario,
     leads: TelaLeads,
     conversas: TelaConversas,
     alunos: TelaAlunos,
@@ -12,6 +13,7 @@ const App = {
     matriculas: TelaMatriculas,
     financeiro: TelaFinanceiro,
     relatorios: TelaRelatorios,
+    metas: TelaMetas,
     equipe: TelaEquipe,
     atividades: TelaAtividades,
   },

@@ -97,6 +97,7 @@ const ModelosMensagem = {
     { nome: 'Lembrete de aula', categoria: 'Acadêmico', texto: 'Oi, {primeiro_nome}! Passando para lembrar da sua aula de {curso} ({turma}) – {horario}. Te esperamos! 📚' },
     { nome: 'Aviso de faltas', categoria: 'Acadêmico', texto: 'Olá, {primeiro_nome}! Sentimos sua falta nas aulas de {curso}. Sua frequência está em {frequencia} e o mínimo exigido é 75%. Está tudo bem? Podemos ajudar em algo?' },
     { nome: 'Certificado disponível', categoria: 'Acadêmico', texto: 'Parabéns, {primeiro_nome}! 🎓 Você concluiu o curso {curso} e o seu certificado já está disponível na secretaria da {escola}.' },
+    { nome: 'Feliz aniversário', categoria: 'Geral', texto: 'Feliz aniversário, {primeiro_nome}! 🎂🎉 Toda a equipe da {escola} deseja um dia incrível e um ano cheio de conquistas!' },
     { nome: 'Mensalidade a vencer', categoria: 'Financeiro', texto: 'Olá, {primeiro_nome}! Lembrete: {descricao} no valor de {valor} vence em {vencimento}. Para pagar via PIX, use a chave {pix}. Obrigado! 😊' },
     { nome: 'Cobrança em atraso', categoria: 'Financeiro', texto: 'Olá, {primeiro_nome}, tudo bem? Identificamos que {descricao} ({valor}), com vencimento em {vencimento}, ainda está em aberto. Se já pagou, por favor desconsidere. Para pagar via PIX: {pix}. Estamos à disposição!' },
     { nome: 'Confirmação de pagamento', categoria: 'Financeiro', texto: 'Olá, {primeiro_nome}! Confirmamos o recebimento de {valor} referente a {descricao}. Obrigado! ✅' },

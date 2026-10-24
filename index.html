@@ -65,9 +65,18 @@
           <div class="card" data-modulo="leads"><span>Leads em aberto</span><strong id="kpiLeads">0</strong></div>
           <div class="card" data-modulo="financeiro"><span>Recebido no mês</span><strong id="kpiRecebido">R$ 0,00</strong></div>
           <div class="card card-alerta" data-modulo="financeiro"><span>Em atraso</span><strong id="kpiAtraso">R$ 0,00</strong></div>
+          <div class="card" data-somente-diretor><span>Lucro do mês</span><strong id="kpiLucro">R$ 0,00</strong></div>
         </section>
 
         <section class="paineis">
+          <article class="painel painel-largo" id="painelMetas">
+            <h3><span id="tituloMetasPainel">Metas do mês</span> <a href="#metas" class="link-mais" data-somente-diretor>definir metas →</a></h3>
+            <div id="metasPainel"></div>
+          </article>
+          <article class="painel" id="painelHoje">
+            <h3>Hoje na agenda <a href="#agenda" class="link-mais">abrir agenda →</a></h3>
+            <ul class="lista-simples" id="agendaHoje"></ul>
+          </article>
           <article class="painel painel-largo" data-modulo="atividades">
             <h3>Atividades recentes da equipe <a href="#atividades" class="link-mais">ver tudo →</a></h3>
             <ul class="timeline timeline-compacta" id="painelAtividades"></ul>
@@ -96,6 +105,38 @@
             <h3>Mensalidades em atraso</h3>
             <ul class="lista-simples" id="listaAtrasos"></ul>
           </article>
+        </section>
+      </section>
+
+      <!-- ===================== TELA: AGENDA ===================== -->
+      <section class="tela" data-tela="agenda" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Agenda</h1>
+            <p class="subtitle">Aulas, vencimentos, retornos, aniversários, eventos e feriados</p>
+          </div>
+          <button class="btn btn-light" id="btnFeriados" data-somente-diretor>🏖️ Feriados nacionais</button>
+          <button class="btn btn-primary" id="btnNovoEvento">+ Novo evento</button>
+        </header>
+
+        <section class="toolbar agenda-toolbar">
+          <div class="agenda-nav">
+            <button class="btn btn-light" id="agendaAnterior" aria-label="Mês anterior">◀</button>
+            <button class="btn btn-light" id="agendaHojeBtn">Hoje</button>
+            <button class="btn btn-light" id="agendaProximo" aria-label="Próximo mês">▶</button>
+            <h2 id="agendaTitulo"></h2>
+          </div>
+          <div class="alternar" id="agendaVisao">
+            <button class="ativo" data-visao="mes">🗓️ Mês</button>
+            <button data-visao="lista">☰ Lista</button>
+          </div>
+        </section>
+        <div class="camadas" id="agendaCamadas"></div>
+
+        <section class="agenda-layout">
+          <div class="painel calendario-painel" id="agendaCalendario"></div>
+          <aside class="painel agenda-dia-painel" id="agendaDia"></aside>
         </section>
       </section>
 
@@ -448,11 +489,20 @@
           <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
           <div>
             <h1>Financeiro</h1>
-            <p class="subtitle">Mensalidades, taxas e recebimentos</p>
+            <p class="subtitle">Receitas, despesas e resultado</p>
           </div>
-          <button class="btn btn-primary" id="btnNovoLancamento">+ Novo lançamento</button>
+          <button class="btn btn-light" id="btnPagamentoProfessores" data-aba-fin="despesas">👨‍🏫 Pagamento de professores</button>
+          <button class="btn btn-primary" id="btnNovaDespesa" data-aba-fin="despesas">+ Nova despesa</button>
+          <button class="btn btn-primary" id="btnNovoLancamento" data-aba-fin="receitas">+ Novo lançamento</button>
         </header>
 
+        <nav class="abas-tela" id="abasFinanceiro">
+          <button class="ativo" data-aba="receitas">💵 Receitas</button>
+          <button data-aba="despesas">💸 Despesas</button>
+          <button data-aba="resultado" data-somente-diretor>📈 Resultado / lucro</button>
+        </nav>
+
+        <div id="finReceitas">
         <section class="cards">
           <div class="card"><span>Previsto no mês</span><strong id="statFinPrevisto">R$ 0,00</strong></div>
           <div class="card"><span>Recebido no mês</span><strong id="statFinRecebido">R$ 0,00</strong></div>
@@ -486,6 +536,72 @@
           </table>
           <div class="vazio" id="vazioFinanceiro"><p></p></div>
         </section>
+        </div>
+
+        <!-- Despesas (contas a pagar) -->
+        <div id="finDespesas" hidden>
+          <section class="cards">
+            <div class="card"><span>Despesas do mês</span><strong id="statDespPrevisto">R$ 0,00</strong></div>
+            <div class="card"><span>Pago no mês</span><strong id="statDespPago">R$ 0,00</strong></div>
+            <div class="card"><span>A pagar no mês</span><strong id="statDespAPagar">R$ 0,00</strong></div>
+            <div class="card card-alerta"><span>Contas em atraso</span><strong id="statDespAtraso">R$ 0,00</strong></div>
+          </section>
+
+          <section class="toolbar">
+            <input type="search" id="buscaDespesas" placeholder="Buscar por descrição ou fornecedor...">
+            <input type="month" id="filtroMesDespesas" title="Mês de vencimento">
+            <select id="filtroCategoriaDespesas"></select>
+            <select id="filtroSituacaoDespesas">
+              <option value="">Todas as situações</option>
+              <option>Pendente</option>
+              <option>Atrasado</option>
+              <option>Pago</option>
+              <option>Cancelado</option>
+            </select>
+            <button class="btn btn-light" id="btnExportarDespesas">⬇ Exportar CSV</button>
+          </section>
+
+          <section class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th>Valor</th><th>Pagamento</th><th>Situação</th><th class="acoes">Ações</th></tr>
+              </thead>
+              <tbody id="listaDespesas"></tbody>
+              <tfoot id="totalDespesas"></tfoot>
+            </table>
+            <div class="vazio" id="vazioDespesas"><p></p></div>
+          </section>
+        </div>
+
+        <!-- Resultado (lucro) – somente diretor -->
+        <div id="finResultado" hidden>
+          <section class="toolbar">
+            <label class="rotulo-filtro">Mês
+              <input type="month" id="mesResultado">
+            </label>
+          </section>
+          <section class="cards">
+            <div class="card"><span>Receita recebida</span><strong id="resReceita">R$ 0,00</strong></div>
+            <div class="card"><span>Despesas pagas</span><strong id="resDespesa">R$ 0,00</strong></div>
+            <div class="card"><span>Lucro (caixa)</span><strong id="resLucro">R$ 0,00</strong></div>
+            <div class="card"><span>Margem</span><strong id="resMargem">-</strong></div>
+          </section>
+          <section class="paineis">
+            <article class="painel painel-largo">
+              <h3>Receitas × despesas – últimos 6 meses</h3>
+              <div id="grafResultado"></div>
+              <div class="table-wrap table-plana table-mini-borda" id="tabelaResultado"></div>
+            </article>
+            <article class="painel">
+              <h3>Demonstrativo do mês</h3>
+              <div id="dreResultado"></div>
+            </article>
+            <article class="painel">
+              <h3>Despesas do mês por categoria</h3>
+              <div id="grafCategorias"></div>
+            </article>
+          </section>
+        </div>
       </section>
 
       <!-- ===================== TELA: RELATÓRIOS ===================== -->
@@ -533,6 +649,39 @@
             <p class="ajuda">Apaga todos os cadastros deste navegador (a equipe e o registro de atividades são mantidos). Faça um backup antes.</p>
             <button class="btn btn-perigo" id="btnLimparTudo">Apagar todos os dados</button>
           </article>
+        </section>
+      </section>
+
+      <!-- ===================== TELA: METAS (diretor) ===================== -->
+      <section class="tela" data-tela="metas" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Metas</h1>
+            <p class="subtitle">Objetivos do mês para a escola e para cada funcionário</p>
+          </div>
+          <button class="btn btn-light" id="btnCopiarMetas">📋 Copiar do mês anterior</button>
+          <button class="btn btn-primary" id="btnSalvarMetas">Salvar metas</button>
+        </header>
+
+        <section class="toolbar">
+          <label class="rotulo-filtro">Mês
+            <input type="month" id="mesMetas">
+          </label>
+          <span class="texto-suave" id="metasInfo"></span>
+        </section>
+
+        <section class="metas-grade" id="metasEscola"></section>
+
+        <section class="painel painel-tabela">
+          <h3>Metas individuais</h3>
+          <p class="ajuda">Matrículas: contadas pelo atendente que fez a matrícula. Leads: pelo responsável pelo lead.</p>
+          <div class="table-wrap table-plana" id="metasIndividuais"></div>
+        </section>
+
+        <section class="painel painel-tabela">
+          <h3>Histórico – últimos 6 meses</h3>
+          <div class="table-wrap table-plana" id="metasHistorico"></div>
         </section>
       </section>
 
@@ -1410,6 +1559,170 @@
     </div>
   </div>
 
+  <!-- ===================== MODAL: EVENTO ===================== -->
+  <div class="modal" id="modalEvento" aria-hidden="true">
+    <div class="modal-box modal-medio" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Novo evento</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formEvento" novalidate>
+        <input type="hidden" name="id">
+        <fieldset>
+          <div class="grid grid-2">
+            <label class="col-full">Título *
+              <input type="text" name="titulo" maxlength="80" placeholder="Ex.: Reunião pedagógica">
+            </label>
+            <label>Tipo
+              <select name="tipo"></select>
+            </label>
+            <label>Local
+              <input type="text" name="local" placeholder="Ex.: Sala 2, Online">
+            </label>
+            <label>Data *
+              <input type="date" name="data">
+            </label>
+            <label>Até (vários dias)
+              <input type="date" name="dataFim">
+            </label>
+            <label class="col-full checkbox-linha">
+              <input type="checkbox" name="diaInteiro" value="sim"> Dia inteiro
+            </label>
+            <label class="campo-hora">Início
+              <input type="time" name="horaInicio">
+            </label>
+            <label class="campo-hora">Fim
+              <input type="time" name="horaFim">
+            </label>
+            <label class="col-full">Turma (opcional)
+              <select name="turmaId"></select>
+            </label>
+            <label class="col-full checkbox-linha">
+              <input type="checkbox" name="semAula" value="sim"> Não há aula neste(s) dia(s) (feriado, recesso)
+            </label>
+            <label class="col-full">Descrição
+              <textarea name="descricao" rows="3"></textarea>
+            </label>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light btn-esquerda" id="btnExcluirEvento">🗑️ Excluir</button>
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: DESPESA ===================== -->
+  <div class="modal" id="modalDespesa" aria-hidden="true">
+    <div class="modal-box modal-medio" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Nova despesa</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formDespesa" novalidate>
+        <input type="hidden" name="id">
+        <fieldset>
+          <div class="grid grid-2">
+            <label class="col-full">Descrição *
+              <input type="text" name="descricao" placeholder="Ex.: Aluguel da sede">
+            </label>
+            <label>Categoria *
+              <select name="categoria"></select>
+            </label>
+            <label>Fornecedor / favorecido
+              <input type="text" name="fornecedor">
+            </label>
+            <label>Valor (R$) *
+              <input type="number" name="valor" min="0.01" step="0.01">
+            </label>
+            <label>Vencimento *
+              <input type="date" name="vencimento">
+            </label>
+            <label class="col-full" id="linhaRepetir">Repetir todo mês por
+              <select name="repetir">
+                <option value="1">Não repetir</option>
+                <option value="3">3 meses</option>
+                <option value="6">6 meses</option>
+                <option value="12">12 meses</option>
+                <option value="24">24 meses</option>
+              </select>
+            </label>
+            <label class="col-full">Observações
+              <textarea name="observacoes" rows="2"></textarea>
+            </label>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: PAGAR DESPESA ===================== -->
+  <div class="modal" id="modalPagarDespesa" aria-hidden="true">
+    <div class="modal-box modal-pequeno" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Registrar pagamento da despesa</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formPagarDespesa" novalidate>
+        <input type="hidden" name="id">
+        <p class="resumo-pagamento" id="resumoPagarDespesa"></p>
+        <fieldset>
+          <div class="grid grid-2">
+            <label>Data do pagamento *
+              <input type="date" name="dataPagamento">
+            </label>
+            <label>Valor pago (R$) *
+              <input type="number" name="valorPago" min="0.01" step="0.01">
+            </label>
+            <label class="col-full">Forma de pagamento
+              <select name="formaPagamento">
+                <option>PIX</option>
+                <option>Boleto</option>
+                <option>Transferência</option>
+                <option>Cartão de crédito</option>
+                <option>Débito automático</option>
+                <option>Dinheiro</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Confirmar pagamento</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: PAGAMENTO DOS PROFESSORES ===================== -->
+  <div class="modal" id="modalProfessoresPagamento" aria-hidden="true">
+    <div class="modal-box modal-grande" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Pagamento de professores</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <div class="modal-corpo">
+        <div class="toolbar">
+          <label class="rotulo-filtro">Mês trabalhado <input type="month" id="mesProfessores"></label>
+          <label class="rotulo-filtro">Vencimento <input type="date" id="vencProfessores"></label>
+        </div>
+        <p class="ajuda">Cálculo: aulas do mês (sem feriados) × duração da aula × valor da hora-aula do professor.</p>
+        <div id="listaPagamentoProfessores"></div>
+      </div>
+      <footer class="modal-footer">
+        <span class="texto-suave btn-esquerda" id="totalPagamentoProfessores"></span>
+        <button type="button" class="btn btn-light" data-fechar>Fechar</button>
+        <button type="button" class="btn btn-primary" id="btnGerarPagamentos">Gerar despesas selecionadas</button>
+      </footer>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
   <div class="dica" id="dica" role="tooltip"></div>
 
@@ -1430,6 +1743,9 @@
   <script src="js/modelos/leads.js"></script>
   <script src="js/modelos/academico.js"></script>
   <script src="js/modelos/mensagens.js"></script>
+  <script src="js/modelos/eventos.js"></script>
+  <script src="js/modelos/despesas.js"></script>
+  <script src="js/modelos/metas.js"></script>
   <script src="js/documentos.js"></script>
   <script src="js/telas/entrada.js"></script>
   <script src="js/telas/painel.js"></script>
@@ -1444,6 +1760,9 @@
   <script src="js/telas/turmas.js"></script>
   <script src="js/telas/matriculas.js"></script>
   <script src="js/telas/financeiro.js"></script>
+  <script src="js/telas/despesas.js"></script>
+  <script src="js/telas/calendario.js"></script>
+  <script src="js/telas/metas.js"></script>
   <script src="js/telas/relatorios.js"></script>
   <script src="js/telas/equipe.js"></script>
   <script src="js/telas/atividades.js"></script>

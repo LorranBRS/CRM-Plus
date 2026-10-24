@@ -38,8 +38,9 @@ const Mensageiro = {
       m.id = m.id || undefined;
       const erros = ModelosMensagem.validar(m);
       if (erros.length) return Utils.mostrarErros(form, erros);
+      const editando = Boolean(m.id);
       const salvo = ModelosMensagem.salvar(m);
-      Atividades.registrar('conversas', m.id ? 'Modelo de mensagem editado' : 'Modelo de mensagem criado', m.nome, { refId: salvo.id });
+      Atividades.registrar('conversas', editando ? 'Modelo de mensagem editado' : 'Modelo de mensagem criado', m.nome, { refId: salvo.id });
       this.renderizarModelos(salvo.id);
       Utils.toast('Modelo salvo!');
     });

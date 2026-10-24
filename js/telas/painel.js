@@ -16,6 +16,50 @@ const TelaPainel = {
     });
   },
 
+  // Barras de progresso das metas do mês
+  renderizarMetas() {
+    const e = Utils.escapar;
+    const mes = Utils.mesAtual();
+    const doc = Metas.doMes(mes);
+    const linha = (rotulo, icone, ind, p) => {
+      const st = Metas.status(p);
+      return `<div class="meta-linha">
+        <span class="meta-linha-nome">${icone} ${e(rotulo)}</span>
+        <div class="meta-barra"><span class="meta-${st.classe}" style="width:${Math.min(100, p.pct || 0)}%"></span></div>
+        <span class="meta-linha-valor"><strong>${Metas.formatar(ind, p.realizado)}</strong> / ${Metas.formatar(ind, p.meta)}</span>
+        <span class="badge badge-${st.classe}">${st.icone} ${p.pct}%</span>
+      </div>`;
+    };
+    const escola = Metas.indicadoresVisiveis().map((i) => ({ i, p: Metas.progresso(mes, i.id) })).filter(({ p }) => p.meta);
+    let html = escola.map(({ i, p }) => linha(i.nome, i.icone, i.id, p)).join('');
+
+    // Funcionário vê as próprias metas; o diretor vê as de cada um (matrículas)
+    if (Sessao.ehDiretor()) {
+      const individuais = Usuarios.ativos().map((u) => ({ u, p: Metas.progresso(mes, 'matriculas', u.id) })).filter(({ p }) => p.meta);
+      if (individuais.length) html += `<h4 class="titulo-secao">Matrículas por funcionário</h4>${individuais.map(({ u, p }) => linha(u.nome, '👤', 'matriculas', p)).join('')}`;
+    } else {
+      const minhas = Metas.INDICADORES.filter((i) => i.individual).map((i) => ({ i, p: Metas.progresso(mes, i.id, Sessao.idAtual()) })).filter(({ p }) => p.meta);
+      if (minhas.length) html += `<h4 class="titulo-secao">Minhas metas</h4>${minhas.map(({ i, p }) => linha(i.nome, i.icone, i.id, p)).join('')}`;
+    }
+    $('painelMetas').hidden = !html && !Sessao.ehDiretor();
+    $('tituloMetasPainel').textContent = `Metas de ${new Date().toLocaleDateString('pt-BR', { month: 'long' })}`;
+    $('metasPainel').innerHTML = html || `<p class="graf-vazio">Nenhuma meta definida para este mês. ${doc.id ? '' : 'Clique em "definir metas".'}</p>`;
+  },
+
+  // O que acontece hoje (aulas, eventos, vencimentos, retornos...)
+  renderizarHoje() {
+    const e = Utils.escapar;
+    const hoje = Utils.hoje();
+    const itens = Calendario.itens(hoje, hoje, Calendario.camadasPermitidas().map((c) => c.id))[hoje] || [];
+    const resumidos = TelaCalendario.resumirDia(itens);
+    $('agendaHoje').innerHTML = resumidos.slice(0, 8).map((i) => {
+      const c = Calendario.CAMADAS.find((x) => x.id === i.camada);
+      return `<li><div><strong><i class="ponto ${c.cor}"></i>${i.hora ? `${i.hora} · ` : ''}${e(i.titulo)}</strong>
+        ${i.detalhe ? `<small>${e(i.detalhe)}</small>` : ''}</div><span class="texto-suave">${c.icone}</span></li>`;
+    }).join('') + (resumidos.length > 8 ? `<li><a href="#agenda" class="link-mais">+${resumidos.length - 8} itens na agenda →</a></li>` : '')
+      || '<li class="graf-vazio">Nada na agenda para hoje.</li>';
+  },
+
   renderizar() {
     const hoje = Utils.hoje();
     $('painelData').textContent = new Date().toLocaleDateString('pt-BR',
@@ -28,6 +72,13 @@ const TelaPainel = {
     $('kpiLeads').textContent = Leads.estatisticas().abertos;
     $('kpiRecebido').textContent = Utils.formatarMoeda(fin.recebido);
     $('kpiAtraso').textContent = Utils.formatarMoeda(fin.atraso);
+    if (Sessao.ehDiretor()) {
+      const lucro = Resultado.doMes(Utils.mesAtual()).lucro;
+      $('kpiLucro').textContent = Utils.formatarMoeda(lucro);
+      $('kpiLucro').className = lucro < 0 ? 'texto-perigo' : 'texto-sucesso';
+    }
+    this.renderizarMetas();
+    this.renderizarHoje();
 
     // Receita dos últimos 6 meses
     const meses = [];

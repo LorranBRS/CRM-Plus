@@ -25,7 +25,8 @@ Tudo o que é feito no sistema fica registrado com o usuário, a data e a hora.
 
 | Módulo | O que faz |
 |---|---|
-| 🏠 **Painel** | Indicadores, receita prevista × recebida (6 meses), funil de leads, ocupação das turmas, próximos contatos e mensalidades em atraso |
+| 🏠 **Painel** | Indicadores, **lucro do mês**, **metas do mês**, o que tem **hoje na agenda**, receita (6 meses), funil, ocupação, contatos e atrasos |
+| 📅 **Agenda** | Calendário mensal e lista com aulas, contas a pagar e a receber, retornos de leads, aniversários, eventos e **feriados nacionais** (importação automática); camadas liga/desliga; feriados suspendem as aulas |
 | 💬 **Conversas** | Tela de chat com alunos, leads e professores: histórico, envio pelo WhatsApp (abre com o texto pronto), registro das respostas e **modelos de mensagem** com campos automáticos ({primeiro_nome}, {valor}, {vencimento}...) |
 | 🎯 **Leads / Funil** | Kanban com 6 etapas (arrastar e soltar), origem, responsável, próximo contato, histórico de interações e **conversão em aluno → matrícula** |
 | 👩‍🎓 **Alunos** | Cadastro completo, validação de CPF, máscaras, endereço pelo CEP (ViaCEP) e **ficha do aluno** (foto, matrículas, frequência, notas, financeiro, histórico e anotações; impressão) |
@@ -34,8 +35,9 @@ Tudo o que é feito no sistema fica registrado com o usuário, a data e a hora.
 | 🏫 **Turmas** | Professor, sala, dias, turno, horário, período, vagas, ocupação e **grade semanal**; bloqueia conflito de horário do professor |
 | 🎓 **Acadêmico** | **Chamada** (presente/falta/justificada, aulas sem chamada), **notas** por módulo da grade, situação (aprovado/reprovado) e **certificado de conclusão** com código de verificação |
 | 📝 **Matrículas** | Aluno × turma, controle de vagas, desconto, parcelas, dia de vencimento; gera o financeiro automaticamente |
-| 💰 **Financeiro** | Contas a receber, situação automática, **emissão de fatura numerada** e **recibo** (impressão/PDF), pagamentos com registro de quem recebeu, estorno e CSV |
+| 💰 **Financeiro** | **Receitas**: contas a receber, fatura numerada, recibo, pagamentos e estorno · **Despesas**: contas a pagar por categoria, recorrência mensal e **pagamento de professores** calculado pelas aulas dadas × valor da hora-aula · **Resultado** *(diretor)*: lucro, margem, gráfico de 6 meses e demonstrativo |
 | 📊 **Relatórios** | Exportação CSV de todos os módulos, inadimplência, resumo por turma, backup/restauração em JSON |
+| 🏆 **Metas** *(diretor)* | Metas mensais de matrículas, leads, receita e lucro, metas individuais por funcionário, projeção pelo ritmo atual e histórico |
 | 👥 **Equipe** *(diretor)* | Usuários, perfis, PIN, módulos liberados, desempenho no período e dados da instituição (**logo, cor da escola**, média e frequência mínimas) |
 | 🕒 **Atividades** *(diretor)* | Linha do tempo filtrável por funcionário, módulo e período, com exportação |
 
@@ -76,12 +78,13 @@ CRM-Plus/
     ├── documentos.js       # HTML da fatura, recibo e grade curricular
     ├── modelos/            # Regras de negócio
     │   ├── usuarios.js  atividades.js  instituicao.js  professores.js
+    │   ├── eventos.js (agenda e feriados)  despesas.js (despesas e resultado)  metas.js
     │   ├── alunos.js  cursos.js  turmas.js  academico.js (frequência e notas)
     │   └── matriculas.js  financeiro.js  leads.js  mensagens.js (WhatsApp, contatos, modelos)
     ├── telas/              # Eventos e renderização de cada tela
     │   ├── entrada.js  painel.js  leads.js  conversas.js  mensageiro.js  alunos.js  ficha.js
-    │   ├── cursos.js  professores.js  turmas.js  academico.js  matriculas.js
-    │   └── financeiro.js  relatorios.js  equipe.js  atividades.js
+    │   ├── calendario.js  cursos.js  professores.js  turmas.js  academico.js  matriculas.js
+    │   └── financeiro.js  despesas.js  metas.js  relatorios.js  equipe.js  atividades.js
     ├── exemplos.js         # Dados de demonstração
     └── app.js              # Entrada, menu por permissão e navegação
 ```
@@ -108,6 +111,9 @@ python3 -m http.server 8000
 - [x] Ficha do aluno, chamada, notas e certificado
 - [x] WhatsApp com mensagens prontas e tela de conversas
 - [x] Modo escuro, logo e cor da escola
+- [x] Agenda/calendário com feriados
+- [x] Metas mensais (escola e funcionários)
+- [x] Despesas, pagamento de professores e lucro
 - [ ] Receber respostas do WhatsApp automaticamente (API oficial – exige servidor)
 - [ ] Backend + banco de dados (dados compartilhados entre computadores)
 - [ ] Login seguro com senha (no servidor)

@@ -1,7 +1,15 @@
 // ===== Tela: Financeiro =====
 const TelaFinanceiro = {
+  aba: 'receitas',
+
   iniciar() {
     $('filtroMesFinanceiro').value = Utils.mesAtual();
+    TelaDespesas.iniciar();
+    TelaResultado.iniciar();
+    $('abasFinanceiro').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-aba]');
+      if (btn) { this.aba = btn.dataset.aba; this.renderizar(); }
+    });
 
     $('btnNovoLancamento').addEventListener('click', () => this.abrir());
     $('buscaFinanceiro').addEventListener('input', () => this.renderizar());
@@ -141,7 +149,25 @@ const TelaFinanceiro = {
       b('editar', '✏️', 'Editar') + b('cancelar', '🚫', 'Cancelar');
   },
 
+  abrirAba(aba) {
+    this.aba = aba;
+    if (location.hash !== '#financeiro') location.hash = '#financeiro';
+    else this.renderizar();
+  },
+
   renderizar() {
+    if (this.aba === 'resultado' && !Sessao.ehDiretor()) this.aba = 'receitas';
+    document.querySelectorAll('#abasFinanceiro [data-aba]').forEach((b) => b.classList.toggle('ativo', b.dataset.aba === this.aba));
+    document.querySelectorAll('[data-aba-fin]').forEach((b) => { b.hidden = b.dataset.abaFin !== this.aba; });
+    $('finReceitas').hidden = this.aba !== 'receitas';
+    $('finDespesas').hidden = this.aba !== 'despesas';
+    $('finResultado').hidden = this.aba !== 'resultado';
+    if (this.aba === 'despesas') return TelaDespesas.renderizar();
+    if (this.aba === 'resultado') return TelaResultado.renderizar();
+    this.renderizarReceitas();
+  },
+
+  renderizarReceitas() {
     const lista = this.listaFiltrada();
 
     $('listaFinanceiro').innerHTML = lista.map((l) => {

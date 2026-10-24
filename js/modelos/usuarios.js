@@ -7,6 +7,7 @@ const Usuarios = {
   // Módulos do sistema (ordem do menu). somenteDiretor = nunca liberado para funcionário
   MODULOS: [
     { id: 'painel', nome: 'Painel', icone: '🏠' },
+    { id: 'agenda', nome: 'Agenda', icone: '📅' },
     { id: 'leads', nome: 'Leads / Funil', icone: '🎯' },
     { id: 'conversas', nome: 'Conversas', icone: '💬' },
     { id: 'alunos', nome: 'Alunos', icone: '👩‍🎓' },
@@ -17,17 +18,18 @@ const Usuarios = {
     { id: 'matriculas', nome: 'Matrículas', icone: '📝' },
     { id: 'financeiro', nome: 'Financeiro', icone: '💰' },
     { id: 'relatorios', nome: 'Relatórios', icone: '📊' },
+    { id: 'metas', nome: 'Metas', icone: '🏆', somenteDiretor: true },
     { id: 'equipe', nome: 'Equipe', icone: '👥', somenteDiretor: true },
     { id: 'atividades', nome: 'Atividades', icone: '🕒', somenteDiretor: true },
   ],
 
   // Acessos sugeridos para cada função (o diretor pode ajustar)
   FUNCOES: {
-    'Secretaria': ['painel', 'conversas', 'alunos', 'cursos', 'professores', 'turmas', 'academico', 'matriculas'],
-    'Comercial': ['painel', 'leads', 'conversas', 'alunos', 'cursos', 'turmas', 'matriculas'],
-    'Financeiro': ['painel', 'conversas', 'alunos', 'matriculas', 'financeiro', 'relatorios'],
-    'Coordenação pedagógica': ['painel', 'conversas', 'alunos', 'cursos', 'professores', 'turmas', 'academico'],
-    'Outro': ['painel'],
+    'Secretaria': ['painel', 'agenda', 'conversas', 'alunos', 'cursos', 'professores', 'turmas', 'academico', 'matriculas'],
+    'Comercial': ['painel', 'agenda', 'leads', 'conversas', 'alunos', 'cursos', 'turmas', 'matriculas'],
+    'Financeiro': ['painel', 'agenda', 'conversas', 'alunos', 'matriculas', 'financeiro', 'relatorios'],
+    'Coordenação pedagógica': ['painel', 'agenda', 'conversas', 'alunos', 'cursos', 'professores', 'turmas', 'academico'],
+    'Outro': ['painel', 'agenda'],
   },
 
   modulosLiberaveis() {

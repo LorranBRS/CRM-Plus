@@ -24,12 +24,13 @@ const Academico = {
     return DIAS_DA_SEMANA[new Date(a, m - 1, d).getDay()];
   },
 
-  // Dias de aula da turma entre o início e "ate" (padrão: hoje)
-  diasDeAula(turma, ate = Utils.hoje()) {
+  // Dias de aula da turma entre "de" e "ate" (padrão: do início até hoje), sem feriados/recessos
+  diasDeAula(turma, ate = Utils.hoje(), de = null, semAula = Eventos.diasSemAula()) {
     const fim = turma.dataFim && turma.dataFim < ate ? turma.dataFim : ate;
+    const inicio = de && de > turma.dataInicio ? de : turma.dataInicio;
     const dias = [];
-    for (let d = turma.dataInicio; d && d <= fim; d = Utils.somarDias(d, 1)) {
-      if ((turma.dias || []).includes(this.diaDaSemana(d))) dias.push(d);
+    for (let d = inicio; d && d <= fim; d = Utils.somarDias(d, 1)) {
+      if ((turma.dias || []).includes(this.diaDaSemana(d)) && !semAula.has(d)) dias.push(d);
     }
     return dias;
   },
