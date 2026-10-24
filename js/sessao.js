@@ -7,7 +7,7 @@ const Sessao = {
   usuario() {
     let id = null;
     try { id = sessionStorage.getItem(this.CHAVE); } catch { /* navegador sem sessionStorage */ }
-    const u = id ? Usuarios.buscarPorId(id) : null;
+    const u = id ? Usuarios.porId(id) : null;
     return u && u.status !== 'Inativo' ? u : null;
   },
 
@@ -19,10 +19,20 @@ const Sessao = {
     return this.usuario()?.perfil === 'Diretor';
   },
 
+  ehProfessor() {
+    return this.usuario()?.perfil === 'Professor';
+  },
+
+  // Id do professor logado (ou null)
+  professorId() {
+    return this.usuario()?.professorId || null;
+  },
+
   pode(modulo) {
     const u = this.usuario();
     if (!u) return false;
     if (u.perfil === 'Diretor') return true;
+    if (u.perfil === 'Professor') return Usuarios.MODULOS_PROFESSOR.includes(modulo);
     const info = Usuarios.MODULOS.find((m) => m.id === modulo);
     return Boolean(info && !info.somenteDiretor && (u.modulos || []).includes(modulo));
   },

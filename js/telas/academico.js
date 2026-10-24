@@ -33,7 +33,8 @@ const TelaAcademico = {
       if (acao === 'salvar-chamada') this.salvarChamada(turma);
       if (acao === 'aula') { this.dataChamada = btn.dataset.data; this.renderizar(); }
       if (acao === 'salvar-notas') this.salvarNotas(turma);
-      if (acao === 'certificado') this.emitirCertificado(btn.dataset.id);
+      if (acao === 'certificado') Documentos.abrirConclusao(btn.dataset.id, 'certificado');
+      if (acao === 'diploma') Documentos.abrirConclusao(btn.dataset.id, 'diploma');
       if (acao === 'ficha') FichaAluno.abrir(btn.dataset.id, 'academico');
       if (acao === 'whats-faltas') Mensageiro.abrir({ tipo: 'aluno', id: btn.dataset.id, turma, modelo: 'Aviso de faltas' });
       if (acao === 'whats-certificado') Mensageiro.abrir({ tipo: 'aluno', id: btn.dataset.id, turma, modelo: 'Certificado disponível' });
@@ -48,7 +49,8 @@ const TelaAcademico = {
 
   turmasDisponiveis() {
     const ordem = { 'Em andamento': 0, Planejada: 1, 'Concluída': 2 };
-    return Turmas.listar().filter((t) => t.status !== 'Cancelada')
+    const prof = Sessao.professorId();
+    return Turmas.listar().filter((t) => t.status !== 'Cancelada' && (!prof || t.professorId === prof))
       .sort((a, b) => ordem[a.status] - ordem[b.status] || a.codigo.localeCompare(b.codigo));
   },
 
@@ -78,7 +80,8 @@ const TelaAcademico = {
 
     const turma = this.turmaAtual();
     if (!turma) {
-      $('academicoConteudo').innerHTML = '<div class="painel"><p class="graf-vazio">Nenhuma turma cadastrada.</p></div>';
+      $('academicoConteudo').innerHTML = `<div class="painel"><p class="graf-vazio">${Sessao.ehProfessor()
+        ? 'Você ainda não tem turmas atribuídas. Fale com a coordenação.' : 'Nenhuma turma cadastrada.'}</p></div>`;
       return;
     }
     const alunos = Academico.alunosDaTurma(turma.id);
@@ -250,7 +253,7 @@ const TelaAcademico = {
     return `
       <section class="painel">
         <div class="table-wrap table-plana"><table>
-          <thead><tr><th>Aluno</th><th>Frequência</th><th>Média</th><th>Situação</th><th>Certificado</th><th class="acoes">Ações</th></tr></thead>
+          <thead><tr><th>Aluno</th><th>Frequência</th><th>Média</th><th>Situação</th>${Sessao.ehProfessor() ? '' : '<th>Documentos</th>'}<th class="acoes">Ações</th></tr></thead>
           <tbody>${alunos.map(({ aluno, matricula }) => {
             const f = Frequencias.resumoAluno(turma.id, aluno.id);
             const media = Notas.media(turma, aluno.id);
@@ -264,13 +267,15 @@ const TelaAcademico = {
                 <small>${f.percentual}% · ${f.faltas} falta(s)</small>` : '<span class="texto-suave">-</span>'}</td>
               <td class="${media !== null && media < Academico.mediaMinima() ? 'texto-perigo' : ''}">${media !== null ? media.toFixed(1).replace('.', ',') : '-'}</td>
               <td>${Utils.badge(sit)}</td>
-              <td>${sit === 'Aprovado'
-                ? `<button class="btn ${matricula.certificadoNumero ? 'btn-light' : 'btn-primary'} btn-pequeno" data-acao="certificado" data-id="${matricula.id}">
-                    🎓 ${matricula.certificadoNumero ? `Nº ${String(matricula.certificadoNumero).padStart(6, '0')}` : 'Emitir'}</button>`
-                : '<span class="texto-suave">—</span>'}</td>
+              ${Sessao.ehProfessor() ? '' : `<td><div class="botoes-documentos">${sit === 'Aprovado' ? `
+                <button class="btn ${matricula.certificadoNumero ? 'btn-light' : 'btn-primary'} btn-pequeno" data-acao="certificado" data-id="${matricula.id}"
+                  title="Certificado de conclusão">🎓 ${matricula.certificadoNumero ? `Cert. ${String(matricula.certificadoNumero).padStart(6, '0')}` : 'Certificado'}</button>
+                <button class="btn ${matricula.diplomaNumero ? 'btn-light' : 'btn-primary'} btn-pequeno" data-acao="diploma" data-id="${matricula.id}"
+                  title="Diploma de conclusão">📜 ${matricula.diplomaNumero ? `Dipl. ${String(matricula.diplomaNumero).padStart(6, '0')}` : 'Diploma'}</button>`
+                : '<span class="texto-suave">—</span>'}</div></td>`}
               <td class="acoes">
                 ${baixa ? `<button class="btn-icon" data-acao="whats-faltas" data-id="${aluno.id}" title="Avisar sobre faltas">💬</button>` : ''}
-                ${matricula.certificadoNumero ? `<button class="btn-icon" data-acao="whats-certificado" data-id="${aluno.id}" title="Avisar que o certificado está pronto">📨</button>` : ''}
+                ${(matricula.certificadoNumero || matricula.diplomaNumero) && !Sessao.ehProfessor() ? `<button class="btn-icon" data-acao="whats-certificado" data-id="${aluno.id}" title="Avisar que o documento está pronto">📨</button>` : ''}
               </td></tr>`;
           }).join('')}</tbody>
         </table></div>
@@ -279,18 +284,7 @@ const TelaAcademico = {
   },
 
   emitirCertificado(matriculaId) {
-    let m = Matriculas.buscarPorId(matriculaId);
-    const turma = Turmas.buscarPorId(m.turmaId);
-    if (Notas.situacao(turma, m.alunoId) !== 'Aprovado') return Utils.toast('O aluno ainda não está aprovado nesta turma.', 'erro');
-    const primeira = !m.certificadoNumero;
-    if (primeira) {
-      m = Matriculas.salvar({ id: m.id, certificadoNumero: Instituicao.proximoNumeroCertificado(),
-        certificadoEmitidoEm: new Date().toISOString(), certificadoEmitidoPor: Sessao.idAtual() });
-    }
-    Atividades.registrar('academico', primeira ? 'Certificado emitido' : 'Certificado reimpresso',
-      `Nº ${String(m.certificadoNumero).padStart(6, '0')} – ${Matriculas.nomeAluno(m)} – ${Turmas.nomeCurso(turma)}`, { refId: m.id });
-    Utils.imprimir(`Certificado – ${Matriculas.nomeAluno(m)}`, Documentos.certificado(m), 'certificado');
-    this.renderizar();
-    FichaAluno.atualizarSeAberta();
+    Documentos.abrirConclusao(matriculaId, 'certificado');
   },
+
 };

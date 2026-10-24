@@ -45,8 +45,21 @@ const Usuarios = {
     return this.ativos().filter((u) => u.perfil === perfil);
   },
 
+  // Professores entram com id "prof:<id do professor>"
+  porId(id) {
+    if (!id) return null;
+    if (String(id).startsWith('prof:')) {
+      const p = Professores.buscarPorId(id.slice(5));
+      return p ? { id, nome: p.nome, perfil: 'Professor', professorId: p.id, status: p.status, pinHash: p.pinHash || '',
+        modulos: this.MODULOS_PROFESSOR, foto: p.foto } : null;
+    }
+    return this.buscarPorId(id);
+  },
+
+  MODULOS_PROFESSOR: ['painel', 'agenda', 'academico'],
+
   nome(id) {
-    return id ? this.buscarPorId(id)?.nome || '' : '';
+    return this.porId(id)?.nome || '';
   },
 
   iniciais(nome) {
@@ -55,6 +68,7 @@ const Usuarios = {
   },
 
   descricao(u) {
+    if (u.perfil === 'Professor') return 'Professor(a)';
     return u.perfil === 'Diretor' ? 'Diretor(a)' : (u.funcao || 'Funcionário');
   },
 

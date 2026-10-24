@@ -28,6 +28,7 @@ const TelaMatriculas = {
       const m = Matriculas.buscarPorId(btn.dataset.id);
       if (btn.dataset.acao === 'editar') this.abrir(m);
       if (btn.dataset.acao === 'ficha') FichaAluno.abrir(m.alunoId);
+      if (btn.dataset.acao === 'contrato') Documentos.abrirContrato(m.id);
       if (btn.dataset.acao === 'financeiro') {
         $('buscaFinanceiro').value = Matriculas.nomeAluno(m);
         $('filtroMesFinanceiro').value = '';
@@ -68,6 +69,7 @@ const TelaMatriculas = {
       Utils.fecharModal('modalMatricula');
       this.renderizar();
       Utils.toast(anterior ? 'Matrícula atualizada!' : 'Matrícula realizada!');
+      if (!anterior && $('gerarContrato').checked) Documentos.abrirContrato(salva.id);
     });
   },
 
@@ -127,6 +129,8 @@ const TelaMatriculas = {
     }
 
     $('linhaGerarFinanceiro').hidden = Boolean(m);
+    $('linhaGerarContrato').hidden = Boolean(m);
+    $('gerarContrato').checked = true;
     $('gerarFinanceiro').checked = true;
     this.atualizarValorFinal();
     Utils.abrirModal('modalMatricula', m ? 'Editar matrícula' : 'Nova matrícula');
@@ -157,6 +161,7 @@ const TelaMatriculas = {
         <td>${Utils.badge(m.status)}</td>
         <td class="acoes">
           ${Sessao.pode('financeiro') ? `<button class="btn-icon" data-acao="financeiro" data-id="${m.id}" title="Ver financeiro">💰</button>` : ''}
+          <button class="btn-icon" data-acao="contrato" data-id="${m.id}" title="${m.contratoNumero ? `Contrato Nº ${m.contratoNumero}` : 'Gerar contrato'}">📄</button>
           <button class="btn-icon" data-acao="editar" data-id="${m.id}" title="Editar">✏️</button>
           <button class="btn-icon" data-acao="excluir" data-id="${m.id}" title="Excluir">🗑️</button>
         </td>

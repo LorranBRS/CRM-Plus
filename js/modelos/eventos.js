@@ -115,7 +115,8 @@ const Calendario = {
     }
 
     if (ativas.has('aulas')) {
-      Turmas.listar().filter((t) => t.status !== 'Cancelada' && (t.dias || []).length).forEach((t) => {
+      const prof = Sessao.professorId();
+      Turmas.listar().filter((t) => t.status !== 'Cancelada' && (t.dias || []).length && (!prof || t.professorId === prof)).forEach((t) => {
         Academico.diasDeAula(t, ate, de, semAula).forEach((d) => add(d, {
           camada: 'aulas', titulo: t.codigo, icone: '🏫', hora: t.horaInicio,
           detalhe: `${Turmas.nomeCurso(t)} · ${Turmas.nomeProfessor(t) || 'sem professor'}${t.sala ? ` · ${t.sala}` : ''}`,

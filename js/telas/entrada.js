@@ -11,7 +11,7 @@ const TelaEntrada = {
       if (acao === 'voltar') this.passoPerfil();
       if (acao === 'demo') this.entrarDemonstracao();
       if (acao === 'usuario') {
-        const u = Usuarios.buscarPorId(btn.dataset.id);
+        const u = Usuarios.porId(btn.dataset.id);
         if (u.pinHash) this.passoPin(u);
         else this.entrar(u);
       }
@@ -21,7 +21,7 @@ const TelaEntrada = {
       e.preventDefault();
       const form = e.target;
       if (form.id === 'formPin') {
-        const ok = await this.entrar(Usuarios.buscarPorId(form.dataset.id), form.elements.pin.value);
+        const ok = await this.entrar(Usuarios.porId(form.dataset.id), form.elements.pin.value);
         if (!ok) {
           form.elements.pin.value = '';
           form.elements.pin.classList.add('invalido');
@@ -55,6 +55,11 @@ const TelaEntrada = {
           <strong>Funcionário</strong>
           <small>Acesso aos módulos liberados pela direção</small>
         </button>
+        <button class="perfil-card" data-acao="perfil" data-perfil="Professor">
+          <span class="perfil-icone">👨‍🏫</span>
+          <strong>Professor</strong>
+          <small>Minhas turmas, chamada, notas e agenda de aulas</small>
+        </button>
       </div>
       ${semUsuarios ? `
         <div class="entrada-demo">
@@ -65,20 +70,24 @@ const TelaEntrada = {
 
   passoLista(perfil) {
     if (perfil === 'Diretor' && !Usuarios.doPerfil('Diretor').length) return this.passoPrimeiroDiretor();
-    const lista = Usuarios.doPerfil(perfil);
+    const lista = perfil === 'Professor'
+      ? Professores.ativos().map((p) => Usuarios.porId(`prof:${p.id}`))
+      : Usuarios.doPerfil(perfil);
     const e = Utils.escapar;
+    const titulos = { Diretor: 'Entrar como diretor', 'Funcionário': 'Quem é você?', Professor: 'Qual professor(a) é você?' };
+    const vazio = perfil === 'Professor' ? 'Nenhum professor cadastrado ainda.<br>A direção cadastra os professores no menu <strong>Professores</strong>.'
+      : 'Nenhum funcionário cadastrado ainda.<br>Entre como <strong>diretor</strong> e cadastre a equipe no menu <strong>Equipe</strong>.';
 
     $('entradaConteudo').innerHTML = `
-      <h2>${perfil === 'Diretor' ? 'Entrar como diretor' : 'Quem é você?'}</h2>
+      <h2>${titulos[perfil]}</h2>
       <p class="entrada-sub">Selecione o seu nome</p>
       ${lista.length ? `<div class="entrada-usuarios">${lista.map((u) => `
         <button class="usuario-item" data-acao="usuario" data-id="${u.id}">
-          <span class="avatar">${e(Usuarios.iniciais(u.nome))}</span>
+          ${App.avatar(u)}
           <span><strong>${e(u.nome)}</strong><small>${e(Usuarios.descricao(u))}</small></span>
           <span class="usuario-pin">${u.pinHash ? '🔒' : ''}</span>
         </button>`).join('')}</div>`
-      : `<p class="entrada-aviso">Nenhum funcionário cadastrado ainda.<br>
-          Entre como <strong>diretor</strong> e cadastre a equipe no menu <strong>Equipe</strong>.</p>`}
+      : `<p class="entrada-aviso">${vazio}</p>`}
       <button class="btn btn-light btn-voltar" data-acao="voltar">← Voltar</button>`;
   },
 

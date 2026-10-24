@@ -72,6 +72,8 @@ const Exemplos = {
         email: 'contato@escolafuturo.com.br', endereco: 'Rua das Flores, 100 – Centro – São Paulo/SP',
         chavePix: 'financeiro@escolafuturo.com.br', mediaMinima: 7, frequenciaMinima: 75,
         responsavelCertificado: eq.diretor.nome, logo: this.logo(),
+        multaAtraso: 2, jurosMes: 1, avisoPrevio: 30, multaRescisoria: 10, foro: 'São Paulo/SP',
+        amparoLegal: 'Curso livre de formação inicial e continuada, amparado pela Lei nº 9.394/96 (LDB) e pelo Decreto nº 5.154/2004.',
       });
     }
 
@@ -177,6 +179,11 @@ const Exemplos = {
       cep: '', endereco: '', numero: '', bairro: '', observacoes: '',
       curso: '', status: 'Interessado', criadoPor: i % 3 ? eq.ana.id : eq.diego.id,
     }));
+
+    // Um aluno menor de idade, com responsável financeiro
+    Alunos.salvar({ id: alunos[13].id, nascimento: `${Number(hoje.slice(0, 4)) - 16}-03-14`, responsavelNome: 'Cláudia Teixeira',
+      responsavelParentesco: 'Mãe', responsavelCpf: this.cpf(258369147), responsavelTelefone: '(48) 99123-4567',
+      endereco: 'Rua das Palmeiras', numero: '45', bairro: 'Centro', cidade: 'Florianópolis', uf: 'SC', cep: '88010-000' });
 
     // ---------- Matrículas (+ financeiro gerado automaticamente) ----------
     let seq = 0;

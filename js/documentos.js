@@ -1,5 +1,48 @@
 // ===== Documentos para impressão: fatura, recibo e grade curricular =====
 const Documentos = {
+  // Abre o contrato da matrícula (numera na primeira emissão)
+  abrirContrato(matriculaId) {
+    let m = Matriculas.buscarPorId(matriculaId);
+    const primeira = !m.contratoNumero;
+    if (primeira) {
+      m = Matriculas.salvar({ id: m.id, contratoNumero: Instituicao.proximoNumeroContrato(),
+        contratoEmitidoEm: new Date().toISOString(), contratoEmitidoPor: Sessao.idAtual() });
+    }
+    const aluno = Alunos.buscarPorId(m.alunoId);
+    Atividades.registrar('matriculas', primeira ? 'Contrato emitido' : 'Contrato reimpresso',
+      `Nº ${this.numero(m.contratoNumero)} – ${aluno.nome} – ${Matriculas.turma(m)?.codigo || ''}`, { refId: m.id });
+    const idade = Utils.idade(aluno.nascimento);
+    const menor = idade !== null && idade < 18;
+    App.documento(`Contrato Nº ${this.numero(m.contratoNumero)}`, this.contrato(m), {
+      arquivo: `Contrato_${this.numero(m.contratoNumero)}_${aluno.nome.replace(/\s+/g, '_')}`,
+      dica: menor && !aluno.responsavelNome ? '⚠ Aluno menor de idade sem responsável cadastrado.' : 'Modelo padrão – revise as cláusulas com seu advogado.',
+    });
+  },
+
+  // Certificado ou diploma (só para alunos aprovados); numera na primeira emissão
+  abrirConclusao(matriculaId, tipo) {
+    let m = Matriculas.buscarPorId(matriculaId);
+    const turma = Turmas.buscarPorId(m.turmaId);
+    if (Notas.situacao(turma, m.alunoId) !== 'Aprovado') return Utils.toast('O aluno ainda não está aprovado nesta turma.', 'erro');
+    const campo = tipo === 'diploma' ? 'diploma' : 'certificado';
+    const primeira = !m[`${campo}Numero`];
+    if (primeira) {
+      const numero = tipo === 'diploma' ? Instituicao.proximoNumeroDiploma() : Instituicao.proximoNumeroCertificado();
+      m = Matriculas.salvar({ id: m.id, [`${campo}Numero`]: numero, [`${campo}EmitidoEm`]: new Date().toISOString(), [`${campo}EmitidoPor`]: Sessao.idAtual() });
+    }
+    const nomeTipo = tipo === 'diploma' ? 'Diploma' : 'Certificado';
+    const aluno = Matriculas.nomeAluno(m);
+    Atividades.registrar('academico', `${nomeTipo} ${primeira ? 'emitido' : 'reimpresso'}`,
+      `Nº ${this.numero(m[`${campo}Numero`])} – ${aluno} – ${Turmas.nomeCurso(turma)}`, { refId: m.id });
+    App.documento(`${nomeTipo} – ${aluno}`, tipo === 'diploma' ? this.diploma(m) : this.certificado(m), {
+      classe: 'certificado', orientacao: 'landscape',
+      arquivo: `${nomeTipo}_${this.numero(m[`${campo}Numero`])}_${aluno.replace(/\s+/g, '_')}`,
+      dica: 'Frente e verso. No PDF, imprima em papel A4 paisagem.',
+    });
+    App.renderizarAtual();
+    FichaAluno.atualizarSeAberta();
+  },
+
   cabecalho(titulo, numero = '') {
     const i = Instituicao.ler();
     const e = Utils.escapar;
@@ -67,6 +110,177 @@ const Documentos = {
       <footer class="doc-rodape">Emitido em ${Utils.formatarDataHora(new Date().toISOString())}</footer>`;
   },
 
+  // Data por extenso com a cidade da escola: "São Paulo/SP, 23 de outubro de 2026"
+  localData(iso) {
+    const i = Instituicao.ler();
+    const cidade = i.foro || (i.endereco || '').split('–').pop().trim();
+    const data = new Date(iso).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    return `${cidade ? `${cidade}, ` : ''}${data}`;
+  },
+
+  numero(n) {
+    return String(n).padStart(6, '0');
+  },
+
+  // ---------- Contrato de prestação de serviços educacionais ----------
+  contrato(m) {
+    const e = Utils.escapar;
+    const i = Instituicao.ler();
+    const aluno = Alunos.buscarPorId(m.alunoId);
+    const turma = Turmas.buscarPorId(m.turmaId);
+    const curso = Cursos.buscarPorId(turma.cursoId);
+    const temResp = Boolean(aluno.responsavelNome);
+    const endereco = [aluno.endereco, aluno.numero, aluno.bairro, aluno.cidade && `${aluno.cidade}/${aluno.uf}`, aluno.cep && `CEP ${aluno.cep}`]
+      .filter(Boolean).join(', ') || 'endereço não informado';
+    const parcelas = Financeiro.listar().filter((l) => l.matriculaId === m.id && l.status !== 'Cancelado')
+      .sort((a, b) => a.vencimento.localeCompare(b.vencimento));
+    const total = (m.taxaMatricula || 0) + m.valorFinal * m.parcelas;
+    const multa = i.multaAtraso ?? 2;
+    const juros = i.jurosMes ?? 1;
+    const aviso = i.avisoPrevio ?? 30;
+    const rescisoria = i.multaRescisoria ?? 10;
+    const n = { num: 0 };
+    const clausula = (titulo, texto) => `<section class="clausula"><h3>Cláusula ${++n.num}ª – ${titulo}</h3>${texto}</section>`;
+
+    return `
+      ${this.cabecalho('CONTRATO', `Nº ${this.numero(m.contratoNumero)}`)}
+      <h2 class="contrato-titulo">Contrato de Prestação de Serviços Educacionais</h2>
+      <section class="clausula partes">
+        <p><strong>CONTRATADA:</strong> ${e(i.nome || 'Instituição de Ensino')}${i.cnpj ? `, inscrita no CNPJ sob o nº ${e(i.cnpj)}` : ''}${
+          i.endereco ? `, com sede em ${e(i.endereco)}` : ''}, doravante denominada <strong>ESCOLA</strong>.</p>
+        <p><strong>CONTRATANTE:</strong> ${temResp
+          ? `${e(aluno.responsavelNome)}, CPF ${e(aluno.responsavelCpf || 'não informado')}${aluno.responsavelParentesco ? `, ${e(aluno.responsavelParentesco.toLowerCase())} do(a) aluno(a)` : ''}, telefone ${e(aluno.responsavelTelefone || aluno.telefone)}`
+          : `${e(aluno.nome)}, CPF ${e(aluno.cpf)}, telefone ${e(aluno.telefone)}, e-mail ${e(aluno.email)}`}, residente em ${e(endereco)}.</p>
+        ${temResp ? `<p><strong>ALUNO(A):</strong> ${e(aluno.nome)}, CPF ${e(aluno.cpf)}${aluno.nascimento ? `, nascido(a) em ${Utils.formatarData(aluno.nascimento)}` : ''}.</p>` : ''}
+        <p>As partes acima identificadas celebram o presente contrato, que se regerá pelas cláusulas a seguir.</p>
+      </section>
+      ${clausula('Do objeto', `<p>A ESCOLA prestará ao(à) aluno(a) os serviços educacionais do curso <strong>${e(curso.nome)}</strong>${curso.area ? ` (${e(curso.area)})` : ''},
+        na modalidade ${e((curso.modalidade || '').toLowerCase())}, com carga horária total de <strong>${curso.cargaHoraria} horas</strong>,
+        na turma <strong>${e(turma.codigo)}</strong>, com aulas às ${e((turma.dias || []).join(', ') || 'datas a definir')}${turma.horaInicio ? `, das ${e(turma.horaInicio)} às ${e(turma.horaFim)}` : ''},
+        no período de ${Utils.formatarData(turma.dataInicio)} a ${Utils.formatarData(turma.dataFim)}${turma.sala ? `, em ${e(turma.sala)}` : ''}.
+        O conteúdo programático consta no Anexo II.</p>`)}
+      ${clausula('Do valor e da forma de pagamento', `<p>Pelos serviços, o CONTRATANTE pagará:</p>
+        <ul>
+          ${m.taxaMatricula ? `<li>Taxa de matrícula de <strong>${Utils.formatarMoeda(m.taxaMatricula)}</strong>, com vencimento em ${Utils.formatarData(m.dataMatricula)};</li>` : ''}
+          <li><strong>${m.parcelas}</strong> mensalidade(s) de <strong>${Utils.formatarMoeda(m.valorFinal)}</strong>${m.desconto
+            ? ` (valor cheio de ${Utils.formatarMoeda(m.valorMensalidade)} com desconto de ${m.desconto}%)` : ''}, com vencimento todo dia <strong>${m.diaVencimento}</strong>;</li>
+          <li>Valor total do contrato: <strong>${Utils.formatarMoeda(total)}</strong>.</li>
+        </ul>
+        <p>Os pagamentos poderão ser feitos por PIX${i.chavePix ? ` (chave ${e(i.chavePix)})` : ''}, boleto, cartão ou na secretaria. O cronograma consta no Anexo I.</p>`)}
+      ${clausula('Do atraso no pagamento', `<p>O pagamento após o vencimento acarretará multa de ${String(multa).replace('.', ',')}% e juros de
+        ${String(juros).replace('.', ',')}% ao mês, calculados proporcionalmente aos dias de atraso, sem prejuízo da cobrança dos valores devidos.</p>`)}
+      ${clausula('Das obrigações da escola', `<p>A ESCOLA se compromete a ministrar as aulas conforme o plano do curso, com professores qualificados,
+        e a emitir certificado de conclusão ao(à) aluno(a) que obtiver média final igual ou superior a ${Academico.mediaMinima()} e frequência mínima
+        de ${Academico.frequenciaMinima()}% das aulas.</p>`)}
+      ${clausula('Das obrigações do contratante', `<p>O CONTRATANTE se compromete a efetuar os pagamentos nas datas acordadas, zelar pela frequência
+        e pelo bom desempenho do(a) aluno(a), respeitar as normas internas da ESCOLA e manter seus dados cadastrais atualizados.</p>`)}
+      ${clausula('Do cancelamento e do trancamento', `<p>O cancelamento deverá ser solicitado por escrito com antecedência mínima de ${aviso} dias.
+        Permanecem devidas as parcelas vencidas até a data do pedido, e será cobrada multa rescisória de ${rescisoria}% sobre o saldo das parcelas a vencer.
+        O trancamento, quando aceito, suspende as cobranças futuras e poderá ser retomado conforme disponibilidade de vagas.</p>`)}
+      ${clausula('Das aulas e reposições', `<p>Não haverá aulas em feriados e recessos previstos no calendário da ESCOLA. Aulas canceladas por iniciativa
+        da ESCOLA serão repostas. A ESCOLA poderá alterar horários e professores, comunicando previamente o CONTRATANTE.</p>`)}
+      ${clausula('Dos dados pessoais', `<p>Os dados pessoais fornecidos serão tratados pela ESCOLA exclusivamente para a execução deste contrato,
+        comunicação acadêmica e cumprimento de obrigações legais, nos termos da Lei nº 13.709/2018 (LGPD).</p>`)}
+      ${clausula('Do foro', `<p>Fica eleito o foro da comarca de ${e(i.foro || (i.endereco || '').split('–').pop().trim() || 'sede da ESCOLA')}
+        para dirimir quaisquer dúvidas oriundas deste contrato.</p>`)}
+      <p class="contrato-fecho">E, por estarem de acordo, as partes assinam o presente contrato em duas vias de igual teor.</p>
+      <p class="contrato-data">${e(this.localData(m.contratoEmitidoEm || new Date().toISOString()))}.</p>
+      <div class="assinaturas-contrato">
+        <div><span></span><p>${e(temResp ? aluno.responsavelNome : aluno.nome)}<br><small>CONTRATANTE</small></p></div>
+        <div><span></span><p>${e(i.nome || 'Instituição de Ensino')}<br><small>CONTRATADA</small></p></div>
+        <div><span></span><p>Testemunha 1<br><small>Nome / CPF</small></p></div>
+        <div><span></span><p>Testemunha 2<br><small>Nome / CPF</small></p></div>
+      </div>
+
+      <section class="anexo">
+        <h3>Anexo I – Cronograma de pagamentos</h3>
+        <table class="doc-tabela">
+          <thead><tr><th>#</th><th>Descrição</th><th>Vencimento</th><th>Valor</th></tr></thead>
+          <tbody>${(parcelas.length ? parcelas : Array.from({ length: m.parcelas }, (_, k) => ({
+            descricao: `Mensalidade ${k + 1}/${m.parcelas}`, vencimento: Utils.somarMeses(m.dataMatricula, k + 1, m.diaVencimento), valor: m.valorFinal,
+          }))).map((l, k) => `<tr><td>${k + 1}</td><td>${e(l.descricao)}</td><td>${Utils.formatarData(l.vencimento)}</td><td>${Utils.formatarMoeda(l.valor)}</td></tr>`).join('')}</tbody>
+          <tfoot><tr><td colspan="3">Total</td><td>${Utils.formatarMoeda(total)}</td></tr></tfoot>
+        </table>
+      </section>
+      <section class="anexo">
+        <h3>Anexo II – Conteúdo programático</h3>
+        <table class="doc-tabela">
+          <thead><tr><th>#</th><th>Módulo / disciplina</th><th>Carga</th></tr></thead>
+          <tbody>${(curso.grade || []).map((g, k) => `<tr><td>${k + 1}</td><td><strong>${e(g.nome)}</strong>${g.ementa ? `<br><small>${e(g.ementa)}</small>` : ''}</td><td>${g.cargaHoraria}h</td></tr>`).join('')
+            || `<tr><td colspan="3">${e(curso.descricao || 'Conforme plano do curso.')}</td></tr>`}</tbody>
+        </table>
+      </section>
+      <footer class="doc-rodape">Contrato Nº ${this.numero(m.contratoNumero)} · matrícula de ${Utils.formatarData(m.dataMatricula)} · gerado pelo CRM Plus</footer>`;
+  },
+
+  // ---------- Diploma de conclusão (frente + verso com registro e histórico) ----------
+  diploma(m) {
+    const e = Utils.escapar;
+    const i = Instituicao.ler();
+    const aluno = Alunos.buscarPorId(m.alunoId);
+    const turma = Turmas.buscarPorId(m.turmaId);
+    const curso = Cursos.buscarPorId(turma.cursoId);
+    const freq = Frequencias.resumoAluno(turma.id, aluno.id);
+    const media = Notas.media(turma, aluno.id);
+    const numero = this.numero(m.diplomaNumero);
+    const livro = Math.ceil(m.diplomaNumero / 100);
+    const folha = ((m.diplomaNumero - 1) % 100) + 1;
+    const codigo = `DP-${new Date(m.diplomaEmitidoEm).getFullYear()}-${numero}`;
+    const notas = Notas.notasDoAluno(turma.id, aluno.id);
+    const ornamento = (classe) => `<svg class="dip-canto ${classe}" viewBox="0 0 60 60"><path d="M4 56V20C4 11 11 4 20 4h36" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M12 56V24c0-7 5-12 12-12h32" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="currentColor"/></svg>`;
+    const selo = i.logo ? `<img src="${i.logo}" alt="">` : `<strong>${e(Usuarios.iniciais(i.nome || 'C P'))}</strong>`;
+
+    return `
+      <section class="diploma">
+        <div class="dip-moldura">
+          ${ornamento('sup-esq')}${ornamento('sup-dir')}${ornamento('inf-esq')}${ornamento('inf-dir')}
+          ${i.logo ? `<img class="dip-logo" src="${i.logo}" alt="">` : ''}
+          <p class="dip-escola">${e(i.nome || 'Instituição de Ensino')}</p>
+          <h1 class="dip-titulo">Diploma</h1>
+          <p class="dip-texto">A <strong>${e(i.nome || 'Instituição de Ensino')}</strong>, no uso de suas atribuições, confere a</p>
+          <p class="dip-nome">${e(aluno.nome)}</p>
+          <p class="dip-texto">o presente Diploma por haver concluído com êxito o curso de <strong>${e(curso.nome)}</strong>,
+            com carga horária de <strong>${curso.cargaHoraria} horas</strong>, realizado de ${Utils.formatarData(turma.dataInicio)}
+            a ${Utils.formatarData(turma.dataFim)}${media !== null ? `, com média final <strong>${media.toFixed(1).replace('.', ',')}</strong>` : ''}${
+            freq.aulas ? ` e frequência de ${freq.percentual}%` : ''}, para que possa gozar de todos os direitos e prerrogativas legais.</p>
+          ${i.amparoLegal ? `<p class="dip-amparo">${e(i.amparoLegal)}</p>` : ''}
+          <p class="dip-data">${e(this.localData(m.diplomaEmitidoEm))}.</p>
+          <div class="dip-rodape">
+            <div class="dip-assinatura"><span></span><p>${e(i.responsavelCertificado || 'Direção')}<br><small>Diretor(a)</small></p></div>
+            <div class="dip-selo">${selo}<small>Reg. ${numero}</small></div>
+            <div class="dip-assinatura"><span></span><p>${e(aluno.nome)}<br><small>Diplomado(a)</small></p></div>
+          </div>
+        </div>
+      </section>
+      <section class="dip-verso">
+        <div class="dip-verso-grade">
+          <div class="dip-registro">
+            <h3>Registro</h3>
+            <p>Diploma registrado sob o nº <strong>${numero}</strong>,<br>Livro <strong>${livro}</strong>, Folha <strong>${folha}</strong>,<br>
+              em ${Utils.formatarData(m.diplomaEmitidoEm)}.</p>
+            <div class="dip-assinatura"><span></span><p>${e(Usuarios.nome(m.diplomaEmitidoPor) || 'Secretaria')}<br><small>Secretaria acadêmica</small></p></div>
+            <p class="dip-codigo">Código de verificação<br><strong>${codigo}</strong></p>
+          </div>
+          <div class="dip-historico">
+            <h3>Histórico escolar – ${e(curso.nome)}</h3>
+            <p class="texto-pequeno">Aluno(a): ${e(aluno.nome)} · CPF ${e(aluno.cpf)} · Turma ${e(turma.codigo)}</p>
+            <table class="doc-tabela">
+              <thead><tr><th>#</th><th>Módulo / disciplina</th><th>Professor(a)</th><th>Carga</th><th>Nota</th></tr></thead>
+              <tbody>${Notas.avaliacoes(turma).map((a, k) => {
+                const g = (curso.grade || []).find((x) => x.id === a.id);
+                return `<tr><td>${k + 1}</td><td>${e(a.nome)}</td><td>${e(Professores.nome(g?.professorId) || Turmas.nomeProfessor(turma) || '-')}</td>
+                  <td>${g ? `${g.cargaHoraria}h` : `${curso.cargaHoraria}h`}</td><td>${notas[a.id] ?? '-'}</td></tr>`;
+              }).join('')}</tbody>
+              <tfoot><tr><td colspan="3">Carga horária total · Frequência ${freq.aulas ? `${freq.percentual}%` : '-'}</td>
+                <td>${curso.cargaHoraria}h</td><td>${media !== null ? media.toFixed(1).replace('.', ',') : '-'}</td></tr></tfoot>
+            </table>
+            <p class="texto-pequeno">Situação final: <strong>Aprovado(a)</strong> · Coordenação: ${e(Cursos.nomeCoordenador(curso) || '-')}</p>
+          </div>
+        </div>
+      </section>`;
+  },
+
   // Certificado de conclusão (página 1) + conteúdo programático (página 2)
   certificado(m) {
     const e = Utils.escapar;
@@ -76,7 +290,7 @@ const Documentos = {
     const curso = Cursos.buscarPorId(turma.cursoId);
     const freq = Frequencias.resumoAluno(turma.id, aluno.id);
     const media = Notas.media(turma, aluno.id);
-    const codigo = `CP-${(m.certificadoEmitidoEm || '').slice(0, 4)}-${String(m.certificadoNumero).padStart(6, '0')}`;
+    const codigo = `CP-${new Date(m.certificadoEmitidoEm).getFullYear()}-${String(m.certificadoNumero).padStart(6, '0')}`;
     const cidade = (i.endereco || '').split('–').pop().trim() || '';
     const dataExtenso = new Date(m.certificadoEmitidoEm).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
     const coordenador = Cursos.nomeCoordenador(curso);
@@ -94,6 +308,7 @@ const Documentos = {
             ${Utils.formatarData(turma.dataInicio)} a ${Utils.formatarData(turma.dataFim)}${
               freq.aulas ? `, com frequência de ${freq.percentual}%` : ''}${
               media !== null ? ` e média final ${media.toFixed(1).replace('.', ',')}` : ''}.</p>
+          ${i.amparoLegal ? `<p class="dip-amparo">${e(i.amparoLegal)}</p>` : ''}
           <p class="cert-data">${e(cidade ? `${cidade}, ` : '')}${dataExtenso}.</p>
           <div class="cert-assinaturas">
             <div><span></span><p>${e(i.responsavelCertificado || 'Direção')}<br><small>Direção</small></p></div>

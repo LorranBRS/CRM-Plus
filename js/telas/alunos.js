@@ -35,6 +35,8 @@ const TelaAlunos = {
     // Máscaras
     form.elements.cpf.addEventListener('input', (e) => { e.target.value = Utils.mascaraCPF(e.target.value); });
     form.elements.telefone.addEventListener('input', (e) => { e.target.value = Utils.mascaraTelefone(e.target.value); });
+    form.elements.responsavelCpf.addEventListener('input', (e) => { e.target.value = Utils.mascaraCPF(e.target.value); });
+    form.elements.responsavelTelefone.addEventListener('input', (e) => { e.target.value = Utils.mascaraTelefone(e.target.value); });
     form.elements.cep.addEventListener('input', (e) => { e.target.value = Utils.mascaraCEP(e.target.value); });
     form.elements.cep.addEventListener('blur', () => this.buscarCEP());
 

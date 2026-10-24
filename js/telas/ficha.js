@@ -33,7 +33,9 @@ const FichaAluno = {
         this.renderizar();
         App.renderizarAtual();
       }
-      if (acao === 'certificado') TelaAcademico.emitirCertificado(btn.dataset.id);
+      if (acao === 'certificado') Documentos.abrirConclusao(btn.dataset.id, 'certificado');
+      if (acao === 'diploma') Documentos.abrirConclusao(btn.dataset.id, 'diploma');
+      if (acao === 'contrato') Documentos.abrirContrato(btn.dataset.id);
       if (acao === 'conversa') {
         Utils.fecharModal('modalFicha');
         TelaConversas.abrirContato('aluno', aluno.id);
@@ -72,7 +74,7 @@ const FichaAluno = {
   abrir(alunoId, aba = 'geral') {
     if (!Alunos.buscarPorId(alunoId)) return;
     this.alunoId = alunoId;
-    this.aba = aba;
+    this.aba = Sessao.ehProfessor() ? 'academico' : aba;
     this.renderizar();
     Utils.abrirModal('modalFicha', 'Ficha do aluno');
   },
@@ -82,11 +84,9 @@ const FichaAluno = {
   },
 
   idade(nascimento) {
-    if (!nascimento) return null;
-    const [a, m, d] = nascimento.split('-').map(Number);
-    const hoje = new Date();
-    return hoje.getFullYear() - a - ((hoje.getMonth() + 1 < m || (hoje.getMonth() + 1 === m && hoje.getDate() < d)) ? 1 : 0);
+    return Utils.idade(nascimento);
   },
+
 
   renderizar() {
     const e = Utils.escapar;
@@ -105,7 +105,8 @@ const FichaAluno = {
     const atraso = lancamentos.filter((l) => Financeiro.situacao(l) === 'Atrasado').reduce((s, l) => s + Number(l.valor), 0);
     const idade = this.idade(aluno.nascimento);
 
-    const abas = [['geral', 'Visão geral'], ['academico', 'Acadêmico'], ...(podeFin ? [['financeiro', 'Financeiro']] : []), ['historico', 'Histórico']];
+    const abas = Sessao.ehProfessor() ? [['academico', 'Acadêmico'], ['geral', 'Dados']]
+      : [['geral', 'Visão geral'], ['academico', 'Acadêmico'], ...(podeFin ? [['financeiro', 'Financeiro']] : []), ['historico', 'Histórico']];
     if (!abas.some(([id]) => id === this.aba)) this.aba = 'geral';
 
     $('fichaCorpo').innerHTML = `
@@ -125,7 +126,7 @@ const FichaAluno = {
           ${Sessao.pode('conversas') ? '<button class="btn btn-light" data-acao="conversa">🗨️ Conversa</button>' : ''}
           ${podeEditar ? '<button class="btn btn-light" data-acao="editar">✏️ Editar</button>' : ''}
           ${Sessao.pode('matriculas') ? '<button class="btn btn-light" data-acao="matricular">📝 Matricular</button>' : ''}
-          <button class="btn btn-light" data-acao="imprimir">🖨️ Imprimir</button>
+          ${Sessao.ehProfessor() ? '' : '<button class="btn btn-light" data-acao="imprimir">🖨️ Imprimir</button>'}
         </div>
       </header>
 
@@ -155,20 +156,23 @@ const FichaAluno = {
         ${campo('Cadastrado em', `${Utils.formatarData(aluno.criadoEm)}${aluno.criadoPor ? ` por ${e(Usuarios.nome(aluno.criadoPor))}` : ''}`)}
         ${aluno.observacoes ? `<div class="ficha-dados-largo"><span>Observações</span><p>${e(aluno.observacoes)}</p></div>` : ''}
       </div>
-      <h3 class="titulo-secao">Matrículas</h3>
+      ${Sessao.ehProfessor() ? '' : `<h3 class="titulo-secao">Matrículas</h3>
       ${matriculas.length ? `<div class="table-wrap table-plana"><table>
-        <thead><tr><th>Turma</th><th>Data</th><th>Mensalidade</th><th>Atendente</th><th>Status</th></tr></thead>
+        <thead><tr><th>Turma</th><th>Data</th><th>Mensalidade</th><th>Atendente</th><th>Status</th><th></th></tr></thead>
         <tbody>${matriculas.map((m) => {
           const t = Turmas.buscarPorId(m.turmaId);
           return `<tr><td><strong>${e(t?.codigo || '-')}</strong><small>${e(t ? Turmas.nomeCurso(t) : '')}</small></td>
             <td>${Utils.formatarData(m.dataMatricula)}</td><td>${Utils.formatarMoeda(m.valorFinal)}</td>
-            <td>${e(Usuarios.nome(m.criadoPor)) || '-'}</td><td>${Utils.badge(m.status)}</td></tr>`;
-        }).join('')}</tbody></table></div>` : '<p class="graf-vazio">Nenhuma matrícula ainda.</p>'}`;
+            <td>${e(Usuarios.nome(m.criadoPor)) || '-'}</td><td>${Utils.badge(m.status)}</td>
+            <td class="acoes">${Sessao.pode('matriculas') ? `<button class="btn-icon" data-acao="contrato" data-id="${m.id}" title="Contrato${m.contratoNumero ? ` Nº ${m.contratoNumero}` : ''}">📄</button>` : ''}</td></tr>`;
+        }).join('')}</tbody></table></div>` : '<p class="graf-vazio">Nenhuma matrícula ainda.</p>'}`}`;
   },
 
   aba_academico(aluno, matriculas) {
     const e = Utils.escapar;
-    const comTurma = matriculas.filter((m) => m.status !== 'Cancelada').map((m) => ({ m, t: Turmas.buscarPorId(m.turmaId) })).filter((x) => x.t);
+    const prof = Sessao.professorId();
+    const comTurma = matriculas.filter((m) => m.status !== 'Cancelada').map((m) => ({ m, t: Turmas.buscarPorId(m.turmaId) }))
+      .filter((x) => x.t && (!prof || x.t.professorId === prof));
     if (!comTurma.length) return '<p class="graf-vazio">Nenhuma matrícula com turma.</p>';
     const minFreq = Academico.frequenciaMinima();
     return comTurma.map(({ m, t }) => {
@@ -198,9 +202,11 @@ const FichaAluno = {
               <p>Média: <strong>${media !== null ? media.toFixed(1).replace('.', ',') : '-'}</strong></p>
             </div>
           </div>
-          ${situacao === 'Aprovado' && (Sessao.pode('academico')) ? `<footer>
+          ${situacao === 'Aprovado' && Sessao.pode('academico') && !Sessao.ehProfessor() ? `<footer class="botoes-documentos">
             <button class="btn btn-primary" data-acao="certificado" data-id="${m.id}">🎓 ${m.certificadoNumero
-              ? `Reimprimir certificado Nº ${String(m.certificadoNumero).padStart(6, '0')}` : 'Emitir certificado'}</button></footer>` : ''}
+              ? `Certificado Nº ${String(m.certificadoNumero).padStart(6, '0')}` : 'Emitir certificado'}</button>
+            <button class="btn btn-primary" data-acao="diploma" data-id="${m.id}">📜 ${m.diplomaNumero
+              ? `Diploma Nº ${String(m.diplomaNumero).padStart(6, '0')}` : 'Emitir diploma'}</button></footer>` : ''}
         </article>`;
     }).join('');
   },

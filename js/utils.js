@@ -123,6 +123,13 @@ const Utils = {
       .replace('. de ', '/').replace(' de ', '/').replace('.', '');
   },
 
+  idade(nascimento) {
+    if (!nascimento) return null;
+    const [a, m, d] = nascimento.split('-').map(Number);
+    const hoje = new Date();
+    return hoje.getFullYear() - a - ((hoje.getMonth() + 1 < m || (hoje.getMonth() + 1 === m && hoje.getDate() < d)) ? 1 : 0);
+  },
+
   // "sexta-feira, 23 de outubro" -> "Sexta-feira, 23 de outubro"
   capitalizar(texto) {
     return (texto || '').replace(/^./, (c) => c.toUpperCase());
@@ -266,6 +273,95 @@ const Utils = {
       <title>${Utils.escapar(titulo)}</title><link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}">
       </head><body class="${classe}" style="--cor:${cor}">${corpo}<script>window.onload = () => setTimeout(() => window.print(), 300);<\/script></body></html>`);
     janela.document.close();
+  },
+
+  // Gera e baixa um arquivo PDF a partir do HTML do documento (usa html2pdf.js, carregado só quando necessário).
+  // Renderiza num iframe isolado com o estilo de impressão; se a biblioteca não carregar (sem internet), cai na impressão.
+  URL_HTML2PDF: 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
+
+  gerarPDF(nomeArquivo, corpo, { classe = '', orientacao = 'portrait', saida = 'save' } = {}) {
+    const paisagem = orientacao === 'landscape';
+    const margem = paisagem ? 0 : 12; // mm
+    const larguraMm = (paisagem ? 297 : 210) - margem * 2;
+    const cor = Instituicao.ler().corPrimaria || Tema.COR_PADRAO;
+    Utils.toast('Gerando PDF...');
+
+    return new Promise((resolve, reject) => {
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.style.cssText = `position:fixed;left:-20000px;top:0;width:${Math.round(larguraMm * 3.78) + 40}px;height:900px;border:0;`;
+      iframe.srcdoc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+        <link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}"></head>
+        <body class="pdf ${classe} ${paisagem ? 'pdf-paisagem' : ''}" style="--cor:${cor}">${corpo}</body></html>`;
+
+      iframe.onload = () => {
+        const win = iframe.contentWindow;
+        const script = win.document.createElement('script');
+        script.src = Utils.URL_HTML2PDF;
+        script.onerror = () => {
+          iframe.remove();
+          Utils.toast('Não foi possível gerar o PDF (sem internet?). Abrindo a impressão…', 'erro');
+          Utils.imprimir(nomeArquivo, corpo, classe);
+          reject(new Error('html2pdf indisponível'));
+        };
+        script.onload = async () => {
+          try {
+            await Utils.rasterizarSVGs(win.document);
+            const tarefa = win.html2pdf().set({
+              margin: margem,
+              filename: `${nomeArquivo}.pdf`,
+              image: { type: 'jpeg', quality: 0.95 },
+              html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: orientacao },
+              pagebreak: { mode: ['css', 'legacy'], avoid: ['.clausula', 'tr', '.assinaturas-contrato', '.doc-bloco'] },
+            }).from(win.document.body);
+            const resultado = saida === 'save' ? await tarefa.save() : await tarefa.outputPdf(saida);
+            Utils.toast('PDF gerado!');
+            resolve(resultado);
+          } catch (erro) {
+            Utils.toast('Erro ao gerar o PDF.', 'erro');
+            reject(erro);
+          } finally {
+            setTimeout(() => iframe.remove(), 1500);
+          }
+        };
+        win.document.head.appendChild(script);
+      };
+      document.body.appendChild(iframe);
+    });
+  },
+
+  // O gerador de PDF não desenha SVG: converte SVGs (inline e <img>) em PNG antes de gerar
+  async rasterizarSVGs(doc) {
+    const win = doc.defaultView;
+    doc.querySelectorAll('svg').forEach((svg) => {
+      const r = svg.getBoundingClientRect();
+      const clone = svg.cloneNode(true);
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      clone.setAttribute('width', r.width);
+      clone.setAttribute('height', r.height);
+      const xml = new XMLSerializer().serializeToString(clone).replace(/currentColor/g, win.getComputedStyle(svg).color);
+      const img = doc.createElement('img');
+      img.setAttribute('class', svg.getAttribute('class') || '');
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
+      svg.replaceWith(img);
+    });
+    await Promise.all([...doc.images].filter((img) => img.src.startsWith('data:image/svg')).map((img) => new Promise((resolve) => {
+      const converter = () => {
+        const r = img.getBoundingClientRect();
+        const w = Math.max(1, Math.round((r.width || img.naturalWidth || 100) * 3));
+        const h = Math.max(1, Math.round((r.height || img.naturalHeight || 100) * 3));
+        const canvas = doc.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = canvas.toDataURL('image/png');
+      };
+      if (img.complete && img.naturalWidth) converter();
+      else { img.onload = converter; img.onerror = () => resolve(); }
+    })));
   },
 
   baixarArquivo(conteudo, nome, tipo) {

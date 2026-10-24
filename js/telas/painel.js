@@ -1,6 +1,12 @@
 // ===== Tela: Painel (visão geral) =====
 const TelaPainel = {
   iniciar() {
+    $('painelProfessor').addEventListener('click', (e) => {
+      const chamada = e.target.closest('[data-chamada]');
+      if (chamada) return TelaAcademico.abrirChamada(chamada.dataset.chamada, chamada.dataset.data);
+      const ficha = e.target.closest('[data-ficha]');
+      if (ficha) FichaAluno.abrir(ficha.dataset.ficha);
+    });
     $('listaContatos').addEventListener('click', (e) => {
       const item = e.target.closest('[data-lead]');
       if (item) TelaLeads.abrir(Leads.buscarPorId(item.dataset.lead));
@@ -60,7 +66,80 @@ const TelaPainel = {
       || '<li class="graf-vazio">Nada na agenda para hoje.</li>';
   },
 
+  // Painel exclusivo do perfil Professor
+  renderizarProfessor() {
+    const e = Utils.escapar;
+    const prof = Sessao.professorId();
+    const hoje = Utils.hoje();
+    const turmas = Turmas.listar().filter((t) => t.professorId === prof && Turmas.estaAberta(t));
+    const alunos = turmas.flatMap((t) => Academico.alunosDaTurma(t.id, ['Ativa']).map((x) => ({ ...x, turma: t })));
+    const semAula = Eventos.diasSemAula();
+    const aulasHoje = turmas.filter((t) => Academico.diasDeAula(t, hoje, hoje, semAula).length);
+    const pendentes = turmas.flatMap((t) => Academico.diasDeAula(t, Utils.somarDias(hoje, -1), null, semAula)
+      .filter((d) => !Frequencias.buscarAula(t.id, d)).slice(-5).map((d) => ({ t, d })));
+    const baixa = alunos.map((x) => ({ ...x, f: Frequencias.resumoAluno(x.turma.id, x.aluno.id) }))
+      .filter((x) => x.f.aulas && x.f.percentual < Academico.frequenciaMinima()).sort((a, b) => a.f.percentual - b.f.percentual);
+    const eventos = Eventos.listar().filter((ev) => (ev.dataFim || ev.data) >= hoje && ev.data <= Utils.somarDias(hoje, 14)
+      && (!ev.turmaId || turmas.some((t) => t.id === ev.turmaId))).sort((a, b) => a.data.localeCompare(b.data)).slice(0, 6);
+    const proximas = [];
+    for (let d = hoje; d <= Utils.somarDias(hoje, 6) && proximas.length < 6; d = Utils.somarDias(d, 1)) {
+      turmas.filter((t) => Academico.diasDeAula(t, d, d, semAula).length).forEach((t) => proximas.push({ t, d }));
+    }
+
+    $('painelProfessor').innerHTML = `
+      <section class="cards">
+        <div class="card"><span>Minhas turmas</span><strong>${turmas.length}</strong></div>
+        <div class="card"><span>Alunos</span><strong>${alunos.length}</strong></div>
+        <div class="card"><span>Aulas hoje</span><strong>${aulasHoje.length}</strong></div>
+        <div class="card ${pendentes.length ? 'card-alerta' : ''}"><span>Chamadas pendentes</span><strong>${pendentes.length}</strong></div>
+      </section>
+      <section class="paineis">
+        <article class="painel">
+          <h3>Próximas aulas</h3>
+          <ul class="lista-simples">${proximas.map(({ t, d }) => `
+            <li><div><strong>${d === hoje ? 'Hoje' : Utils.dataPorExtenso(d)} · ${e(t.horaInicio || '')}–${e(t.horaFim || '')}</strong>
+              <small>${e(t.codigo)} – ${e(Turmas.nomeCurso(t))}${t.sala ? ` · ${e(t.sala)}` : ''}</small></div>
+              ${d === hoje ? `<button class="btn btn-primary btn-pequeno" data-chamada="${t.id}" data-data="${d}">Fazer chamada</button>` : ''}</li>`).join('')
+            || '<li class="graf-vazio">Nenhuma aula nos próximos 7 dias.</li>'}</ul>
+        </article>
+        <article class="painel">
+          <h3>Chamadas pendentes</h3>
+          <ul class="lista-simples">${pendentes.map(({ t, d }) => `
+            <li class="clicavel" data-chamada="${t.id}" data-data="${d}"><div><strong>${Utils.dataPorExtenso(d)}</strong>
+              <small>${e(t.codigo)} – ${e(Turmas.nomeCurso(t))}</small></div><span class="texto-alerta">Registrar →</span></li>`).join('')
+            || '<li class="graf-vazio">Tudo em dia! ✅</li>'}</ul>
+        </article>
+        <article class="painel">
+          <h3>Alunos com frequência baixa</h3>
+          <ul class="lista-simples">${baixa.slice(0, 8).map((x) => `
+            <li class="clicavel" data-ficha="${x.aluno.id}"><div><strong>${e(x.aluno.nome)}</strong>
+              <small>${e(x.turma.codigo)} · ${x.f.faltas} falta(s)</small></div><span class="texto-perigo">${x.f.percentual}%</span></li>`).join('')
+            || '<li class="graf-vazio">Nenhum aluno abaixo do mínimo.</li>'}</ul>
+        </article>
+        <article class="painel">
+          <h3>Próximos eventos <a href="#agenda" class="link-mais">agenda →</a></h3>
+          <ul class="lista-simples">${eventos.map((ev) => `
+            <li><div><strong>${Eventos.icone(ev.tipo)} ${e(ev.titulo)}</strong>
+              <small>${Utils.dataPorExtenso(ev.data)}${ev.horaInicio ? ` · ${ev.horaInicio}` : ''}${ev.local ? ` · ${e(ev.local)}` : ''}</small></div></li>`).join('')
+            || '<li class="graf-vazio">Nenhum evento nos próximos 14 dias.</li>'}</ul>
+        </article>
+        <article class="painel painel-largo">
+          <h3>Minha semana</h3>
+          <div id="agendaPainelProfessor"></div>
+        </article>
+      </section>`;
+    Agenda.render($('agendaPainelProfessor'), turmas, { mostrar: 'curso' });
+  },
+
   renderizar() {
+    const professor = Sessao.ehProfessor();
+    $('painelProfessor').hidden = !professor;
+    $('painelKpis').hidden = professor;
+    $('painelEquipe').hidden = professor;
+    if (professor) {
+      $('painelData').textContent = `Olá, ${Sessao.usuario().nome.split(' ')[0]}! ${Utils.dataPorExtenso(Utils.hoje())}`;
+      return this.renderizarProfessor();
+    }
     const hoje = Utils.hoje();
     $('painelData').textContent = new Date().toLocaleDateString('pt-BR',
       { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });

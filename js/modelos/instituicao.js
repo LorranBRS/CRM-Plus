@@ -18,6 +18,18 @@ const Instituicao = {
     return this.ler().nome || 'Instituição de Ensino';
   },
 
+  proximoNumeroContrato() {
+    const numero = (this.ler().ultimoContrato || 0) + 1;
+    this.salvar({ ultimoContrato: numero });
+    return numero;
+  },
+
+  proximoNumeroDiploma() {
+    const numero = (this.ler().ultimoDiploma || 0) + 1;
+    this.salvar({ ultimoDiploma: numero });
+    return numero;
+  },
+
   proximoNumeroCertificado() {
     const numero = (this.ler().ultimoCertificado || 0) + 1;
     this.salvar({ ultimoCertificado: numero });

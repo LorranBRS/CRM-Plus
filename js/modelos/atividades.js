@@ -10,7 +10,7 @@ const Atividades = {
   // opcoes: { refId, usuarioId, data } (usuarioId/data são usados pelos dados de exemplo)
   registrar(modulo, acao, descricao, opcoes = {}) {
     const usuarioId = opcoes.usuarioId || Sessao.idAtual();
-    const usuario = usuarioId ? Usuarios.buscarPorId(usuarioId) : null;
+    const usuario = usuarioId ? Usuarios.porId(usuarioId) : null;
     const lista = this.listar();
     lista.push({
       id: Utils.gerarId(),

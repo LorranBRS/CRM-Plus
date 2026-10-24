@@ -59,7 +59,9 @@
           </div>
         </header>
 
-        <section class="cards cards-5">
+        <div id="painelProfessor" hidden></div>
+
+        <section class="cards cards-5" id="painelKpis">
           <div class="card"><span>Alunos ativos</span><strong id="kpiAlunos">0</strong></div>
           <div class="card"><span>Matrículas ativas</span><strong id="kpiMatriculas">0</strong></div>
           <div class="card" data-modulo="leads"><span>Leads em aberto</span><strong id="kpiLeads">0</strong></div>
@@ -68,7 +70,7 @@
           <div class="card" data-somente-diretor><span>Lucro do mês</span><strong id="kpiLucro">R$ 0,00</strong></div>
         </section>
 
-        <section class="paineis">
+        <section class="paineis" id="painelEquipe">
           <article class="painel painel-largo" id="painelMetas">
             <h3><span id="tituloMetasPainel">Metas do mês</span> <a href="#metas" class="link-mais" data-somente-diretor>definir metas →</a></h3>
             <div id="metasPainel"></div>
@@ -117,7 +119,7 @@
             <p class="subtitle">Aulas, vencimentos, retornos, aniversários, eventos e feriados</p>
           </div>
           <button class="btn btn-light" id="btnFeriados" data-somente-diretor>🏖️ Feriados nacionais</button>
-          <button class="btn btn-primary" id="btnNovoEvento">+ Novo evento</button>
+          <button class="btn btn-primary" id="btnNovoEvento" data-nao-professor>+ Novo evento</button>
         </header>
 
         <section class="toolbar agenda-toolbar">
@@ -911,6 +913,24 @@
         </fieldset>
 
         <fieldset>
+          <legend>Responsável financeiro (obrigatório para menores de 18 anos)</legend>
+          <div class="grid">
+            <label class="col-2">Nome do responsável
+              <input type="text" name="responsavelNome">
+            </label>
+            <label>Parentesco
+              <input type="text" name="responsavelParentesco" placeholder="Ex.: Mãe">
+            </label>
+            <label>CPF do responsável
+              <input type="text" name="responsavelCpf" inputmode="numeric" placeholder="000.000.000-00">
+            </label>
+            <label>Telefone do responsável
+              <input type="tel" name="responsavelTelefone">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend>Acadêmico</legend>
           <div class="grid">
             <label class="col-2">Curso de interesse
@@ -1188,6 +1208,10 @@
               <input type="checkbox" id="gerarFinanceiro" checked>
               Gerar taxa e mensalidades automaticamente no Financeiro
             </label>
+            <label class="col-full checkbox-linha" id="linhaGerarContrato">
+              <input type="checkbox" id="gerarContrato" checked>
+              Abrir o contrato para impressão/PDF depois de salvar
+            </label>
             <label class="col-full">Observações
               <textarea name="observacoes" rows="2"></textarea>
             </label>
@@ -1324,6 +1348,18 @@
             </label>
           </div>
         </fieldset>
+        <fieldset>
+          <legend>Acesso ao sistema (perfil Professor)</legend>
+          <div class="grid">
+            <label>PIN do professor (4 a 8 números)
+              <input type="password" name="pin" inputmode="numeric" autocomplete="new-password" placeholder="Opcional">
+            </label>
+            <label class="col-2 checkbox-linha" id="linhaRemoverPinProf">
+              <input type="checkbox" id="removerPinProf"> Remover PIN atual
+            </label>
+          </div>
+          <p class="ajuda">O professor entra pela opção <strong>Professor</strong> e vê só as turmas dele: chamada, notas e agenda.</p>
+        </fieldset>
         <footer class="modal-footer">
           <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
           <button type="submit" class="btn btn-primary">Salvar</button>
@@ -1455,6 +1491,29 @@
                 <div class="cores-sugeridas" id="coresSugeridas"></div>
               </div>
             </div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Contrato de prestação de serviços</legend>
+          <div class="grid">
+            <label>Multa por atraso (%)
+              <input type="number" name="multaAtraso" min="0" max="2" step="0.1" placeholder="2">
+            </label>
+            <label>Juros ao mês (%)
+              <input type="number" name="jurosMes" min="0" max="10" step="0.1" placeholder="1">
+            </label>
+            <label>Aviso prévio p/ cancelar (dias)
+              <input type="number" name="avisoPrevio" min="0" step="1" placeholder="30">
+            </label>
+            <label>Multa rescisória (% do saldo)
+              <input type="number" name="multaRescisoria" min="0" max="100" step="1" placeholder="10">
+            </label>
+            <label class="col-2">Foro (cidade/UF)
+              <input type="text" name="foro" placeholder="Ex.: São Paulo/SP">
+            </label>
+            <label class="col-full">Amparo legal (aparece no diploma e no certificado)
+              <input type="text" name="amparoLegal" placeholder="Ex.: Curso livre – Lei nº 9.394/96 e Decreto nº 5.154/04">
+            </label>
           </div>
         </fieldset>
         <fieldset>
@@ -1719,6 +1778,22 @@
         <span class="texto-suave btn-esquerda" id="totalPagamentoProfessores"></span>
         <button type="button" class="btn btn-light" data-fechar>Fechar</button>
         <button type="button" class="btn btn-primary" id="btnGerarPagamentos">Gerar despesas selecionadas</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: DOCUMENTO (contrato, diploma, certificado) ===================== -->
+  <div class="modal" id="modalDocumento" aria-hidden="true">
+    <div class="modal-box modal-documento" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Documento</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <div class="documento-previa" id="documentoPrevia"></div>
+      <footer class="modal-footer">
+        <span class="ajuda btn-esquerda documento-dica" id="documentoDica"></span>
+        <button type="button" class="btn btn-light" id="btnImprimirDocumento">🖨️ Imprimir</button>
+        <button type="button" class="btn btn-primary" id="btnPdfDocumento">⬇ Baixar PDF</button>
       </footer>
     </div>
   </div>

@@ -15,6 +15,15 @@ const Alunos = {
     );
     if (cpfDuplicado) erros.push({ campo: 'cpf', msg: 'Já existe um aluno com este CPF.' });
 
+    // Menor de idade precisa de responsável financeiro
+    const idade = aluno.nascimento ? Utils.idade(aluno.nascimento) : null;
+    if (idade !== null && idade < 18 && !aluno.responsavelNome) {
+      erros.push({ campo: 'responsavelNome', msg: `Aluno com ${idade} anos: informe o responsável financeiro.` });
+    }
+    if (aluno.responsavelCpf && !Utils.cpfValido(aluno.responsavelCpf)) {
+      erros.push({ campo: 'responsavelCpf', msg: 'CPF do responsável inválido.' });
+    }
+
     return erros;
   },
 

@@ -52,11 +52,20 @@ const App = {
       Sessao.sair();
       TelaEntrada.mostrar();
     });
+    $('btnPdfDocumento').addEventListener('click', () => {
+      const d = this.docAtual;
+      Utils.gerarPDF(d.arquivo || d.titulo, d.corpo, { classe: d.classe, orientacao: d.orientacao }).catch(() => {});
+    });
+    $('btnImprimirDocumento').addEventListener('click', () => {
+      const d = this.docAtual;
+      Utils.imprimir(d.titulo, d.corpo, d.classe);
+    });
     $('btnImprimirVisualizar').addEventListener('click', () => {
       if (this.imprimirVisualizar) this.imprimirVisualizar();
     });
 
     window.addEventListener('hashchange', () => { if (Sessao.usuario()) this.navegar(); });
+    window.addEventListener('resize', () => { if ($('modalDocumento').classList.contains('aberto')) this.ajustarPrevia(); });
     this.iniciarSessao();
   },
 
@@ -89,6 +98,7 @@ const App = {
   aplicarPermissoes() {
     document.querySelectorAll('[data-modulo]').forEach((el) => { el.hidden = !Sessao.pode(el.dataset.modulo); });
     document.querySelectorAll('[data-somente-diretor]').forEach((el) => { el.hidden = !Sessao.ehDiretor(); });
+    document.querySelectorAll('[data-nao-professor]').forEach((el) => { el.hidden = Sessao.ehProfessor(); });
   },
 
   telaAtual() {
@@ -142,6 +152,38 @@ const App = {
     const e = Utils.escapar;
     return `<span class="avatar ${classe} ${pessoa?.foto ? 'com-foto' : ''}" ${id ? `id="${id}"` : ''} title="${e(pessoa?.nome || '')}">${
       pessoa?.foto ? `<img src="${pessoa.foto}" alt="">` : e(Usuarios.iniciais(pessoa?.nome))}</span>`;
+  },
+
+  // Prévia de documento (contrato, diploma, certificado) com "Baixar PDF" e "Imprimir"
+  // opcoes: { classe, orientacao: 'portrait'|'landscape', arquivo, dica }
+  documento(titulo, corpo, opcoes = {}) {
+    this.docAtual = { titulo, corpo, ...opcoes };
+    const largura = opcoes.orientacao === 'landscape' ? 1123 : 794;
+    const cor = Instituicao.ler().corPrimaria || Tema.COR_PADRAO;
+    $('documentoPrevia').innerHTML = '<div class="documento-escala" id="documentoEscala"><iframe id="documentoFrame" title="Prévia do documento"></iframe></div>';
+    const frame = $('documentoFrame');
+    frame.style.width = `${largura}px`;
+    frame.srcdoc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+      <link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}"></head>
+      <body class="previa ${opcoes.classe || ''}" style="--cor:${cor}">${corpo}</body></html>`;
+    this.larguraPrevia = largura;
+    frame.onload = () => this.ajustarPrevia();
+    $('documentoDica').textContent = opcoes.dica || '';
+    Utils.abrirModal('modalDocumento', titulo);
+    requestAnimationFrame(() => this.ajustarPrevia());
+  },
+
+  ajustarPrevia() {
+    const frame = $('documentoFrame');
+    const largura = this.larguraPrevia;
+    const disponivel = $('documentoPrevia').clientWidth - 24;
+    if (!frame?.contentDocument?.body || disponivel <= 0) return;
+    const altura = frame.contentDocument.documentElement.scrollHeight;
+    const escala = Math.min(1, disponivel / largura);
+    frame.style.height = `${altura}px`;
+    frame.style.transform = `scale(${escala})`;
+    $('documentoEscala').style.width = `${largura * escala}px`;
+    $('documentoEscala').style.height = `${altura * escala}px`;
   },
 
   // Janela de visualização (agenda do professor, grade do curso...)

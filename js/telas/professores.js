@@ -28,12 +28,16 @@ const TelaProfessores = {
       }
     });
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const p = Professores.preparar(Utils.lerForm(form));
       p.id = p.id || undefined;
       const erros = Professores.validar(p);
+      if (p.pin && !/^\d{4,8}$/.test(p.pin)) erros.push({ campo: 'pin', msg: 'O PIN deve ter de 4 a 8 números.' });
       if (erros.length) return Utils.mostrarErros(form, erros);
+      if ($('removerPinProf').checked) p.pinHash = '';
+      else if (p.pin) p.pinHash = await Sessao.hash(p.pin);
+      delete p.pin;
 
       const editando = Boolean(p.id);
       const salvo = Professores.salvar(p);
@@ -46,6 +50,9 @@ const TelaProfessores = {
 
   abrir(p = null) {
     Utils.preencherForm($('formProfessor'), p || { status: 'Ativo' });
+    $('formProfessor').elements.pin.value = '';
+    $('removerPinProf').checked = false;
+    $('linhaRemoverPinProf').hidden = !p?.pinHash;
     Utils.abrirModal('modalProfessor', p ? 'Editar professor' : 'Novo professor');
   },
 
@@ -84,7 +91,7 @@ const TelaProfessores = {
       const disciplinas = Professores.disciplinas(p.id);
       return `
       <tr>
-        <td><strong>${Utils.escapar(p.nome)}</strong><small>${Utils.escapar(p.formacao)}</small></td>
+        <td><strong>${Utils.escapar(p.nome)}</strong>${p.pinHash ? ' <span title="Tem PIN de acesso">🔒</span>' : ''}<small>${Utils.escapar(p.formacao)}</small></td>
         <td>${Utils.escapar(p.telefone)}<small>${Utils.escapar(p.email)}</small></td>
         <td>${Utils.escapar(p.especialidades) || '-'}</td>
         <td>${turmas.length ? turmas.map((t) => Utils.escapar(t.codigo)).join('<br>') : '-'}</td>
