@@ -142,3 +142,7 @@ body.certificado .diploma { height: 180mm; display: flex; break-after: page; pag
 .pix-codigo { font-family: "Courier New", monospace; font-size: 9.5px; word-break: break-all; background: #f3f4f6; padding: 6px 8px; border-radius: 6px; margin-top: 6px; color: #374151; }
 .declaracao-texto { font-size: 15px; line-height: 1.9; text-align: justify; margin: 18px 0; }
 .doc-assinatura { margin: 48px auto 10px; width: 320px; text-align: center; font-size: 13px; }
+
+/* ===== Proposta comercial ===== */
+.proposta-escolhida td { background: color-mix(in srgb, var(--cor, #4f46e5) 12%, #fff); font-weight: 700; }
+.proposta-combinada { margin-top: 10px; padding: 10px 12px; border-left: 4px solid var(--cor, #4f46e5); background: #f9fafb; }

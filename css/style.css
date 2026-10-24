@@ -752,8 +752,64 @@ legend { font-weight: 700; font-size: 13px; color: var(--primaria-texto); text-t
 #buscaDocumentos { margin-bottom: 10px; }
 .table-documentos { max-height: 360px; }
 
+/* ===== Simulador de propostas ===== */
+.simulador { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.sim-principal { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sim-lateral { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 16px; }
+.sim-form label small { font-weight: 400; }
+.sim-resumo { margin: 10px 0 0; }
+.sim-legenda { font-size: 12px; font-weight: 400; }
+.sim-avista { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.sim-opcao {
+  font: inherit; color: var(--texto); text-align: left; cursor: pointer; width: 100%;
+  background: var(--superficie-2); border: 2px solid transparent; border-radius: 10px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 2px; transition: border-color .1s, background .1s;
+}
+.sim-opcao:hover { border-color: var(--borda); }
+.sim-opcao.ativa { border-color: var(--primaria); background: var(--destaque); }
+.sim-opcao small { color: var(--texto-suave); font-size: 12px; }
+.sim-vista strong { font-size: 22px; }
+.sim-forma { font-size: 13px; font-weight: 600; color: var(--texto-suave); }
+.sim-tabela { max-height: 520px; overflow-y: auto; }
+.sim-tabela td { padding: 4px 6px; }
+.sim-tabela th { position: sticky; top: 0; z-index: 1; }
+.sim-celula { padding: 6px 10px; }
+.sim-celula strong { font-size: 15px; }
+.sim-celula.com-juros { background: color-mix(in srgb, var(--alerta) 8%, var(--superficie-2)); }
+.sim-celula.com-juros.ativa { background: var(--destaque); }
+.sim-destaque { font-size: 26px; margin: 4px 0 10px; }
+.sim-detalhes { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 14px; margin-bottom: 14px; }
+.sim-detalhes dt { color: var(--texto-suave); }
+.sim-detalhes dd { text-align: right; font-weight: 600; }
+.sim-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.sim-acoes .btn { flex: 1 1 auto; }
+.sim-acoes .btn:disabled { opacity: .5; cursor: not-allowed; }
+.calc { display: flex; flex-direction: column; gap: 8px; }
+.calc-visor { background: var(--superficie-3); border-radius: 10px; padding: 10px 14px; text-align: right; min-height: 64px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+.calc-visor small { color: var(--texto-suave); font-size: 12px; min-height: 16px; white-space: nowrap; }
+.calc-visor strong { font-size: 28px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.calc-teclas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.calc-teclas button {
+  font: inherit; font-size: 18px; font-weight: 600; height: 46px; border: 1px solid var(--borda); border-radius: 10px;
+  background: var(--superficie); color: var(--texto); cursor: pointer;
+}
+.calc-teclas button:hover { background: var(--superficie-2); }
+.calc-teclas button:active { transform: scale(.97); }
+.calc-teclas .tecla-funcao { background: var(--superficie-3); }
+.calc-teclas .tecla-op { color: var(--primaria-texto); background: var(--destaque); }
+.calc-teclas .tecla-igual { background: var(--primaria); color: #fff; border-color: var(--primaria); }
+.calc-usar { width: 100%; }
+.desconto-rapido label { font-size: 12px; }
+.desc-resumo { margin: 10px 0 0; }
+.regra-forma { border: 1px solid var(--borda); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+.regra-forma h4 { margin-bottom: 8px; }
+.regra-forma h4 .checkbox-linha { display: inline-flex; align-items: center; gap: 8px; }
+.regra-forma h4 input { width: auto; }
+
 /* ===== Responsivo ===== */
 @media (max-width: 1100px) {
+  .simulador { grid-template-columns: 1fr; }
+  .sim-lateral { position: static; }
   .academico-grid { grid-template-columns: 1fr; }
   .agenda-layout { grid-template-columns: 1fr; }
   .agenda-dia-painel { position: static; max-height: none; }

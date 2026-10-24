@@ -10,6 +10,7 @@ const Usuarios = {
     { id: 'agenda', nome: 'Agenda', icone: '📅' },
     { id: 'leads', nome: 'Leads / Funil', icone: '🎯' },
     { id: 'conversas', nome: 'Conversas', icone: '💬' },
+    { id: 'simulador', nome: 'Simulador', icone: '🧮' },
     { id: 'alunos', nome: 'Alunos', icone: '👩‍🎓' },
     { id: 'cursos', nome: 'Cursos', icone: '📚' },
     { id: 'professores', nome: 'Professores', icone: '👨‍🏫' },
@@ -25,9 +26,9 @@ const Usuarios = {
 
   // Acessos sugeridos para cada função (o diretor pode ajustar)
   FUNCOES: {
-    'Secretaria': ['painel', 'agenda', 'conversas', 'alunos', 'cursos', 'professores', 'turmas', 'academico', 'matriculas'],
-    'Comercial': ['painel', 'agenda', 'leads', 'conversas', 'alunos', 'cursos', 'turmas', 'matriculas'],
-    'Financeiro': ['painel', 'agenda', 'conversas', 'alunos', 'matriculas', 'financeiro', 'relatorios'],
+    'Secretaria': ['painel', 'agenda', 'conversas', 'simulador', 'alunos', 'cursos', 'professores', 'turmas', 'academico', 'matriculas'],
+    'Comercial': ['painel', 'agenda', 'leads', 'conversas', 'simulador', 'alunos', 'cursos', 'turmas', 'matriculas'],
+    'Financeiro': ['painel', 'agenda', 'conversas', 'simulador', 'alunos', 'matriculas', 'financeiro', 'relatorios'],
     'Coordenação pedagógica': ['painel', 'agenda', 'conversas', 'alunos', 'cursos', 'professores', 'turmas', 'academico'],
     'Outro': ['painel', 'agenda'],
   },

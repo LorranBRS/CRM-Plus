@@ -128,6 +128,11 @@ const TelaMatriculas = {
       }
     }
 
+    // Condição vinda do simulador de propostas
+    if (!m && extras.condicao) {
+      Object.entries(extras.condicao).forEach(([campo, valor]) => { if (form.elements[campo]) form.elements[campo].value = valor; });
+    }
+
     $('linhaGerarFinanceiro').hidden = Boolean(m);
     $('linhaGerarContrato').hidden = Boolean(m);
     $('gerarContrato').checked = true;

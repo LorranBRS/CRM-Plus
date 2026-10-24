@@ -5,6 +5,7 @@ const App = {
     agenda: TelaCalendario,
     leads: TelaLeads,
     conversas: TelaConversas,
+    simulador: TelaSimulador,
     alunos: TelaAlunos,
     cursos: TelaCursos,
     professores: TelaProfessores,

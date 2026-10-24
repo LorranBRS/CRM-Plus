@@ -170,6 +170,111 @@
         <section class="kanban" id="kanban"></section>
       </section>
 
+      <!-- ===================== TELA: SIMULADOR DE PROPOSTAS ===================== -->
+      <section class="tela" data-tela="simulador" hidden>
+        <header class="topbar">
+          <button class="btn-icon btn-menu" aria-label="Abrir menu">☰</button>
+          <div>
+            <h1>Simulador de propostas</h1>
+            <p class="subtitle">Monte a proposta para o cliente: à vista, parcelado, descontos e juros</p>
+          </div>
+          <button class="btn btn-light" id="btnRegrasPagamento" data-somente-diretor>⚙️ Regras de pagamento</button>
+        </header>
+
+        <div class="simulador">
+          <div class="sim-principal">
+            <section class="painel">
+              <h3>Dados da proposta</h3>
+              <div class="grid sim-form">
+                <label class="col-2">Curso
+                  <select id="simCurso"></select>
+                </label>
+                <label>Valor total (R$)
+                  <input type="number" id="simValor" min="0" step="0.01" placeholder="0,00">
+                </label>
+                <label class="col-2">Cliente (opcional)
+                  <select id="simCliente"></select>
+                </label>
+                <label>Desconto especial (%)
+                  <input type="number" id="simDesconto" min="0" max="100" step="0.5" value="0">
+                </label>
+                <label>Entrada (R$) <small class="texto-suave">só no parcelado</small>
+                  <input type="number" id="simEntrada" min="0" step="0.01" value="0">
+                </label>
+              </div>
+              <p class="aviso" id="simAviso" hidden></p>
+              <p class="ajuda sim-resumo" id="simResumoValor"></p>
+            </section>
+
+            <section class="painel">
+              <h3>À vista</h3>
+              <div class="sim-avista" id="simAvista"></div>
+            </section>
+
+            <section class="painel">
+              <h3>Parcelado <span class="texto-suave sim-legenda" id="simLegenda"></span></h3>
+              <div id="simParcelado"></div>
+            </section>
+          </div>
+
+          <aside class="sim-lateral">
+            <section class="painel sim-escolhida" id="simEscolhida"></section>
+
+            <section class="painel">
+              <h3>Calculadora</h3>
+              <div class="calc">
+                <div class="calc-visor" aria-live="polite">
+                  <small id="calcConta">&nbsp;</small>
+                  <strong id="calcValor">0</strong>
+                </div>
+                <div class="calc-teclas" id="calcTeclas">
+                  <button type="button" class="tecla-funcao" data-tecla="limpar">C</button>
+                  <button type="button" class="tecla-funcao" data-tecla="sinal">±</button>
+                  <button type="button" class="tecla-funcao" data-tecla="porcento">%</button>
+                  <button type="button" class="tecla-op" data-tecla="÷">÷</button>
+                  <button type="button" class="" data-tecla="7">7</button>
+                  <button type="button" class="" data-tecla="8">8</button>
+                  <button type="button" class="" data-tecla="9">9</button>
+                  <button type="button" class="tecla-op" data-tecla="×">×</button>
+                  <button type="button" class="" data-tecla="4">4</button>
+                  <button type="button" class="" data-tecla="5">5</button>
+                  <button type="button" class="" data-tecla="6">6</button>
+                  <button type="button" class="tecla-op" data-tecla="−">−</button>
+                  <button type="button" class="" data-tecla="1">1</button>
+                  <button type="button" class="" data-tecla="2">2</button>
+                  <button type="button" class="" data-tecla="3">3</button>
+                  <button type="button" class="tecla-op" data-tecla="+">+</button>
+                  <button type="button" class="" data-tecla="0">0</button>
+                  <button type="button" class="" data-tecla=",">,</button>
+                  <button type="button" class="tecla-funcao" data-tecla="apagar">⌫</button>
+                  <button type="button" class="tecla-igual" data-tecla="=">=</button>
+                </div>
+                <button type="button" class="btn btn-light btn-pequeno calc-usar" id="calcUsar">↑ Usar como valor da proposta</button>
+              </div>
+            </section>
+
+            <section class="painel">
+              <h3>Desconto rápido</h3>
+              <div class="grid grid-2 desconto-rapido">
+                <label>Valor (R$)
+                  <input type="number" id="descValor" min="0" step="0.01">
+                </label>
+                <label>Desconto (%)
+                  <input type="number" id="descPct" min="0" max="100" step="0.1">
+                </label>
+                <label>Desconto (R$)
+                  <input type="number" id="descReais" min="0" step="0.01">
+                </label>
+                <label>Valor final (R$)
+                  <input type="number" id="descFinal" min="0" step="0.01">
+                </label>
+              </div>
+              <p class="ajuda desc-resumo" id="descResumo">Preencha o valor e o desconto (em % ou R$) ou o valor final desejado.</p>
+            </section>
+          </aside>
+        </div>
+      </section>
+
       <!-- ===================== TELA: CONVERSAS ===================== -->
       <section class="tela" data-tela="conversas" hidden>
         <header class="topbar">
@@ -854,6 +959,7 @@
 
         <footer class="modal-footer">
           <button type="button" class="btn btn-whatsapp btn-esquerda" id="btnWhatsLead">💬 WhatsApp</button>
+          <button type="button" class="btn btn-light" id="btnSimularLead" data-modulo="simulador">🧮 Simular proposta</button>
           <button type="button" class="btn btn-light" id="btnConverterLead">🎓 Converter em aluno</button>
           <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
           <button type="submit" class="btn btn-primary">Salvar</button>
@@ -1794,6 +1900,82 @@
     </div>
   </div>
 
+  <!-- ===================== MODAL: REGRAS DE PAGAMENTO ===================== -->
+  <div class="modal" id="modalRegras" aria-hidden="true">
+    <div class="modal-box" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Regras de pagamento</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formRegras" novalidate>
+        <fieldset>
+          <p class="ajuda">Valem para todas as propostas do simulador. Acima do "sem juros", as parcelas são calculadas com juros compostos (Tabela Price).</p>
+          
+          <div class="regra-forma">
+            <h4><label class="checkbox-linha"><input type="checkbox" name="pix.ativo"> ⚡ PIX (à vista)</label></h4>
+            <div class="grid">
+              <label>Desconto à vista (%)
+                <input type="number" name="pix.descontoVista" min="0" max="50" step="0.5">
+              </label>
+            </div>
+          </div>
+          
+          <div class="regra-forma">
+            <h4><label class="checkbox-linha"><input type="checkbox" name="boleto.ativo"> 📄 Boleto</label></h4>
+            <div class="grid">
+              <label>Desconto à vista (%)
+                <input type="number" name="boleto.descontoVista" min="0" max="50" step="0.5">
+              </label>
+              <label>Máximo de parcelas
+                <input type="number" name="boleto.maxParcelas" min="1" max="48" step="1">
+              </label>
+              <label>Sem juros até (parcelas)
+                <input type="number" name="boleto.semJurosAte" min="1" max="48" step="1">
+              </label>
+              <label>Juros ao mês acima disso (%)
+                <input type="number" name="boleto.jurosMes" min="0" max="15" step="0.01">
+              </label>
+            </div>
+          </div>
+          
+          <div class="regra-forma">
+            <h4><label class="checkbox-linha"><input type="checkbox" name="cartao.ativo"> 💳 Cartão de crédito</label></h4>
+            <div class="grid">
+              <label>Desconto à vista (%)
+                <input type="number" name="cartao.descontoVista" min="0" max="50" step="0.5">
+              </label>
+              <label>Máximo de parcelas
+                <input type="number" name="cartao.maxParcelas" min="1" max="48" step="1">
+              </label>
+              <label>Sem juros até (parcelas)
+                <input type="number" name="cartao.semJurosAte" min="1" max="48" step="1">
+              </label>
+              <label>Juros ao mês acima disso (%)
+                <input type="number" name="cartao.jurosMes" min="0" max="15" step="0.01">
+              </label>
+            </div>
+          </div>
+          <div class="regra-forma">
+            <h4>Limites do atendente</h4>
+            <div class="grid">
+              <label>Desconto especial máximo (%)
+                <input type="number" name="descontoMaxFuncionario" min="0" max="100" step="0.5">
+              </label>
+              <label>Validade da proposta (dias)
+                <input type="number" name="validadeDias" min="1" max="90" step="1">
+              </label>
+            </div>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light btn-esquerda" id="btnRegrasPadrao">Restaurar padrão</button>
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar regras</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
   <!-- ===================== MODAL: DOCUMENTO (contrato, diploma, certificado) ===================== -->
   <div class="modal" id="modalDocumento" aria-hidden="true">
     <div class="modal-box modal-documento" role="dialog">
@@ -1836,6 +2018,7 @@
   <script src="js/modelos/despesas.js"></script>
   <script src="js/modelos/metas.js"></script>
   <script src="js/modelos/registros.js"></script>
+  <script src="js/modelos/simulador.js"></script>
   <script src="js/documentos.js"></script>
   <script src="js/telas/entrada.js"></script>
   <script src="js/telas/painel.js"></script>
@@ -1852,6 +2035,7 @@
   <script src="js/telas/financeiro.js"></script>
   <script src="js/telas/despesas.js"></script>
   <script src="js/telas/calendario.js"></script>
+  <script src="js/telas/simulador.js"></script>
   <script src="js/telas/metas.js"></script>
   <script src="js/telas/relatorios.js"></script>
   <script src="js/telas/equipe.js"></script>

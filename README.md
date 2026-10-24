@@ -27,6 +27,7 @@ Tudo o que é feito no sistema fica registrado com o usuário, a data e a hora.
 |---|---|
 | 🏠 **Painel** | Indicadores, **lucro do mês**, **metas do mês**, o que tem **hoje na agenda**, receita (6 meses), funil, ocupação, contatos e atrasos |
 | 📅 **Agenda** | Calendário mensal e lista com aulas, contas a pagar e a receber, retornos de leads, aniversários, eventos e **feriados nacionais** (importação automática); camadas liga/desliga; feriados suspendem as aulas |
+| 🧮 **Simulador** | Propostas para o cliente: PIX/boleto à vista com desconto, parcelado sem juros até N vezes e **com juros acima disso (Tabela Price)**, entrada, desconto especial com limite do atendente; copiar, enviar por WhatsApp, PDF, registrar no lead e matricular com a condição. **Calculadora** e **desconto rápido**. Regras definidas pelo diretor |
 | 💬 **Conversas** | Tela de chat com alunos, leads e professores: histórico, envio pelo WhatsApp (abre com o texto pronto), registro das respostas e **modelos de mensagem** com campos automáticos ({primeiro_nome}, {valor}, {vencimento}...) |
 | 🎯 **Leads / Funil** | Kanban com 6 etapas (arrastar e soltar), origem, responsável, próximo contato, histórico de interações e **conversão em aluno → matrícula** |
 | 👩‍🎓 **Alunos** | Cadastro completo, validação de CPF, máscaras, endereço pelo CEP (ViaCEP) e **ficha do aluno** (foto, matrículas, frequência, notas, financeiro, histórico e anotações; impressão) |
@@ -125,6 +126,7 @@ python3 -m http.server 8000
 - [ ] Receber respostas do WhatsApp automaticamente (API oficial – exige servidor)
 - [x] Perfil Professor, contrato e diploma em PDF
 - [x] PIX com QR Code, declarações e verificação de documentos
+- [x] Simulador de propostas e calculadora
 - [ ] Backend + banco de dados (dados compartilhados entre computadores)
 - [ ] Login seguro com senha (no servidor)
 - [ ] Frequência/notas, emissão de boletos/PIX, envio de WhatsApp/e-mail

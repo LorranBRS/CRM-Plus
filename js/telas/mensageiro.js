@@ -80,6 +80,7 @@ const Mensageiro = {
     $('msgModelo').innerHTML = this.opcoesModelos();
     $('msgModelo').value = (opcoes.modelo && ModelosMensagem.porNome(opcoes.modelo)?.id) || '';
     this.aplicarModelo();
+    if (opcoes.texto) { $('msgTexto').value = opcoes.texto; this.avisarCamposVazios(); }
     Utils.abrirModal('modalMensagem');
     $('msgTexto').focus();
   },

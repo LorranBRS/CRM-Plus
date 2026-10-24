@@ -66,6 +66,12 @@ const TelaLeads = {
     });
 
     $('btnConverterLead').addEventListener('click', () => this.converter());
+    $('btnSimularLead').addEventListener('click', () => {
+      const id = $('formLead').elements.id.value;
+      if (!id) return;
+      Utils.fecharModal('modalLead');
+      TelaSimulador.abrirParaLead(id);
+    });
     $('btnWhatsLead').addEventListener('click', () => {
       const lead = Leads.buscarPorId($('formLead').elements.id.value);
       if (lead) Mensageiro.abrir({ tipo: 'lead', id: lead.id, modelo: lead.etapa === 'Novo' ? 'Primeiro contato' : 'Retorno de proposta' });
@@ -98,6 +104,7 @@ const TelaLeads = {
 
     $('btnConverterLead').hidden = !lead || Boolean(lead.alunoId);
     $('btnWhatsLead').hidden = !lead;
+    $('btnSimularLead').hidden = !lead || !Sessao.pode('simulador');
     Utils.abrirModal('modalLead', lead ? 'Editar lead' : 'Novo lead');
   },
 

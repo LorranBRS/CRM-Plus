@@ -96,6 +96,45 @@ const Documentos = {
         por ${e(Usuarios.nome(l.faturaEmitidaPor) || '-')}</footer>`;
   },
 
+  // ---------- Proposta comercial (simulador) ----------
+  proposta({ resultado, escolhida, curso, cliente }) {
+    const e = Utils.escapar;
+    const r = resultado;
+    const linha = (op) => `<tr class="${op.id === escolhida?.id ? 'proposta-escolhida' : ''}">
+      <td>${Simulador.FORMAS[op.forma].icone} ${Simulador.FORMAS[op.forma].nome}</td>
+      <td>${op.parcelas === 1 ? 'À vista' : `${op.entrada ? `${Utils.formatarMoeda(op.entrada)} + ` : ''}${op.parcelas}x de ${Utils.formatarMoeda(op.valorParcela)}`}</td>
+      <td>${op.parcelas === 1 ? (op.desconto ? `${String(op.desconto).replace('.', ',')}% de desconto` : '—') : (op.juros ? `${String(op.juros).replace('.', ',')}% a.m.` : 'sem juros')}</td>
+      <td>${Utils.formatarMoeda(op.total)}</td></tr>`;
+    const opcoes = Simulador.destaques(r);
+    if (escolhida && !opcoes.some((o) => o.id === escolhida.id)) opcoes.push(escolhida);
+    return `
+      ${this.cabecalho('PROPOSTA', Utils.formatarData(Utils.hoje()))}
+      <h2 class="contrato-titulo">Proposta comercial</h2>
+      <section class="doc-bloco">
+        <h3>Para</h3>
+        <p><strong>${e(cliente?.nome || 'Cliente')}</strong>${cliente?.telefone ? ` · ${e(cliente.telefone)}` : ''}${cliente?.item?.email ? ` · ${e(cliente.item.email)}` : ''}</p>
+      </section>
+      ${curso ? `<section class="doc-bloco">
+        <h3>Curso</h3>
+        <p><strong>${e(curso.nome)}</strong> – ${curso.cargaHoraria} horas${curso.duracaoMeses ? `, ${curso.duracaoMeses} meses` : ''}, ${e((curso.modalidade || '').toLowerCase())}</p>
+        ${curso.descricao ? `<p>${e(curso.descricao)}</p>` : ''}
+        ${(curso.grade || []).length ? `<p class="texto-pequeno">Conteúdo: ${curso.grade.map((g) => e(g.nome)).join(' · ')}</p>` : ''}
+      </section>` : ''}
+      <section class="doc-bloco">
+        <h3>Investimento</h3>
+        <p>Valor do curso: <strong>${Utils.formatarMoeda(r.valor)}</strong>${r.descontoExtra
+          ? ` · desconto especial de ${String(r.descontoExtra).replace('.', ',')}%: <strong>${Utils.formatarMoeda(r.base)}</strong>` : ''}</p>
+        <table class="doc-tabela">
+          <thead><tr><th>Forma</th><th>Condição</th><th>Desconto / juros</th><th>Total</th></tr></thead>
+          <tbody>${opcoes.map(linha).join('')}</tbody>
+        </table>
+        ${escolhida ? `<p class="proposta-combinada">✅ Condição combinada: <strong>${e(Simulador.descreverOpcao(escolhida))}</strong></p>` : ''}
+      </section>
+      <p class="texto-pequeno">Proposta válida até ${Utils.formatarData(Utils.somarDias(Utils.hoje(), r.regras.validadeDias))}.
+        Parcelas acima do limite sem juros calculadas com juros compostos (Tabela Price).</p>
+      <div class="doc-assinatura"><span></span><p>${e(Sessao.usuario()?.nome || '')}<br>${e(Instituicao.nome())}</p></div>`;
+  },
+
   // QR Code PIX com valor e identificação da fatura + código "copia e cola"
   blocoPix(l, numero) {
     const e = Utils.escapar;
