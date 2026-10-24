@@ -16,7 +16,7 @@ const Storage = {
 
   // Dados do negócio (apagáveis) + equipe/registro (preservados ao limpar)
   COLECOES_NEGOCIO: ['alunos', 'cursos', 'professores', 'turmas', 'matriculas', 'financeiro', 'leads',
-    'frequencias', 'notas', 'mensagens', 'eventos', 'despesas', 'metas'],
+    'frequencias', 'notas', 'mensagens', 'eventos', 'despesas', 'metas', 'documentos'],
   COLECOES_SISTEMA: ['usuarios', 'atividades', 'modelosMensagem'],
 
   get COLECOES() {

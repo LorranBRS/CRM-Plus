@@ -9,6 +9,8 @@ const Documentos = {
         contratoEmitidoEm: new Date().toISOString(), contratoEmitidoPor: Sessao.idAtual() });
     }
     const aluno = Alunos.buscarPorId(m.alunoId);
+    Registros.registrar({ codigo: this.codigo('contrato', m), tipo: 'contrato', matricula: m,
+      detalhes: `${m.parcelas}x ${Utils.formatarMoeda(m.valorFinal)}${m.taxaMatricula ? ` + taxa ${Utils.formatarMoeda(m.taxaMatricula)}` : ''}` });
     Atividades.registrar('matriculas', primeira ? 'Contrato emitido' : 'Contrato reimpresso',
       `Nº ${this.numero(m.contratoNumero)} – ${aluno.nome} – ${Matriculas.turma(m)?.codigo || ''}`, { refId: m.id });
     const idade = Utils.idade(aluno.nascimento);
@@ -32,6 +34,10 @@ const Documentos = {
     }
     const nomeTipo = tipo === 'diploma' ? 'Diploma' : 'Certificado';
     const aluno = Matriculas.nomeAluno(m);
+    const freq = Frequencias.resumoAluno(turma.id, m.alunoId);
+    const media = Notas.media(turma, m.alunoId);
+    Registros.registrar({ codigo: this.codigo(campo, m), tipo: campo, matricula: m,
+      detalhes: `Média final ${media !== null ? media.toFixed(1).replace('.', ',') : '-'} · frequência ${freq.aulas ? `${freq.percentual}%` : '-'} · período ${Utils.formatarData(turma.dataInicio)} a ${Utils.formatarData(turma.dataFim)}` });
     Atividades.registrar('academico', `${nomeTipo} ${primeira ? 'emitido' : 'reimpresso'}`,
       `Nº ${this.numero(m[`${campo}Numero`])} – ${aluno} – ${Turmas.nomeCurso(turma)}`, { refId: m.id });
     App.documento(`${nomeTipo} – ${aluno}`, tipo === 'diploma' ? this.diploma(m) : this.certificado(m), {
@@ -85,13 +91,28 @@ const Documentos = {
           <td>${Utils.formatarMoeda(l.valor)}</td></tr></tbody>
         <tfoot><tr><td colspan="2">Total a pagar</td><td>${Utils.formatarMoeda(l.valor)}</td></tr></tfoot>
       </table>
-      <section class="doc-bloco">
-        <h3>Como pagar</h3>
-        <p>${i.chavePix ? `PIX – chave: <strong>${e(i.chavePix)}</strong>` : 'Pagamento na secretaria (PIX, cartão ou dinheiro).'}</p>
-        <p>Após o vencimento, entre em contato com a secretaria.</p>
-      </section>
+      ${this.blocoPix(l, numero)}
       <footer class="doc-rodape">Emitida em ${Utils.formatarDataHora(l.faturaEmitidaEm)}
         por ${e(Usuarios.nome(l.faturaEmitidaPor) || '-')}</footer>`;
+  },
+
+  // QR Code PIX com valor e identificação da fatura + código "copia e cola"
+  blocoPix(l, numero) {
+    const e = Utils.escapar;
+    const i = Instituicao.ler();
+    const codigo = Pix.copiaECola({ valor: l.valor, txid: `FAT${String(l.numeroFatura || '').padStart(6, '0')}` });
+    if (!codigo) {
+      return `<section class="doc-bloco"><h3>Como pagar</h3><p>Pagamento na secretaria (PIX, cartão ou dinheiro).</p></section>`;
+    }
+    return `<section class="doc-bloco doc-pix">
+      ${QR.imagem(codigo, { tamanho: 150 })}
+      <div>
+        <h3>Pague com PIX</h3>
+        <p>Abra o app do seu banco, escolha <strong>PIX → Ler QR Code</strong> ou <strong>PIX Copia e Cola</strong>.</p>
+        <p>Valor: <strong>${Utils.formatarMoeda(l.valor)}</strong> · Chave: ${e(i.chavePix)} · Ref.: ${e(numero)}</p>
+        <p class="pix-codigo">${e(codigo)}</p>
+      </div>
+    </section>`;
   },
 
   recibo(l) {
@@ -120,6 +141,71 @@ const Documentos = {
 
   numero(n) {
     return String(n).padStart(6, '0');
+  },
+
+  // Códigos de verificação: CT (contrato), CP (certificado), DP (diploma)
+  codigo(tipo, m) {
+    const prefixo = { contrato: 'CT', certificado: 'CP', diploma: 'DP' }[tipo];
+    return `${prefixo}-${new Date(m[`${tipo}EmitidoEm`]).getFullYear()}-${this.numero(m[`${tipo}Numero`])}`;
+  },
+
+  // QR Code + código para conferir a autenticidade
+  verificacao(codigo, tamanho = 84) {
+    const url = Registros.urlVerificacao(codigo);
+    return `<div class="doc-verificacao">${QR.imagem(url, { tamanho })}
+      <div><strong>Verificação de autenticidade</strong><small>Código: <b>${Utils.escapar(codigo)}</b></small>
+        <small>${Utils.escapar(url.split('?')[0])}</small></div></div>`;
+  },
+
+  // ---------- Declarações (matrícula, frequência, conclusão) ----------
+  abrirDeclaracao(matriculaId, tipo) {
+    const m = Matriculas.buscarPorId(matriculaId);
+    const turma = Turmas.buscarPorId(m.turmaId);
+    if (tipo === 'decl-conclusao' && Notas.situacao(turma, m.alunoId) !== 'Aprovado') {
+      return Utils.toast('Declaração de conclusão só para alunos aprovados.', 'erro');
+    }
+    const codigo = Registros.novoCodigo('DC');
+    const f = Frequencias.resumoAluno(turma.id, m.alunoId);
+    const reg = Registros.registrar({ codigo, tipo, matricula: m,
+      detalhes: tipo === 'decl-frequencia' ? `Frequência ${f.percentual}% em ${f.aulas} aula(s) até ${Utils.formatarData(Utils.hoje())}` : '' });
+    Atividades.registrar('academico', 'Declaração emitida', `${Registros.TIPOS[tipo]} – ${Matriculas.nomeAluno(m)} (${codigo})`, { refId: m.id });
+    App.documento(Registros.TIPOS[tipo], this.declaracao(tipo, m, reg), {
+      arquivo: `${Registros.TIPOS[tipo].replace(/\s+/g, '_')}_${Matriculas.nomeAluno(m).replace(/\s+/g, '_')}`,
+      dica: `Código ${codigo} – registrado para verificação.`,
+    });
+  },
+
+  declaracao(tipo, m, reg) {
+    const e = Utils.escapar;
+    const i = Instituicao.ler();
+    const aluno = Alunos.buscarPorId(m.alunoId);
+    const turma = Turmas.buscarPorId(m.turmaId);
+    const curso = Cursos.buscarPorId(turma.cursoId);
+    const f = Frequencias.resumoAluno(turma.id, aluno.id);
+    const media = Notas.media(turma, aluno.id);
+    const quem = `<strong>${e(aluno.nome)}</strong>, CPF ${e(aluno.cpf)}${aluno.nascimento ? `, nascido(a) em ${Utils.formatarData(aluno.nascimento)}` : ''}`;
+    const cursoTxt = `<strong>${e(curso.nome)}</strong> (${curso.cargaHoraria} horas, modalidade ${e((curso.modalidade || '').toLowerCase())}), turma ${e(turma.codigo)}`;
+    const horario = `${e((turma.dias || []).join(', '))}${turma.horaInicio ? `, das ${e(turma.horaInicio)} às ${e(turma.horaFim)}` : ''}`;
+    const textos = {
+      'decl-matricula': `Declaramos, para os devidos fins, que ${quem}, está regularmente matriculado(a) nesta instituição no curso ${cursoTxt},
+        com aulas às ${horario}, no período de ${Utils.formatarData(turma.dataInicio)} a ${Utils.formatarData(turma.dataFim)}.
+        A matrícula foi realizada em ${Utils.formatarData(m.dataMatricula)} e encontra-se <strong>${e(m.status.toLowerCase())}</strong>.`,
+      'decl-frequencia': `Declaramos, para os devidos fins, que ${quem}, aluno(a) do curso ${cursoTxt}, compareceu a
+        <strong>${f.aulas - f.faltas} de ${f.aulas} aulas</strong> registradas até ${Utils.formatarData(Utils.hoje())},
+        o que corresponde a uma frequência de <strong>${f.percentual}%</strong>${f.justificadas ? ` (${f.justificadas} falta(s) justificada(s) não descontada(s))` : ''}.`,
+      'decl-conclusao': `Declaramos, para os devidos fins, que ${quem}, concluiu com aproveitamento o curso ${cursoTxt},
+        realizado no período de ${Utils.formatarData(turma.dataInicio)} a ${Utils.formatarData(turma.dataFim)}${
+        media !== null ? `, com média final <strong>${media.toFixed(1).replace('.', ',')}</strong>` : ''}${f.aulas ? ` e frequência de ${f.percentual}%` : ''}.
+        O certificado de conclusão ${m.certificadoNumero ? `foi emitido sob o nº ${this.numero(m.certificadoNumero)}` : 'encontra-se em fase de emissão'}.`,
+    };
+    return `
+      ${this.cabecalho('DECLARAÇÃO', reg.codigo)}
+      <h2 class="contrato-titulo">${e(Registros.TIPOS[tipo])}</h2>
+      <p class="doc-texto declaracao-texto">${textos[tipo]}</p>
+      <p class="doc-texto declaracao-texto">Por ser verdade, firmamos a presente declaração.</p>
+      <p class="contrato-data">${e(this.localData(reg.emitidoEm))}.</p>
+      <div class="doc-assinatura"><span></span><p>${e(reg.emitidoPorNome || 'Secretaria')}<br>${e(i.nome || 'Instituição de Ensino')}</p></div>
+      ${this.verificacao(reg.codigo)}`;
   },
 
   // ---------- Contrato de prestação de serviços educacionais ----------
@@ -210,6 +296,7 @@ const Documentos = {
             || `<tr><td colspan="3">${e(curso.descricao || 'Conforme plano do curso.')}</td></tr>`}</tbody>
         </table>
       </section>
+      ${this.verificacao(this.codigo('contrato', m), 72)}
       <footer class="doc-rodape">Contrato Nº ${this.numero(m.contratoNumero)} · matrícula de ${Utils.formatarData(m.dataMatricula)} · gerado pelo CRM Plus</footer>`;
   },
 
@@ -260,7 +347,8 @@ const Documentos = {
             <p>Diploma registrado sob o nº <strong>${numero}</strong>,<br>Livro <strong>${livro}</strong>, Folha <strong>${folha}</strong>,<br>
               em ${Utils.formatarData(m.diplomaEmitidoEm)}.</p>
             <div class="dip-assinatura"><span></span><p>${e(Usuarios.nome(m.diplomaEmitidoPor) || 'Secretaria')}<br><small>Secretaria acadêmica</small></p></div>
-            <p class="dip-codigo">Código de verificação<br><strong>${codigo}</strong></p>
+            <div class="dip-codigo">${QR.imagem(Registros.urlVerificacao(codigo), { tamanho: 96 })}
+              <p>Código de verificação<br><strong>${codigo}</strong></p></div>
           </div>
           <div class="dip-historico">
             <h3>Histórico escolar – ${e(curso.nome)}</h3>
@@ -328,6 +416,7 @@ const Documentos = {
             `<tr><td colspan="5">${e(curso.descricao || 'Conteúdo conforme plano do curso.')}</td></tr>`}</tbody>
           <tfoot><tr><td colspan="3">Carga horária total</td><td colspan="2">${curso.cargaHoraria}h</td></tr></tfoot>
         </table>
+        ${this.verificacao(codigo)}
         <p class="doc-rodape">Turma ${e(turma.codigo)} · Professor(a) responsável: ${e(Turmas.nomeProfessor(turma) || '-')}
           · Registro ${codigo}</p>
       </section>`;

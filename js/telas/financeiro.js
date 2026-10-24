@@ -125,13 +125,16 @@ const TelaFinanceiro = {
     const fatura = Financeiro.emitirFatura(l.id);
     Atividades.registrar('financeiro', 'Fatura emitida',
       `Nº ${String(fatura.numeroFatura).padStart(6, '0')} – ${Financeiro.resumo(fatura)}${primeira ? '' : ' (2ª via)'}`, { refId: l.id });
-    Utils.imprimir(`Fatura ${fatura.numeroFatura}`, Documentos.fatura(fatura));
+    App.documento(`Fatura Nº ${String(fatura.numeroFatura).padStart(6, '0')}`, Documentos.fatura(fatura), {
+      arquivo: `Fatura_${String(fatura.numeroFatura).padStart(6, '0')}_${Financeiro.nomeAluno(fatura).replace(/\s+/g, '_')}`,
+      dica: Instituicao.ler().chavePix ? 'Com QR Code PIX no valor exato da fatura.' : 'Cadastre a chave PIX em Equipe → Instituição para incluir o QR Code.',
+    });
     this.renderizar();
   },
 
   emitirRecibo(l) {
     Atividades.registrar('financeiro', 'Recibo emitido', Financeiro.resumo(l), { refId: l.id });
-    Utils.imprimir('Recibo', Documentos.recibo(l));
+    App.documento('Recibo', Documentos.recibo(l), { arquivo: `Recibo_${Financeiro.nomeAluno(l).replace(/\s+/g, '_')}` });
   },
 
   listaFiltrada() {

@@ -173,7 +173,7 @@ const Exemplos = {
     const alunos = nomes.map(([nome, cidade, uf], i) => Alunos.salvar({
       nome, cidade, uf,
       cpf: this.cpf(String(123456700 + i * 7919).slice(0, 9)),
-      email: `${nome.split(' ')[0].toLowerCase()}@exemplo.com`,
+      email: `${Pix.semAcento(nome.split(' ')[0]).toLowerCase()}@exemplo.com`,
       telefone: Utils.mascaraTelefone(`119${String(87650000 + i * 1111).slice(0, 8)}`),
       nascimento: `${1990 + (i % 12)}-0${1 + (i % 9)}-1${i % 9}`,
       cep: '', endereco: '', numero: '', bairro: '', observacoes: '',
@@ -322,6 +322,9 @@ const Exemplos = {
     Matriculas.salvar({ id: concluidas[0].id, certificadoNumero: Instituicao.proximoNumeroCertificado(),
       certificadoEmitidoEm: certData, certificadoEmitidoPor: eq.ana.id });
     log(eq.ana, 'academico', 'Certificado emitido', `Nº 000001 – ${alunos[2].nome} – ${info.nome}`, certData, concluidas[0].id);
+    const certReg = Registros.registrar({ codigo: Documentos.codigo('certificado', Matriculas.buscarPorId(concluidas[0].id)), tipo: 'certificado',
+      matricula: Matriculas.buscarPorId(concluidas[0].id), detalhes: 'Curso concluído com aproveitamento' });
+    Registros.salvar({ id: certReg.id, emitidoEm: certData, emitidoPorNome: eq.ana.nome });
 
     // ---------- Despesas (últimos 6 meses + próximos 2) ----------
     const pagadora = eq.patricia;

@@ -36,10 +36,17 @@ Tudo o que é feito no sistema fica registrado com o usuário, a data e a hora.
 | 🎓 **Acadêmico** | **Chamada** (presente/falta/justificada, aulas sem chamada), **notas** por módulo da grade, situação (aprovado/reprovado) e **certificado de conclusão** com código de verificação |
 | 📝 **Matrículas** | Aluno × turma, controle de vagas, desconto, parcelas, dia de vencimento; gera o financeiro automaticamente |
 | 💰 **Financeiro** | **Receitas**: contas a receber, fatura numerada, recibo, pagamentos e estorno · **Despesas**: contas a pagar por categoria, recorrência mensal e **pagamento de professores** calculado pelas aulas dadas × valor da hora-aula · **Resultado** *(diretor)*: lucro, margem, gráfico de 6 meses e demonstrativo |
-| 📊 **Relatórios** | Exportação CSV de todos os módulos, inadimplência, resumo por turma, backup/restauração em JSON |
+| 📊 **Relatórios** | Exportação CSV de todos os módulos, inadimplência, resumo por turma, **documentos emitidos** e backup/restauração em JSON |
 | 🏆 **Metas** *(diretor)* | Metas mensais de matrículas, leads, receita e lucro, metas individuais por funcionário, projeção pelo ritmo atual e histórico |
 | 👥 **Equipe** *(diretor)* | Usuários, perfis, PIN, módulos liberados, desempenho no período e dados da instituição (**logo, cor da escola**, média e frequência mínimas) |
 | 🕒 **Atividades** *(diretor)* | Linha do tempo filtrável por funcionário, módulo e período, com exportação |
+
+### Documentos (PDF)
+Contrato de prestação de serviços, certificado, diploma, **declarações** (matrícula, frequência, conclusão), fatura e recibo —
+todos com prévia, **⬇ Baixar PDF** e impressão. Fatura com **QR Code PIX** (BR Code com valor) e "copia e cola".
+Contratos, certificados, diplomas e declarações recebem **código e QR Code de verificação** (`verificar.html`).
+
+> A verificação consulta o registro salvo no navegador da escola; a verificação pública por qualquer pessoa depende do banco de dados online.
 
 ### Regras de negócio
 - CPF válido e único; códigos de curso e turma únicos
@@ -65,6 +72,7 @@ A camada `js/storage.js` isola o acesso aos dados para facilitar a troca por uma
 ```
 CRM-Plus/
 ├── index.html              # Tela de entrada, layout, telas e formulários (modais)
+├── verificar.html          # Página de verificação de documentos (código / QR Code)
 ├── css/
 │   ├── style.css           # Estilos e responsividade
 │   └── impressao.css       # Fatura, recibo, grade, ficha e certificado impressos
@@ -115,6 +123,8 @@ python3 -m http.server 8000
 - [x] Metas mensais (escola e funcionários)
 - [x] Despesas, pagamento de professores e lucro
 - [ ] Receber respostas do WhatsApp automaticamente (API oficial – exige servidor)
+- [x] Perfil Professor, contrato e diploma em PDF
+- [x] PIX com QR Code, declarações e verificação de documentos
 - [ ] Backend + banco de dados (dados compartilhados entre computadores)
 - [ ] Login seguro com senha (no servidor)
 - [ ] Frequência/notas, emissão de boletos/PIX, envio de WhatsApp/e-mail

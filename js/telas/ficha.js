@@ -36,6 +36,7 @@ const FichaAluno = {
       if (acao === 'certificado') Documentos.abrirConclusao(btn.dataset.id, 'certificado');
       if (acao === 'diploma') Documentos.abrirConclusao(btn.dataset.id, 'diploma');
       if (acao === 'contrato') Documentos.abrirContrato(btn.dataset.id);
+      if (acao === 'declaracao') Documentos.abrirDeclaracao(btn.dataset.id, btn.dataset.tipo);
       if (acao === 'conversa') {
         Utils.fecharModal('modalFicha');
         TelaConversas.abrirContato('aluno', aluno.id);
@@ -202,6 +203,12 @@ const FichaAluno = {
               <p>Média: <strong>${media !== null ? media.toFixed(1).replace('.', ',') : '-'}</strong></p>
             </div>
           </div>
+          ${!Sessao.ehProfessor() && (Sessao.pode('alunos') || Sessao.pode('academico')) ? `<div class="ficha-declaracoes">
+            <span class="rotulo">Declarações</span>
+            ${m.status === 'Ativa' ? `<button class="btn btn-light btn-pequeno" data-acao="declaracao" data-tipo="decl-matricula" data-id="${m.id}">📃 Matrícula</button>` : ''}
+            ${f.aulas ? `<button class="btn btn-light btn-pequeno" data-acao="declaracao" data-tipo="decl-frequencia" data-id="${m.id}">📃 Frequência</button>` : ''}
+            ${situacao === 'Aprovado' ? `<button class="btn btn-light btn-pequeno" data-acao="declaracao" data-tipo="decl-conclusao" data-id="${m.id}">📃 Conclusão</button>` : ''}
+          </div>` : ''}
           ${situacao === 'Aprovado' && Sessao.pode('academico') && !Sessao.ehProfessor() ? `<footer class="botoes-documentos">
             <button class="btn btn-primary" data-acao="certificado" data-id="${m.id}">🎓 ${m.certificadoNumero
               ? `Certificado Nº ${String(m.certificadoNumero).padStart(6, '0')}` : 'Emitir certificado'}</button>

@@ -113,6 +113,8 @@ const TelaRelatorios = {
       Atividades.registrar('relatorios', 'Relatório exportado', exp.titulo.replace(/^\S+\s/, ''));
     });
 
+    $('buscaDocumentos').addEventListener('input', () => this.renderizarDocumentos());
+
     $('btnBackup').addEventListener('click', () => {
       Utils.baixarArquivo(JSON.stringify(Storage.exportarTudo(), null, 2),
         `crmplus_backup_${Utils.hoje()}.json`, 'application/json');
@@ -146,7 +148,21 @@ const TelaRelatorios = {
     });
   },
 
+  renderizarDocumentos() {
+    const e = Utils.escapar;
+    const t = $('buscaDocumentos').value.toLowerCase().trim();
+    const lista = Registros.listar()
+      .filter((r) => !t || [r.codigo, r.alunoNome, Registros.TIPOS[r.tipo], r.curso].some((v) => (v || '').toLowerCase().includes(t)))
+      .sort((a, b) => b.emitidoEm.localeCompare(a.emitidoEm)).slice(0, 100);
+    $('listaDocumentos').innerHTML = lista.map((r) => `<tr>
+      <td><strong>${e(r.codigo)}</strong></td><td>${e(Registros.TIPOS[r.tipo] || r.tipo)}</td>
+      <td>${e(r.alunoNome)}<small>${e(r.curso)}</small></td><td>${Utils.formatarDataHora(r.emitidoEm)}</td><td>${e(r.emitidoPorNome)}</td>
+      <td><a class="link-mais" href="${e(Registros.urlVerificacao(r.codigo))}" target="_blank" rel="noopener" title="Verificar">🔎</a></td></tr>`).join('')
+      || '<tr><td colspan="6" class="graf-vazio">Nenhum documento emitido ainda.</td></tr>';
+  },
+
   renderizar() {
+    this.renderizarDocumentos();
     // Só mostra exportações dos módulos que o usuário pode acessar
     $('botoesExportar').innerHTML = Object.entries(this.EXPORTACOES).filter(([, e]) => Sessao.pode(e.modulo))
       .map(([chave, e]) => `<button class="btn btn-light" data-exportar="${chave}">${e.titulo}</button>`).join('');

@@ -74,8 +74,6 @@ body.certificado .cert { height: 180mm; display: flex; page-break-after: always;
 /* ===== Prévia (dentro do sistema) e PDF ===== */
 body.previa { margin: 0 auto; }
 body.previa.certificado, body.pdf { max-width: none; padding: 0; margin: 0; }
-/* Margem de segurança: o gerador de PDF desenha o texto um pouco mais largo que a tela */
-body.pdf:not(.pdf-paisagem) { padding-right: 9mm; }
 body.previa.certificado .cert, body.previa.certificado .diploma { height: 794px; padding: 28px; box-sizing: border-box; }
 body.previa.certificado .cert-verso, body.previa.certificado .dip-verso { border-top: 2px dashed #d1d5db; padding: 28px 36px; }
 body.pdf.pdf-paisagem .cert, body.pdf.pdf-paisagem .diploma { height: 209mm; padding: 8mm; box-sizing: border-box; display: flex; }
@@ -132,3 +130,15 @@ body.certificado .diploma { height: 180mm; display: flex; break-after: page; pag
 .dip-codigo { margin-top: 8mm; font-size: 11px; line-height: 1.5; }
 .dip-historico h3 { color: #111827; font-size: 14px; text-transform: none; }
 .dip-historico .doc-tabela th, .dip-historico .doc-tabela td { font-size: 12px; padding: 5px 8px; }
+
+/* ===== Verificação (QR) e PIX ===== */
+.doc-verificacao { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; break-inside: avoid; page-break-inside: avoid; }
+.doc-verificacao small { display: block; font-size: 10px; color: #6b7280; }
+.doc-verificacao strong { font-size: 12px; }
+.qr { image-rendering: pixelated; flex-shrink: 0; }
+.dip-codigo { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.doc-pix { display: flex; gap: 18px; align-items: center; border: 2px solid var(--cor, #4f46e5); border-radius: 10px; padding: 14px; }
+.doc-pix h3 { color: #111827; font-size: 15px; text-transform: none; }
+.pix-codigo { font-family: "Courier New", monospace; font-size: 9.5px; word-break: break-all; background: #f3f4f6; padding: 6px 8px; border-radius: 6px; margin-top: 6px; color: #374151; }
+.declaracao-texto { font-size: 15px; line-height: 1.9; text-align: justify; margin: 18px 0; }
+.doc-assinatura { margin: 48px auto 10px; width: 320px; text-align: center; font-size: 13px; }

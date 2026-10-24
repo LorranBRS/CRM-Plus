@@ -634,6 +634,18 @@
             </div>
           </article>
 
+          <article class="painel painel-largo">
+            <h3>Documentos emitidos <a href="verificar.html" target="_blank" rel="noopener" class="link-mais">🔎 página de verificação →</a></h3>
+            <p class="ajuda">Contratos, certificados, diplomas e declarações com código de verificação.</p>
+            <input type="search" id="buscaDocumentos" placeholder="Buscar por código, aluno ou tipo...">
+            <div class="table-wrap table-mini table-documentos">
+              <table>
+                <thead><tr><th>Código</th><th>Documento</th><th>Aluno</th><th>Emitido em</th><th>Por</th><th></th></tr></thead>
+                <tbody id="listaDocumentos"></tbody>
+              </table>
+            </div>
+          </article>
+
           <article class="painel" data-somente-diretor>
             <h3>Backup</h3>
             <p class="ajuda">Os dados ficam salvos neste navegador. Faça backup para não perder nada
@@ -1801,6 +1813,8 @@
   <div class="toast" id="toast"></div>
   <div class="dica" id="dica" role="tooltip"></div>
 
+  <!-- QR Code (fatura PIX e verificação de documentos); sem internet, o sistema funciona sem o QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/graficos.js"></script>
@@ -1821,6 +1835,7 @@
   <script src="js/modelos/eventos.js"></script>
   <script src="js/modelos/despesas.js"></script>
   <script src="js/modelos/metas.js"></script>
+  <script src="js/modelos/registros.js"></script>
   <script src="js/documentos.js"></script>
   <script src="js/telas/entrada.js"></script>
   <script src="js/telas/painel.js"></script>

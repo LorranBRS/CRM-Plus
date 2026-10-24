@@ -89,6 +89,7 @@ const ModelosMensagem = {
     nome: 'Nome completo', primeiro_nome: 'Primeiro nome', escola: 'Nome da escola', atendente: 'Seu nome',
     curso: 'Curso', turma: 'Turma', horario: 'Dias e horário', professor: 'Professor(a)',
     descricao: 'Descrição da cobrança', valor: 'Valor', vencimento: 'Vencimento', pix: 'Chave PIX',
+    pix_copia_cola: 'PIX copia e cola (com valor)',
     frequencia: 'Frequência', media: 'Média',
   },
 
@@ -99,7 +100,7 @@ const ModelosMensagem = {
     { nome: 'Certificado disponível', categoria: 'Acadêmico', texto: 'Parabéns, {primeiro_nome}! 🎓 Você concluiu o curso {curso} e o seu certificado já está disponível na secretaria da {escola}.' },
     { nome: 'Feliz aniversário', categoria: 'Geral', texto: 'Feliz aniversário, {primeiro_nome}! 🎂🎉 Toda a equipe da {escola} deseja um dia incrível e um ano cheio de conquistas!' },
     { nome: 'Mensalidade a vencer', categoria: 'Financeiro', texto: 'Olá, {primeiro_nome}! Lembrete: {descricao} no valor de {valor} vence em {vencimento}. Para pagar via PIX, use a chave {pix}. Obrigado! 😊' },
-    { nome: 'Cobrança em atraso', categoria: 'Financeiro', texto: 'Olá, {primeiro_nome}, tudo bem? Identificamos que {descricao} ({valor}), com vencimento em {vencimento}, ainda está em aberto. Se já pagou, por favor desconsidere. Para pagar via PIX: {pix}. Estamos à disposição!' },
+    { nome: 'Cobrança em atraso', categoria: 'Financeiro', texto: 'Olá, {primeiro_nome}, tudo bem? Identificamos que {descricao} ({valor}), com vencimento em {vencimento}, ainda está em aberto. Se já pagou, por favor desconsidere. Para pagar, use o PIX copia e cola abaixo:\n\n{pix_copia_cola}\n\nEstamos à disposição!' },
     { nome: 'Confirmação de pagamento', categoria: 'Financeiro', texto: 'Olá, {primeiro_nome}! Confirmamos o recebimento de {valor} referente a {descricao}. Obrigado! ✅' },
     { nome: 'Primeiro contato', categoria: 'Comercial', texto: 'Olá, {primeiro_nome}! Aqui é {atendente}, da {escola}. Vi seu interesse no curso {curso} e quero te ajudar com todas as informações. Posso te enviar os detalhes?' },
     { nome: 'Retorno de proposta', categoria: 'Comercial', texto: 'Oi, {primeiro_nome}! Tudo bem? Conseguiu avaliar a proposta do curso {curso}? Estou à disposição para tirar qualquer dúvida. 😊' },
@@ -166,6 +167,7 @@ const ModelosMensagem = {
       v.descricao = lancamento.descricao.replace(/^./, (c) => c.toLowerCase()).replace(/^mensalidade/, 'a mensalidade').replace(/^taxa/, 'a taxa');
       v.valor = Utils.formatarMoeda(lancamento.valor);
       v.vencimento = Utils.formatarData(lancamento.vencimento);
+      v.pix_copia_cola = Pix.copiaECola({ valor: lancamento.valor, txid: `MSG${lancamento.id}` }) || '';
     }
     return v;
   },

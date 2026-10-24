@@ -289,9 +289,12 @@ const Utils = {
     return new Promise((resolve, reject) => {
       const iframe = document.createElement('iframe');
       iframe.setAttribute('aria-hidden', 'true');
-      iframe.style.cssText = `position:fixed;left:-20000px;top:0;width:${Math.round(larguraMm * 3.78) + 40}px;height:900px;border:0;`;
+      // A "janela" de captura tem exatamente a largura útil da página e não tem barra de rolagem:
+      // assim o conteúdo não fica deslocado nem cortado na margem
+      iframe.style.cssText = `position:fixed;left:-20000px;top:0;width:${Math.round(larguraMm * 96 / 25.4)}px;height:900px;border:0;`;
       iframe.srcdoc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-        <link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}"></head>
+        <link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}">
+        <style>html, body { overflow: hidden; }</style></head>
         <body class="pdf ${classe} ${paisagem ? 'pdf-paisagem' : ''}" style="--cor:${cor}">${corpo}</body></html>`;
 
       iframe.onload = () => {

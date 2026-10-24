@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificar documento – CRM Plus</title>
+  <style>
+    :root {
+      --cor: #4f46e5; --fundo: #f4f6fb; --superficie: #fff; --texto: #1f2937; --suave: #6b7280; --borda: #e5e7eb;
+      --ok: #16a34a; --erro: #dc2626; color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --fundo: #0f1117; --superficie: #181b24; --texto: #e5e7eb; --suave: #9ca3af; --borda: #2c3140; --ok: #22c55e; --erro: #f87171; color-scheme: dark; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--fundo); color: var(--texto); min-height: 100vh; padding: 32px 16px; }
+    main { max-width: 560px; margin: 0 auto; }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    header img, .logo { width: 48px; height: 48px; border-radius: 12px; object-fit: contain; background: var(--cor); color: #fff; display: grid; place-items: center; font-weight: 700; }
+    header small { display: block; color: var(--suave); }
+    .cartao { background: var(--superficie); border: 1px solid var(--borda); border-radius: 14px; padding: 22px; margin-bottom: 16px; }
+    h1 { font-size: 20px; margin-bottom: 6px; }
+    p { line-height: 1.5; }
+    form { display: flex; gap: 8px; margin-top: 14px; }
+    input { flex: 1; font: inherit; padding: 10px 12px; border: 1px solid var(--borda); border-radius: 8px; background: var(--superficie); color: var(--texto); text-transform: uppercase; }
+    button { font: inherit; font-weight: 600; padding: 10px 16px; border: none; border-radius: 8px; background: var(--cor); color: #fff; cursor: pointer; }
+    .status { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+    .status.ok { color: var(--ok); }
+    .status.erro { color: var(--erro); }
+    dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px 12px; font-size: 14px; }
+    dt { color: var(--suave); }
+    .aviso { font-size: 13px; color: var(--suave); margin-top: 14px; border-top: 1px dashed var(--borda); padding-top: 12px; }
+    @media (max-width: 480px) { dl { grid-template-columns: 1fr; } dt { margin-top: 6px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="logo" id="logo">C+</span>
+      <div><strong id="escola">CRM Plus</strong><small>Verificação de documentos</small></div>
+    </header>
+
+    <section class="cartao">
+      <h1>Verificar autenticidade</h1>
+      <p>Digite o código impresso no documento (ex.: CP-2026-000001) ou leia o QR Code.</p>
+      <form id="form">
+        <input id="codigo" placeholder="Código do documento" autocomplete="off" aria-label="Código do documento">
+        <button type="submit">Verificar</button>
+      </form>
+    </section>
+
+    <section class="cartao" id="resultado" hidden></section>
+  </main>
+
+  <script>
+    // Lê o registro de documentos do CRM Plus salvo neste navegador
+    const ler = (chave, padrao) => { try { return JSON.parse(localStorage.getItem(chave)) ?? padrao; } catch { return padrao; } };
+    const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const tipos = {
+      contrato: 'Contrato de prestação de serviços', certificado: 'Certificado de conclusão', diploma: 'Diploma de conclusão',
+      'decl-matricula': 'Declaração de matrícula', 'decl-frequencia': 'Declaração de frequência', 'decl-conclusao': 'Declaração de conclusão',
+    };
+
+    const config = ler('crmplus_config', {});
+    if (config.corPrimaria) document.documentElement.style.setProperty('--cor', config.corPrimaria);
+    if (config.nome) document.getElementById('escola').textContent = config.nome;
+    if (config.logo) document.getElementById('logo').outerHTML = `<img src="${esc(config.logo)}" alt="">`;
+
+    function verificar(codigo) {
+      const c = codigo.trim().toUpperCase();
+      if (!c) return;
+      const registros = ler('crmplus_documentos', []);
+      const r = registros.find((x) => String(x.codigo).toUpperCase() === c);
+      const el = document.getElementById('resultado');
+      el.hidden = false;
+      if (r) {
+        const data = new Date(r.emitidoEm).toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
+        el.innerHTML = `
+          <p class="status ok">✅ Documento encontrado no registro</p>
+          <dl>
+            <dt>Código</dt><dd><strong>${esc(r.codigo)}</strong></dd>
+            <dt>Documento</dt><dd>${esc(tipos[r.tipo] || r.tipo)}</dd>
+            <dt>Aluno(a)</dt><dd>${esc(r.alunoNome)}${r.alunoCpf ? ` · CPF ${esc(r.alunoCpf)}` : ''}</dd>
+            <dt>Curso</dt><dd>${esc(r.curso)}${r.cargaHoraria ? ` (${esc(r.cargaHoraria)}h)` : ''}${r.turma ? ` · turma ${esc(r.turma)}` : ''}</dd>
+            ${r.detalhes ? `<dt>Detalhes</dt><dd>${esc(r.detalhes)}</dd>` : ''}
+            <dt>Emitido em</dt><dd>${esc(data)}${r.emitidoPorNome ? ` por ${esc(r.emitidoPorNome)}` : ''}</dd>
+            <dt>Instituição</dt><dd>${esc(r.escola)}</dd>
+          </dl>
+          <p class="aviso">Confira se os dados acima são iguais aos do documento impresso.</p>`;
+      } else {
+        el.innerHTML = `
+          <p class="status erro">❌ Código não encontrado</p>
+          <p>Não há documento com o código <strong>${esc(c)}</strong> no registro deste computador.</p>
+          <p class="aviso">Enquanto o sistema não usa banco de dados online, a verificação só funciona no computador da escola
+            que emitiu o documento. Em caso de dúvida, entre em contato com a secretaria.</p>`;
+      }
+    }
+
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      verificar(document.getElementById('codigo').value);
+    });
+    const inicial = new URLSearchParams(location.search).get('codigo');
+    if (inicial) {
+      document.getElementById('codigo').value = inicial;
+      verificar(inicial);
+    }
+  </script>
+</body>
+</html>

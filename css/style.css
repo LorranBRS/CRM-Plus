@@ -747,6 +747,11 @@ legend { font-weight: 700; font-size: 13px; color: var(--primaria-texto); text-t
 .documento-dica { margin: 0; }
 .botoes-documentos { display: flex; gap: 6px; flex-wrap: wrap; }
 
+.ficha-declaracoes { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 14px 12px; }
+.ficha-declaracoes .rotulo { margin-right: 4px; }
+#buscaDocumentos { margin-bottom: 10px; }
+.table-documentos { max-height: 360px; }
+
 /* ===== Responsivo ===== */
 @media (max-width: 1100px) {
   .academico-grid { grid-template-columns: 1fr; }
