@@ -2,6 +2,16 @@
 const $ = (id) => document.getElementById(id);
 
 const Utils = {
+  // Versão publicada (marcada pelo versao.py no index.html)
+  versao() {
+    return document.querySelector('meta[name=versao]')?.content || 'dev';
+  },
+
+  // Estilo dos documentos impressos, com a versão (evita usar um arquivo antigo do cache)
+  urlImpressao() {
+    return new URL(`css/impressao.css?v=${Utils.versao()}`, location.href).href;
+  },
+
   somenteDigitos(valor) {
     return (valor || '').replace(/\D/g, '');
   },
@@ -270,7 +280,7 @@ const Utils = {
     if (!janela) return Utils.toast('Permita pop-ups deste site para imprimir.', 'erro');
     const cor = Instituicao.ler().corPrimaria || Tema.COR_PADRAO;
     janela.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-      <title>${Utils.escapar(titulo)}</title><link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}">
+      <title>${Utils.escapar(titulo)}</title><link rel="stylesheet" href="${Utils.urlImpressao()}">
       </head><body class="${classe}" style="--cor:${cor}">${corpo}<script>window.onload = () => setTimeout(() => window.print(), 300);<\/script></body></html>`);
     janela.document.close();
   },
@@ -293,7 +303,7 @@ const Utils = {
       // assim o conteúdo não fica deslocado nem cortado na margem
       iframe.style.cssText = `position:fixed;left:-20000px;top:0;width:${Math.round(larguraMm * 96 / 25.4)}px;height:900px;border:0;`;
       iframe.srcdoc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-        <link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}">
+        <link rel="stylesheet" href="${Utils.urlImpressao()}">
         <style>html, body { overflow: hidden; }</style></head>
         <body class="pdf ${classe} ${paisagem ? 'pdf-paisagem' : ''}" style="--cor:${cor}">${corpo}</body></html>`;
 

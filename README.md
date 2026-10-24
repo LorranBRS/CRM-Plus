@@ -74,6 +74,7 @@ A camada `js/storage.js` isola o acesso aos dados para facilitar a troca por uma
 CRM-Plus/
 ├── index.html              # Tela de entrada, layout, telas e formulários (modais)
 ├── verificar.html          # Página de verificação de documentos (código / QR Code)
+├── versao.py / versao.json # Marca a versão publicada (cache) e avisa quem está com versão antiga
 ├── css/
 │   ├── style.css           # Estilos e responsividade
 │   └── impressao.css       # Fatura, recibo, grade, ficha e certificado impressos
@@ -97,6 +98,23 @@ CRM-Plus/
     ├── exemplos.js         # Dados de demonstração
     └── app.js              # Entrada, menu por permissão e navegação
 ```
+
+### Backup
+- **Cópias automáticas** no próprio navegador (IndexedDB): uma por dia e outra antes de restaurar ou apagar dados (10 mais recentes),
+  com restauração em **Relatórios → Cópias automáticas**.
+- **Lembrete no Painel** (diretor) quando o último backup baixado tem mais de 7 dias, com download em um clique.
+- O sistema pede ao navegador armazenamento persistente (para não apagar os dados quando faltar espaço).
+
+## Publicar uma nova versão
+
+Antes de cada publicação, marque a versão (evita que os navegadores usem arquivos antigos do cache):
+
+```bash
+python3 versao.py
+```
+
+O script atualiza o `?v=` de todos os `.js`/`.css` no `index.html` e o `versao.json`.
+Quem estiver com o sistema aberto vê o aviso **"Nova versão disponível – Atualizar agora"**.
 
 ## Como rodar localmente
 
@@ -127,6 +145,7 @@ python3 -m http.server 8000
 - [x] Perfil Professor, contrato e diploma em PDF
 - [x] PIX com QR Code, declarações e verificação de documentos
 - [x] Simulador de propostas e calculadora
+- [x] Versão dos arquivos (cache) e backup automático
 - [ ] Backend + banco de dados (dados compartilhados entre computadores)
 - [ ] Login seguro com senha (no servidor)
 - [ ] Frequência/notas, emissão de boletos/PIX, envio de WhatsApp/e-mail

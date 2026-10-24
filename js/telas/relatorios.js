@@ -115,10 +115,28 @@ const TelaRelatorios = {
 
     $('buscaDocumentos').addEventListener('input', () => this.renderizarDocumentos());
 
-    $('btnBackup').addEventListener('click', () => {
-      Utils.baixarArquivo(JSON.stringify(Storage.exportarTudo(), null, 2),
-        `crmplus_backup_${Utils.hoje()}.json`, 'application/json');
-      Atividades.registrar('relatorios', 'Backup gerado', 'Backup completo dos dados baixado');
+    $('btnBackup').addEventListener('click', () => this.baixarBackup());
+    $('btnCopiaAgora').addEventListener('click', async () => {
+      const copia = await Backup.criarCopia('Manual');
+      Utils.toast(copia ? 'Cópia criada neste navegador.' : 'Não há dados para copiar.', copia ? '' : 'erro');
+      this.renderizarCopias();
+    });
+    $('listaCopias').addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-copia]');
+      if (!btn) return;
+      const id = Number(btn.dataset.copia);
+      if (btn.dataset.acao === 'baixar') {
+        const copia = await Backup.buscar(id);
+        Utils.baixarArquivo(JSON.stringify(copia.dados, null, 2), `crmplus_copia_${Utils.paraISO(new Date(copia.data))}.json`, 'application/json');
+      }
+      if (btn.dataset.acao === 'restaurar') {
+        if (!confirm('Restaurar esta cópia? Os dados atuais serão substituídos (uma cópia deles é guardada antes).')) return;
+        const copia = await Backup.restaurar(id);
+        Atividades.registrar('relatorios', 'Cópia automática restaurada', `Cópia de ${Utils.formatarDataHora(copia.data)} (${copia.motivo})`);
+        Utils.toast('Cópia restaurada!');
+        if (!Sessao.usuario()) return App.iniciarSessao();
+        App.aposEntrar();
+      }
     });
 
     $('inputRestaurar').addEventListener('change', async (e) => {
@@ -127,7 +145,9 @@ const TelaRelatorios = {
       if (!arquivo) return;
       try {
         const backup = JSON.parse(await arquivo.text());
-        if (!confirm('Restaurar este backup? Os dados atuais serão substituídos.')) return;
+        if (!backup || backup.sistema !== 'CRM Plus' || typeof backup.dados !== 'object') throw new Error('Arquivo de backup inválido.');
+        if (!confirm(`Restaurar o backup de ${Utils.formatarDataHora(backup.geradoEm)}? Os dados atuais serão substituídos (uma cópia deles é guardada antes).`)) return;
+        await Backup.antesDe('restaurar');
         Storage.importarTudo(backup);
         Atividades.registrar('relatorios', 'Backup restaurado', `Backup de ${Utils.formatarDataHora(backup.geradoEm)}`);
         Utils.toast('Backup restaurado!');
@@ -138,14 +158,47 @@ const TelaRelatorios = {
       }
     });
 
-    $('btnLimparTudo').addEventListener('click', () => {
-      if (!confirm('Apagar TODOS os dados deste navegador? Esta ação não pode ser desfeita.')) return;
+    $('btnLimparTudo').addEventListener('click', async () => {
+      if (!confirm('Apagar TODOS os dados deste navegador? Uma cópia automática é guardada antes, mas baixe um backup por garantia.')) return;
       if (prompt('Para confirmar, digite APAGAR') !== 'APAGAR') return Utils.toast('Operação cancelada.');
+      await Backup.antesDe('apagar');
       Storage.limparTudo();
       Atividades.registrar('relatorios', 'Dados apagados', 'Todos os cadastros foram apagados');
       Utils.toast('Todos os dados foram apagados.');
       App.renderizarAtual();
     });
+  },
+
+  baixarBackup() {
+    Backup.baixar();
+    Atividades.registrar('relatorios', 'Backup gerado', 'Backup completo dos dados baixado');
+    Utils.toast('Backup baixado! Guarde o arquivo em local seguro.');
+    App.renderizarAtual();
+  },
+
+  async renderizarCopias() {
+    const e = Utils.escapar;
+    const ultimo = Backup.ultimoDownload();
+    const dias = Backup.diasSemDownload();
+    $('backupStatus').innerHTML = ultimo
+      ? `Último backup baixado: <strong>${Utils.formatarDataHora(ultimo)}</strong> ${dias >= Backup.DIAS_LEMBRETE
+        ? `<span class="texto-alerta">(há ${dias} dias)</span>` : `<span class="texto-sucesso">✓ em dia</span>`}`
+      : '<span class="texto-alerta">⚠ Nenhum backup baixado ainda neste navegador.</span>';
+    if (!Sessao.ehDiretor()) return;
+    try {
+      const lista = await Backup.listar();
+      $('listaCopias').innerHTML = lista.map((c) => `<tr>
+        <td>${Utils.formatarDataHora(c.data)}</td><td>${e(c.motivo)}${c.usuario ? `<small>${e(c.usuario)}</small>` : ''}</td>
+        <td><small>${e(c.resumo)}</small></td><td>${Math.max(1, Math.round(c.tamanho / 1024))} KB</td>
+        <td class="acoes"><button class="btn-icon" data-acao="baixar" data-copia="${c.id}" title="Baixar esta cópia">⬇</button>
+          <button class="btn-icon" data-acao="restaurar" data-copia="${c.id}" title="Restaurar esta cópia">↩️</button></td></tr>`).join('')
+        || '<tr><td colspan="5" class="graf-vazio">Nenhuma cópia ainda.</td></tr>';
+    } catch {
+      $('listaCopias').innerHTML = '<tr><td colspan="5" class="graf-vazio">Este navegador não permite cópias automáticas.</td></tr>';
+    }
+    const est = await Backup.estadoArmazenamento();
+    $('armazenamentoStatus').textContent = `${est.persistente ? '🔒 Armazenamento protegido pelo navegador' : est.persistente === false
+      ? '⚠ O navegador pode apagar os dados se faltar espaço' : ''}${est.usado ? ` · ${(est.usado / 1048576).toFixed(1).replace('.', ',')} MB usados` : ''}`;
   },
 
   renderizarDocumentos() {
@@ -163,6 +216,7 @@ const TelaRelatorios = {
 
   renderizar() {
     this.renderizarDocumentos();
+    this.renderizarCopias();
     // Só mostra exportações dos módulos que o usuário pode acessar
     $('botoesExportar').innerHTML = Object.entries(this.EXPORTACOES).filter(([, e]) => Sessao.pode(e.modulo))
       .map(([chave, e]) => `<button class="btn btn-light" data-exportar="${chave}">${e.titulo}</button>`).join('');

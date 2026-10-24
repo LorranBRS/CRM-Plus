@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="versao" content="2026.10.24-1952">
   <title>CRM Plus – Gestão Educacional</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="js/tema.js"></script>
+  <link rel="stylesheet" href="css/style.css?v=2026.10.24-1952">
+  <script src="js/tema.js?v=2026.10.24-1952"></script>
 </head>
 <body>
   <!-- ===================== ENTRADA (escolha de perfil) ===================== -->
@@ -58,6 +59,13 @@
             <p class="subtitle" id="painelData">Visão geral da instituição</p>
           </div>
         </header>
+
+        <div class="aviso-backup" id="avisoBackup" hidden>
+          <span class="aviso-backup-icone">💾</span>
+          <div><strong id="avisoBackupTitulo"></strong><small>Os dados ficam só neste navegador. Guarde uma cópia no computador ou na nuvem.</small></div>
+          <button class="btn btn-primary btn-pequeno" id="btnBackupPainel">⬇ Baixar backup agora</button>
+          <a href="#relatorios" class="link-mais">mais opções</a>
+        </div>
 
         <div id="painelProfessor" hidden></div>
 
@@ -753,13 +761,30 @@
 
           <article class="painel" data-somente-diretor>
             <h3>Backup</h3>
-            <p class="ajuda">Os dados ficam salvos neste navegador. Faça backup para não perder nada
-              ou para levar os dados para outro computador.</p>
+            <p class="ajuda">Os dados ficam salvos neste navegador. Baixe o backup toda semana e guarde numa pasta
+              do computador, num pen drive ou no Google Drive.</p>
+            <p class="backup-status" id="backupStatus"></p>
             <div class="botoes-relatorio">
-              <button class="btn btn-primary" id="btnBackup">⬇ Baixar backup (JSON)</button>
-              <label class="btn btn-light">⬆ Restaurar backup
+              <button class="btn btn-primary" id="btnBackup">⬇ Baixar backup agora</button>
+              <label class="btn btn-light">⬆ Restaurar de um arquivo
                 <input type="file" id="inputRestaurar" accept=".json,application/json" hidden>
               </label>
+            </div>
+          </article>
+
+          <article class="painel painel-largo" data-somente-diretor>
+            <h3>Cópias automáticas neste navegador</h3>
+            <p class="ajuda">O sistema guarda uma cópia por dia e outra antes de restaurar ou apagar dados (as 10 mais recentes).
+              Servem para desfazer um erro; para não perder tudo se o navegador for limpo, use o "Baixar backup".</p>
+            <div class="table-wrap table-mini">
+              <table>
+                <thead><tr><th>Data</th><th>Tipo</th><th>Conteúdo</th><th>Tamanho</th><th class="acoes">Ações</th></tr></thead>
+                <tbody id="listaCopias"></tbody>
+              </table>
+            </div>
+            <div class="botoes-relatorio copias-acoes">
+              <button class="btn btn-light btn-pequeno" id="btnCopiaAgora">+ Criar cópia agora</button>
+              <span class="texto-suave" id="armazenamentoStatus"></span>
             </div>
           </article>
 
@@ -1992,55 +2017,61 @@
     </div>
   </div>
 
+  <div class="aviso-versao" id="avisoVersao" role="status" hidden>
+    <span>✨ Uma nova versão do CRM Plus foi publicada.</span>
+    <button class="btn btn-primary btn-pequeno" id="btnAtualizarVersao">Atualizar agora</button>
+  </div>
+
   <div class="toast" id="toast"></div>
   <div class="dica" id="dica" role="tooltip"></div>
 
   <!-- QR Code (fatura PIX e verificação de documentos); sem internet, o sistema funciona sem o QR -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/graficos.js"></script>
-  <script src="js/agenda.js"></script>
-  <script src="js/modelos/usuarios.js"></script>
-  <script src="js/modelos/atividades.js"></script>
-  <script src="js/modelos/instituicao.js"></script>
-  <script src="js/sessao.js"></script>
-  <script src="js/modelos/professores.js"></script>
-  <script src="js/modelos/alunos.js"></script>
-  <script src="js/modelos/cursos.js"></script>
-  <script src="js/modelos/turmas.js"></script>
-  <script src="js/modelos/matriculas.js"></script>
-  <script src="js/modelos/financeiro.js"></script>
-  <script src="js/modelos/leads.js"></script>
-  <script src="js/modelos/academico.js"></script>
-  <script src="js/modelos/mensagens.js"></script>
-  <script src="js/modelos/eventos.js"></script>
-  <script src="js/modelos/despesas.js"></script>
-  <script src="js/modelos/metas.js"></script>
-  <script src="js/modelos/registros.js"></script>
-  <script src="js/modelos/simulador.js"></script>
-  <script src="js/documentos.js"></script>
-  <script src="js/telas/entrada.js"></script>
-  <script src="js/telas/painel.js"></script>
-  <script src="js/telas/mensageiro.js"></script>
-  <script src="js/telas/ficha.js"></script>
-  <script src="js/telas/conversas.js"></script>
-  <script src="js/telas/academico.js"></script>
-  <script src="js/telas/leads.js"></script>
-  <script src="js/telas/alunos.js"></script>
-  <script src="js/telas/cursos.js"></script>
-  <script src="js/telas/professores.js"></script>
-  <script src="js/telas/turmas.js"></script>
-  <script src="js/telas/matriculas.js"></script>
-  <script src="js/telas/financeiro.js"></script>
-  <script src="js/telas/despesas.js"></script>
-  <script src="js/telas/calendario.js"></script>
-  <script src="js/telas/simulador.js"></script>
-  <script src="js/telas/metas.js"></script>
-  <script src="js/telas/relatorios.js"></script>
-  <script src="js/telas/equipe.js"></script>
-  <script src="js/telas/atividades.js"></script>
-  <script src="js/exemplos.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/utils.js?v=2026.10.24-1952"></script>
+  <script src="js/storage.js?v=2026.10.24-1952"></script>
+  <script src="js/graficos.js?v=2026.10.24-1952"></script>
+  <script src="js/agenda.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/usuarios.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/atividades.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/instituicao.js?v=2026.10.24-1952"></script>
+  <script src="js/backup.js?v=2026.10.24-1952"></script>
+  <script src="js/sessao.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/professores.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/alunos.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/cursos.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/turmas.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/matriculas.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/financeiro.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/leads.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/academico.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/mensagens.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/eventos.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/despesas.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/metas.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/registros.js?v=2026.10.24-1952"></script>
+  <script src="js/modelos/simulador.js?v=2026.10.24-1952"></script>
+  <script src="js/documentos.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/entrada.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/painel.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/mensageiro.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/ficha.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/conversas.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/academico.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/leads.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/alunos.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/cursos.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/professores.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/turmas.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/matriculas.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/financeiro.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/despesas.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/calendario.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/simulador.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/metas.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/relatorios.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/equipe.js?v=2026.10.24-1952"></script>
+  <script src="js/telas/atividades.js?v=2026.10.24-1952"></script>
+  <script src="js/exemplos.js?v=2026.10.24-1952"></script>
+  <script src="js/app.js?v=2026.10.24-1952"></script>
 </body>
 </html>

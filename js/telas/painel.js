@@ -1,6 +1,7 @@
 // ===== Tela: Painel (visão geral) =====
 const TelaPainel = {
   iniciar() {
+    $('btnBackupPainel').addEventListener('click', () => TelaRelatorios.baixarBackup());
     $('painelProfessor').addEventListener('click', (e) => {
       const chamada = e.target.closest('[data-chamada]');
       if (chamada) return TelaAcademico.abrirChamada(chamada.dataset.chamada, chamada.dataset.data);
@@ -136,6 +137,13 @@ const TelaPainel = {
     $('painelProfessor').hidden = !professor;
     $('painelKpis').hidden = professor;
     $('painelEquipe').hidden = professor;
+    // Lembrete de backup (diretor)
+    const lembrar = Sessao.ehDiretor() && Backup.precisaLembrar();
+    $('avisoBackup').hidden = !lembrar;
+    if (lembrar) {
+      const dias = Backup.diasSemDownload();
+      $('avisoBackupTitulo').textContent = dias === null ? 'Você ainda não baixou nenhum backup dos dados' : `Seu último backup foi há ${dias} dias`;
+    }
     if (professor) {
       $('painelData').textContent = `Olá, ${Sessao.usuario().nome.split(' ')[0]}! ${Utils.dataPorExtenso(Utils.hoje())}`;
       return this.renderizarProfessor();

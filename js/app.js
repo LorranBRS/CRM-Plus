@@ -66,6 +66,16 @@ const App = {
     });
 
     window.addEventListener('hashchange', () => { if (Sessao.usuario()) this.navegar(); });
+
+    // Avisa quando uma versão nova foi publicada enquanto o sistema estava aberto
+    $('btnAtualizarVersao').addEventListener('click', () => this.atualizarVersao());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      this.verificarVersao();
+      if (Sessao.usuario()) Backup.copiaDiaria();
+    });
+    setInterval(() => this.verificarVersao(), 5 * 60 * 1000);
+    this.verificarVersao();
     window.addEventListener('resize', () => { if ($('modalDocumento').classList.contains('aberto')) this.ajustarPrevia(); });
     this.iniciarSessao();
   },
@@ -93,6 +103,8 @@ const App = {
 
     this.aplicarPermissoes();
     this.navegar();
+    Backup.protegerArmazenamento();
+    Backup.copiaDiaria();
   },
 
   // Esconde blocos de módulos não liberados e áreas exclusivas do diretor
@@ -155,6 +167,22 @@ const App = {
       pessoa?.foto ? `<img src="${pessoa.foto}" alt="">` : e(Usuarios.iniciais(pessoa?.nome))}</span>`;
   },
 
+  async verificarVersao() {
+    if (Utils.versao() === 'dev') return;
+    try {
+      const resp = await fetch(`versao.json?t=${Date.now()}`, { cache: 'no-store' });
+      const { versao } = await resp.json();
+      $('avisoVersao').hidden = !versao || versao === Utils.versao();
+    } catch { /* sem internet: tenta de novo depois */ }
+  },
+
+  // Baixa de novo a página (sem cache) e recarrega
+  async atualizarVersao() {
+    $('btnAtualizarVersao').disabled = true;
+    try { await fetch('index.html', { cache: 'reload' }); } catch { /* ignora */ }
+    location.reload();
+  },
+
   // Prévia de documento (contrato, diploma, certificado) com "Baixar PDF" e "Imprimir"
   // opcoes: { classe, orientacao: 'portrait'|'landscape', arquivo, dica }
   documento(titulo, corpo, opcoes = {}) {
@@ -165,7 +193,7 @@ const App = {
     const frame = $('documentoFrame');
     frame.style.width = `${largura}px`;
     frame.srcdoc = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-      <link rel="stylesheet" href="${new URL('css/impressao.css', location.href)}"></head>
+      <link rel="stylesheet" href="${Utils.urlImpressao()}"></head>
       <body class="previa ${opcoes.classe || ''}" style="--cor:${cor}">${corpo}</body></html>`;
     this.larguraPrevia = largura;
     frame.onload = () => this.ajustarPrevia();
