@@ -85,14 +85,14 @@ const Calendario = {
     { id: 'aulas', nome: 'Aulas', icone: '🏫', cor: 'cat-1' },
     { id: 'pagar', nome: 'A pagar', icone: '💸', cor: 'cat-2', modulo: 'financeiro' },
     { id: 'receber', nome: 'A receber', icone: '💵', cor: 'cat-3', modulo: 'financeiro' },
-    { id: 'leads', nome: 'Retornos de leads', icone: '🎯', cor: 'cat-4', modulo: 'leads' },
+    { id: 'leads', nome: 'Retornos (leads e propostas)', icone: '🎯', cor: 'cat-4' },
     { id: 'aniversarios', nome: 'Aniversários', icone: '🎂', cor: 'cat-5', modulo: 'alunos' },
     { id: 'feriados', nome: 'Feriados', icone: '🏖️', cor: 'cat-6' },
     { id: 'eventos', nome: 'Eventos', icone: '📌', cor: 'cat-7' },
   ],
 
   camadasPermitidas() {
-    return this.CAMADAS.filter((c) => !c.modulo || Sessao.pode(c.modulo));
+    return this.CAMADAS.filter((c) => (c.id === 'leads' ? Sessao.pode('leads') || Sessao.pode('simulador') : !c.modulo || Sessao.pode(c.modulo)));
   },
 
   // Retorna { "AAAA-MM-DD": [itens] } para o intervalo [de, ate]
@@ -151,10 +151,19 @@ const Calendario = {
     }
 
     if (ativas.has('leads')) {
-      Leads.listar().filter((l) => Leads.emAberto(l) && l.proximoContato).forEach((l) => add(l.proximoContato, {
+      Leads.listar().filter((l) => Sessao.pode('leads') && Leads.emAberto(l) && l.proximoContato).forEach((l) => add(l.proximoContato, {
         camada: 'leads', titulo: l.nome, icone: '🎯', detalhe: [l.etapa, Leads.nomeCurso(l), Leads.nomeResponsavel(l)].filter(Boolean).join(' · '),
         ref: { tipo: 'lead', id: l.id },
       }));
+      // Propostas enviadas sem resposta: cobrar retorno
+      if (Sessao.pode('simulador')) {
+        const meu = Sessao.ehDiretor() ? null : Sessao.idAtual();
+        Propostas.listar().filter((p) => Propostas.situacao(p) === 'Enviada' && (!meu || p.atendenteId === meu)).forEach((p) => {
+          const retorno = Propostas.dataRetorno(p);
+          add(retorno < Utils.hoje() ? Utils.hoje() : retorno, { camada: 'leads', titulo: `Proposta: ${p.clienteNome}`, icone: '📋',
+            detalhe: `${Propostas.numero(p)} · ${p.descricao} · ${Usuarios.nome(p.atendenteId)}`, ref: { tipo: 'proposta', id: p.id } });
+        });
+      }
     }
 
     if (ativas.has('aniversarios')) {

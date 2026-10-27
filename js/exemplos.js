@@ -405,6 +405,45 @@ const Exemplos = {
     // Um aluno só interessado (sem matrícula)
     Alunos.salvar({ nome: 'Fernando Dias', cpf: this.cpf(741852963), email: 'fernando@exemplo.com', telefone: '(11) 98000-1122', cidade: 'Osasco', uf: 'SP', curso: adm.nome, status: 'Interessado', nascimento: '', cep: '', endereco: '', numero: '', bairro: '', observacoes: '', criadoPor: eq.ana.id });
 
+    // ---------- Propostas do simulador (histórico com todas as situações) ----------
+    const fernando = Alunos.listar().find((x) => x.nome === 'Fernando Dias');
+    const leadPor = (nome) => Leads.listar().find((l) => l.nome === nome);
+    const proposta = ({ tipo, id, curso, desconto = 0, opcao, atendente, diasAtras, desfecho, motivo, comentario }) => {
+      if (!id) return;
+      const resultado = Simulador.calcular({ valor: Simulador.valorDoCurso(curso), descontoExtra: desconto });
+      const op = [...resultado.avista, ...Object.values(resultado.parcelado).flat()].find((o) => o.id === opcao);
+      const criada = this.quando(dia(-diasAtras), diasAtras);
+      const depois = (n) => this.quando(Utils.somarDias(dia(-diasAtras), n), diasAtras + n);
+      const quem = { usuarioId: atendente.id, data: criada };
+      const p = Propostas.criar({ resultado, opcao: op, curso, cliente: Contatos.buscar(tipo, id) },
+        { ...quem, status: desconto > 10 ? 'Aguardando aprovação' : 'Aberta' });
+      if (desconto > 10 && desfecho !== 'aguardando') {
+        if (desfecho === 'negada') return Propostas.recusarDesconto(p.id, comentario || '', { usuarioId: eq.diretor.id, data: depois(0) });
+        Propostas.aprovar(p.id, comentario || '', { usuarioId: eq.diretor.id, data: depois(0) });
+      }
+      if (['enviada', 'aceita', 'recusada'].includes(desfecho)) {
+        const d = depois(0);
+        Propostas.mudar(p.id, 'Enviada', 'Enviada ao cliente (WhatsApp)', { enviadaEm: d, ultimoEnvio: d }, { usuarioId: atendente.id, data: d });
+      }
+      if (desfecho === 'aceita') {
+        const m = Matriculas.listar().find((x) => x.alunoId === id && Turmas.buscarPorId(x.turmaId)?.cursoId === curso.id);
+        Propostas.aceitar(p.id, m?.id || '', { usuarioId: atendente.id, data: depois(3) });
+      }
+      if (desfecho === 'recusada') Propostas.recusar(p.id, motivo, comentario || '', { usuarioId: atendente.id, data: depois(2) });
+    };
+    proposta({ tipo: 'aluno', id: alunos[13].id, curso: info, desconto: 15, opcao: 'pix-1', atendente: eq.bianca, diasAtras: 70, desfecho: 'aceita', comentario: 'Aluno menor de idade, família indicada' });
+    proposta({ tipo: 'aluno', id: alunos[12].id, curso: web, opcao: 'boleto-9', atendente: eq.diego, diasAtras: 55, desfecho: 'aceita' });
+    proposta({ tipo: 'aluno', id: alunos[4].id, curso: ingles, opcao: 'cartao-10', atendente: eq.bianca, diasAtras: 40, desfecho: 'aceita' });
+    proposta({ tipo: 'aluno', id: alunos[7].id, curso: adm, desconto: 5, opcao: 'cartao-6', atendente: eq.diego, diasAtras: 32, desfecho: 'aceita' });
+    proposta({ tipo: 'lead', id: leadPor('Valéria Campos')?.id, curso: adm, opcao: 'cartao-6', atendente: eq.bianca, diasAtras: 22, desfecho: 'recusada', motivo: 'Horário / turma' });
+    proposta({ tipo: 'lead', id: leadPor('Diana Lopes')?.id, curso: web, desconto: 5, opcao: 'cartao-12', atendente: eq.diego, diasAtras: 16, desfecho: 'recusada', motivo: 'Preço', comentario: 'Achou caro, vai esperar promoção' });
+    proposta({ tipo: 'lead', id: leadPor('Marcos Vieira')?.id, curso: adm, opcao: 'pix-1', atendente: eq.diego, diasAtras: 12, desfecho: 'enviada' });
+    proposta({ tipo: 'lead', id: leadPor('Isabela Moura')?.id, curso: info, opcao: 'boleto-4', atendente: eq.bianca, diasAtras: 4, desfecho: 'enviada' });
+    proposta({ tipo: 'lead', id: leadPor('Helena Prado')?.id, curso: ingles, desconto: 18, opcao: 'cartao-12', atendente: eq.bianca, diasAtras: 3, desfecho: 'negada', comentario: 'Máximo 12% para esta turma' });
+    proposta({ tipo: 'lead', id: leadPor('Caio Antunes')?.id, curso: ingles, opcao: 'cartao-15', atendente: eq.diego, diasAtras: 1, desfecho: 'enviada' });
+    proposta({ tipo: 'aluno', id: fernando?.id, curso: adm, opcao: 'boleto-6', atendente: eq.ana, diasAtras: 1, desfecho: 'enviada' });
+    proposta({ tipo: 'lead', id: leadPor('Otávio Freitas')?.id, curso: web, desconto: 12, opcao: 'cartao-12', atendente: eq.diego, diasAtras: 0, desfecho: 'aguardando' });
+
     if (confirmar) {
       location.hash = '#painel';
       App.renderizarAtual();

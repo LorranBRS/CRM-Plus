@@ -823,8 +823,23 @@ legend { font-weight: 700; font-size: 13px; color: var(--primaria-texto); text-t
 .backup-status { font-size: 14px; margin-bottom: 12px; }
 .copias-acoes { margin-top: 10px; align-items: center; }
 
+/* ===== Propostas ===== */
+.badge-aguardando-aprovacao { color: var(--alerta); }
+.badge-desconto-recusado, .badge-recusada { color: var(--perigo); }
+.badge-aberta { color: var(--primaria-texto); }
+.badge-enviada { color: var(--info); }
+.badge-aceita { color: var(--sucesso); }
+.badge-vencida, .badge-lancada { color: var(--texto-suave); }
+.contador-aba { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--perigo); color: #fff; font-size: 11px; margin-left: 4px; }
+.paineis-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; }
+.sim-proposta-num { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.sim-ajuda-salvar { margin: 10px 0 0; }
+.painel-prop-botoes { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.prop-desconto { margin: 10px 0 0; }
+
 /* ===== Responsivo ===== */
 @media (max-width: 1100px) {
+  .paineis-3 { grid-template-columns: 1fr; }
   .simulador { grid-template-columns: 1fr; }
   .sim-lateral { position: static; }
   .academico-grid { grid-template-columns: 1fr; }

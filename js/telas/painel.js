@@ -1,6 +1,11 @@
 // ===== Tela: Painel (visão geral) =====
 const TelaPainel = {
   iniciar() {
+    $('conteudoPainelPropostas').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-acao]');
+      if (btn) TelaSimulador.acaoProposta(btn.dataset.acao, btn.dataset.id);
+    });
+    $('linkPainelPropostas').addEventListener('click', () => { TelaSimulador.aba = 'propostas'; });
     $('btnBackupPainel').addEventListener('click', () => TelaRelatorios.baixarBackup());
     $('painelProfessor').addEventListener('click', (e) => {
       const chamada = e.target.closest('[data-chamada]');
@@ -21,6 +26,49 @@ const TelaPainel = {
       const item = e.target.closest('[data-lancamento]');
       if (item) TelaFinanceiro.abrirPagamento(Financeiro.buscarPorId(item.dataset.lancamento));
     });
+  },
+
+  // Diretor: descontos para aprovar · Atendente: propostas liberadas/recusadas e retornos
+  renderizarPropostas() {
+    const e = Utils.escapar;
+    if (!Sessao.pode('simulador')) { $('painelPropostas').hidden = true; return; }
+    const diretor = Sessao.ehDiretor();
+    const eu = Sessao.idAtual();
+    const item = (p, detalhe, botoes) => `<li>
+      <div><strong>${Propostas.numero(p)} – ${e(p.clienteNome)}</strong><small>${detalhe}</small></div>
+      <span class="painel-prop-botoes">${botoes}</span></li>`;
+    const btn = (acao, id, texto, classe = 'btn-light') => `<button class="btn ${classe} btn-pequeno" data-acao="${acao}" data-id="${id}">${texto}</button>`;
+    const grupos = [];
+
+    if (diretor) {
+      const pedidos = Propostas.aguardandoAprovacao();
+      if (pedidos.length) {
+        grupos.push(`<h4 class="titulo-secao">🔒 Descontos aguardando sua aprovação (${pedidos.length})</h4><ul class="lista-simples">${pedidos.map((p) => item(p,
+          `${e(Usuarios.nome(p.atendenteId))} pede <strong>${String(p.descontoExtra).replace('.', ',')}%</strong> de desconto · ${e(p.cursoNome)} · ${e(p.descricao)}`,
+          btn('aprovar', p.id, '✅ Aprovar', 'btn-primary') + btn('recusar-desconto', p.id, '⛔ Recusar'))).join('')}</ul>`);
+      }
+    } else {
+      const liberadas = Propostas.listar().filter((p) => p.atendenteId === eu && p.status === 'Aberta' && p.aprovacao?.status === 'Aprovado');
+      const negadas = Propostas.listar().filter((p) => p.atendenteId === eu && p.status === 'Desconto recusado' &&
+        Utils.noPeriodo(p.aprovacao?.em, Utils.periodo('7dias')));
+      if (liberadas.length) {
+        grupos.push(`<h4 class="titulo-secao">✅ Desconto aprovado – pronto para enviar</h4><ul class="lista-simples">${liberadas.map((p) => item(p,
+          `${e(p.descricao)}${p.aprovacao.comentario ? ` · “${e(p.aprovacao.comentario)}”` : ''}`, btn('abrir', p.id, '📂 Abrir e enviar', 'btn-primary'))).join('')}</ul>`);
+      }
+      if (negadas.length) {
+        grupos.push(`<h4 class="titulo-secao">⛔ Desconto não aprovado</h4><ul class="lista-simples">${negadas.map((p) => item(p,
+          `${String(p.descontoExtra).replace('.', ',')}% recusado${p.aprovacao.comentario ? ` · “${e(p.aprovacao.comentario)}”` : ''}`, btn('ver', p.id, '🕒 Ver'))).join('')}</ul>`);
+      }
+    }
+    const retornos = Propostas.aguardandoRetorno(diretor ? null : eu);
+    if (retornos.length) {
+      grupos.push(`<h4 class="titulo-secao">⏰ Propostas sem resposta – cobrar retorno (${retornos.length})</h4><ul class="lista-simples">${retornos.slice(0, 6).map((p) => item(p,
+        `${e(p.descricao)} · enviada em ${Utils.formatarData(p.ultimoEnvio)}${diretor ? ` · ${e(Usuarios.nome(p.atendenteId))}` : ''}`,
+        (p.clienteId ? btn('reenviar', p.id, '💬 Cobrar') : '') + btn('cliente-recusou', p.id, '👎 Recusou'))).join('')}</ul>`);
+    }
+    $('painelPropostas').hidden = !grupos.length;
+    $('tituloPainelPropostas').textContent = diretor ? 'Propostas – pendências' : 'Minhas propostas';
+    $('conteudoPainelPropostas').innerHTML = grupos.join('');
   },
 
   // Barras de progresso das metas do mês
@@ -165,6 +213,7 @@ const TelaPainel = {
       $('kpiLucro').className = lucro < 0 ? 'texto-perigo' : 'texto-sucesso';
     }
     this.renderizarMetas();
+    this.renderizarPropostas();
     this.renderizarHoje();
 
     // Receita dos últimos 6 meses

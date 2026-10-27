@@ -97,7 +97,7 @@ const Documentos = {
   },
 
   // ---------- Proposta comercial (simulador) ----------
-  proposta({ resultado, escolhida, curso, cliente }) {
+  proposta({ resultado, escolhida, curso, cliente, proposta }) {
     const e = Utils.escapar;
     const r = resultado;
     const linha = (op) => `<tr class="${op.id === escolhida?.id ? 'proposta-escolhida' : ''}">
@@ -108,7 +108,7 @@ const Documentos = {
     const opcoes = Simulador.destaques(r);
     if (escolhida && !opcoes.some((o) => o.id === escolhida.id)) opcoes.push(escolhida);
     return `
-      ${this.cabecalho('PROPOSTA', Utils.formatarData(Utils.hoje()))}
+      ${this.cabecalho('PROPOSTA', proposta ? `${Propostas.numero(proposta)} · ${Utils.formatarData(proposta.criadoEm)}` : Utils.formatarData(Utils.hoje()))}
       <h2 class="contrato-titulo">Proposta comercial</h2>
       <section class="doc-bloco">
         <h3>Para</h3>
@@ -130,7 +130,7 @@ const Documentos = {
         </table>
         ${escolhida ? `<p class="proposta-combinada">✅ Condição combinada: <strong>${e(Simulador.descreverOpcao(escolhida))}</strong></p>` : ''}
       </section>
-      <p class="texto-pequeno">Proposta válida até ${Utils.formatarData(Utils.somarDias(Utils.hoje(), r.regras.validadeDias))}.
+      <p class="texto-pequeno">Proposta válida até ${Utils.formatarData(proposta?.validade || Utils.somarDias(Utils.hoje(), r.regras.validadeDias))}.
         Parcelas acima do limite sem juros calculadas com juros compostos (Tabela Price).</p>
       <div class="doc-assinatura"><span></span><p>${e(Sessao.usuario()?.nome || '')}<br>${e(Instituicao.nome())}</p></div>`;
   },

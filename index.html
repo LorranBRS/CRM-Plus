@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="versao" content="2026.10.24-1952">
+  <meta name="versao" content="2026.10.27-1949">
   <title>CRM Plus – Gestão Educacional</title>
-  <link rel="stylesheet" href="css/style.css?v=2026.10.24-1952">
-  <script src="js/tema.js?v=2026.10.24-1952"></script>
+  <link rel="stylesheet" href="css/style.css?v=2026.10.27-1949">
+  <script src="js/tema.js?v=2026.10.27-1949"></script>
 </head>
 <body>
   <!-- ===================== ENTRADA (escolha de perfil) ===================== -->
@@ -79,6 +79,10 @@
         </section>
 
         <section class="paineis" id="painelEquipe">
+          <article class="painel painel-largo" id="painelPropostas" data-modulo="simulador" hidden>
+            <h3><span id="tituloPainelPropostas">Propostas</span> <a href="#simulador" class="link-mais" id="linkPainelPropostas">ver propostas →</a></h3>
+            <div id="conteudoPainelPropostas"></div>
+          </article>
           <article class="painel painel-largo" id="painelMetas">
             <h3><span id="tituloMetasPainel">Metas do mês</span> <a href="#metas" class="link-mais" data-somente-diretor>definir metas →</a></h3>
             <div id="metasPainel"></div>
@@ -189,7 +193,61 @@
           <button class="btn btn-light" id="btnRegrasPagamento" data-somente-diretor>⚙️ Regras de pagamento</button>
         </header>
 
-        <div class="simulador">
+        <nav class="abas-tela" id="abasSimulador">
+          <button class="ativo" data-aba="simular">🧮 Simular</button>
+          <button data-aba="propostas">📋 Propostas <span class="contador-aba" id="contadorPropostas" hidden></span></button>
+        </nav>
+
+        <!-- Histórico de propostas -->
+        <div id="simPropostas" hidden>
+          <section class="cards">
+            <div class="card"><span>Propostas no período</span><strong id="statPropTotal">0</strong></div>
+            <div class="card"><span>Taxa de aceite</span><strong id="statPropAceite">-</strong></div>
+            <div class="card"><span>Vendido por propostas</span><strong id="statPropValor">R$ 0,00</strong></div>
+            <div class="card card-alerta"><span>Aguardando retorno</span><strong id="statPropRetorno">0</strong></div>
+          </section>
+
+          <section class="toolbar">
+            <input type="search" id="buscaPropostas" placeholder="Buscar por número, cliente ou curso...">
+            <select id="filtroStatusPropostas"></select>
+            <select id="filtroAtendentePropostas" data-somente-diretor></select>
+            <select id="filtroPeriodoPropostas">
+              <option value="7dias">Últimos 7 dias</option>
+              <option value="30dias">Últimos 30 dias</option>
+              <option value="mes">Este mês</option>
+              <option value="mesPassado">Mês passado</option>
+              <option value="tudo" selected>Todo o período</option>
+            </select>
+          </section>
+
+          <section class="paineis paineis-3" id="relatorioPropostas">
+            <article class="painel" data-somente-diretor>
+              <h3>Aceite por atendente</h3>
+              <div id="grafPropAtendentes"></div>
+            </article>
+            <article class="painel">
+              <h3>Motivos de recusa</h3>
+              <div id="grafPropMotivos"></div>
+            </article>
+            <article class="painel">
+              <h3>Condições aceitas</h3>
+              <div id="grafPropFormas"></div>
+              <p class="ajuda prop-desconto" id="propDescontoMedio"></p>
+            </article>
+          </section>
+
+          <section class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Proposta</th><th>Cliente / curso</th><th>Condição</th><th>Total</th><th>Atendente</th><th>Situação</th><th class="acoes">Ações</th></tr>
+              </thead>
+              <tbody id="listaPropostas"></tbody>
+            </table>
+            <div class="vazio" id="vazioPropostas"><p></p></div>
+          </section>
+        </div>
+
+        <div class="simulador" id="simSimular">
           <div class="sim-principal">
             <section class="painel">
               <h3>Dados da proposta</h3>
@@ -1925,6 +1983,37 @@
     </div>
   </div>
 
+  <!-- ===================== MODAL: CLIENTE RECUSOU A PROPOSTA ===================== -->
+  <div class="modal" id="modalRecusaProposta" aria-hidden="true">
+    <div class="modal-box modal-pequeno" role="dialog">
+      <header class="modal-header">
+        <h2 class="modal-titulo">Cliente recusou a proposta</h2>
+        <button class="btn-icon" data-fechar aria-label="Fechar">✕</button>
+      </header>
+      <form id="formRecusaProposta" novalidate>
+        <input type="hidden" name="id">
+        <p class="resumo-pagamento" id="resumoRecusaProposta"></p>
+        <fieldset>
+          <div class="grid grid-2">
+            <label class="col-full">Motivo *
+              <select name="motivo"></select>
+            </label>
+            <label class="col-full">Observação
+              <textarea name="observacao" rows="2" placeholder="Ex.: achou caro, vai fechar com a escola X"></textarea>
+            </label>
+            <label class="col-full checkbox-linha" id="linhaLeadPerdido">
+              <input type="checkbox" name="leadPerdido" value="sim"> Mover o lead para "Perdido"
+            </label>
+          </div>
+        </fieldset>
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-light" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-perigo">Registrar recusa</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
   <!-- ===================== MODAL: REGRAS DE PAGAMENTO ===================== -->
   <div class="modal" id="modalRegras" aria-hidden="true">
     <div class="modal-box" role="dialog">
@@ -2027,51 +2116,52 @@
 
   <!-- QR Code (fatura PIX e verificação de documentos); sem internet, o sistema funciona sem o QR -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-  <script src="js/utils.js?v=2026.10.24-1952"></script>
-  <script src="js/storage.js?v=2026.10.24-1952"></script>
-  <script src="js/graficos.js?v=2026.10.24-1952"></script>
-  <script src="js/agenda.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/usuarios.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/atividades.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/instituicao.js?v=2026.10.24-1952"></script>
-  <script src="js/backup.js?v=2026.10.24-1952"></script>
-  <script src="js/sessao.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/professores.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/alunos.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/cursos.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/turmas.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/matriculas.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/financeiro.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/leads.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/academico.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/mensagens.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/eventos.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/despesas.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/metas.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/registros.js?v=2026.10.24-1952"></script>
-  <script src="js/modelos/simulador.js?v=2026.10.24-1952"></script>
-  <script src="js/documentos.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/entrada.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/painel.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/mensageiro.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/ficha.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/conversas.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/academico.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/leads.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/alunos.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/cursos.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/professores.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/turmas.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/matriculas.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/financeiro.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/despesas.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/calendario.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/simulador.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/metas.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/relatorios.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/equipe.js?v=2026.10.24-1952"></script>
-  <script src="js/telas/atividades.js?v=2026.10.24-1952"></script>
-  <script src="js/exemplos.js?v=2026.10.24-1952"></script>
-  <script src="js/app.js?v=2026.10.24-1952"></script>
+  <script src="js/utils.js?v=2026.10.27-1949"></script>
+  <script src="js/storage.js?v=2026.10.27-1949"></script>
+  <script src="js/graficos.js?v=2026.10.27-1949"></script>
+  <script src="js/agenda.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/usuarios.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/atividades.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/instituicao.js?v=2026.10.27-1949"></script>
+  <script src="js/backup.js?v=2026.10.27-1949"></script>
+  <script src="js/sessao.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/professores.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/alunos.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/cursos.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/turmas.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/matriculas.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/financeiro.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/leads.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/academico.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/mensagens.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/eventos.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/despesas.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/metas.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/registros.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/propostas.js?v=2026.10.27-1949"></script>
+  <script src="js/modelos/simulador.js?v=2026.10.27-1949"></script>
+  <script src="js/documentos.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/entrada.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/painel.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/mensageiro.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/ficha.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/conversas.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/academico.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/leads.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/alunos.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/cursos.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/professores.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/turmas.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/matriculas.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/financeiro.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/despesas.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/calendario.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/simulador.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/metas.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/relatorios.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/equipe.js?v=2026.10.27-1949"></script>
+  <script src="js/telas/atividades.js?v=2026.10.27-1949"></script>
+  <script src="js/exemplos.js?v=2026.10.27-1949"></script>
+  <script src="js/app.js?v=2026.10.27-1949"></script>
 </body>
 </html>

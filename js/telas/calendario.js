@@ -148,6 +148,7 @@ const TelaCalendario = {
       else TelaDespesas.abrir(d);
     }
     if (ref.tipo === 'lead') TelaLeads.abrir(Leads.buscarPorId(ref.id));
+    if (ref.tipo === 'proposta') TelaSimulador.verProposta(ref.id);
     if (ref.tipo === 'aluno') FichaAluno.abrir(ref.id);
   },
 

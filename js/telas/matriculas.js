@@ -69,6 +69,10 @@ const TelaMatriculas = {
       Utils.fecharModal('modalMatricula');
       this.renderizar();
       Utils.toast(anterior ? 'Matrícula atualizada!' : 'Matrícula realizada!');
+      if (!anterior && this.propostaVinculada) {
+        Propostas.aceitar(this.propostaVinculada, salva.id);
+        this.propostaVinculada = null;
+      }
       if (!anterior && $('gerarContrato').checked) Documentos.abrirContrato(salva.id);
     });
   },
@@ -97,6 +101,7 @@ const TelaMatriculas = {
 
   // extras: { alunoId, cursoId } para pré-selecionar (ex.: vindo da conversão de lead)
   abrir(m = null, extras = {}) {
+    this.propostaVinculada = extras.propostaId || null; // matrícula vinda de uma proposta do simulador
     const form = $('formMatricula');
     const alunos = Alunos.listar().filter((a) => a.status !== 'Inativo' || a.id === m?.alunoId)
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
